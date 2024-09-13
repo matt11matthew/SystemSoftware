@@ -21,4 +21,5 @@ add_executable(hw1
         pass1.c
         regname.c
         symtab.c
-        utilities.c)
+        utilities.c
+        vm.c)
