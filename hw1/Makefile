@@ -1,5 +1,4 @@
-# $Id: Makefile,v 1.51 2024/09/09 17:36:28 leavens Exp leavens $
-# Makefile for PL/0 compiler and code generation
+# $Id: Makefile,v 1.53 2024/09/13 18:26:01 leavens Exp leavens $
 
 # Add .exe to the end of target to get that suffix in the rules
 VM = vm
@@ -12,16 +11,9 @@ RM = rm -f
 SUBMISSIONZIPFILE = submission.zip
 ZIP = zip -9
 # Add the names of your own files with a .o suffix to link them into the VM
-#VM_OBJECTS = machine_main.o machine.o \
-#             machine_types.o instruction.o bof.o \
-#             regname.o utilities.o
-
-
-VM_OBJECTS = vm.o \
+VM_OBJECTS = machine_main.o machine.o \
              machine_types.o instruction.o bof.o \
              regname.o utilities.o
-
-
 TESTS = vm_test0.bof vm_test1.bof vm_test2.bof vm_test3.bof \
 	vm_test4.bof vm_test5.bof vm_test6.bof vm_test7.bof \
 	vm_test8.bof vm_test9.bof vm_testA.bof vm_testB.bof
@@ -47,12 +39,15 @@ $(VM): $(VM_OBJECTS)
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $<
 
-.PHONY: clean
+.PHONY: clean cleanall
 clean:
 	$(RM) *~ *.o *.myo *.myp '#'*
 	$(RM) $(VM).exe $(VM)
 	$(RM) *.stackdump core
 	$(RM) $(SUBMISSIONZIPFILE)
+
+cleanall: clean
+	$(RM) $(ASM).exe $(DISASM).exe test.exe $(BOF_BIN_DUMP).exe
 
 # rule for making .bof files with the assembler ($(ASM));
 # this might need to be done if not running on Linux (or Windows)
@@ -255,14 +250,16 @@ PROVIDEDFILES = Makefile asm_main.c asm.y asm_lexer.l \
 		vm_test*.asm vm_test*.out vm_test*.bof vm_test*.lst \
 		bof_bin_dump.c
 
+PDFFILES = ../../ssm-vm.pdf ../../ssm-asm.pdf
+
 .PHONY: zip $(ZIPFILE)
 
 zip $(ZIPFILE): $(TESTSZIPFILE)
 
-$(TESTSZIPFILE): Makefile $(TESTS) $(PROVIDEDFILES) $(VM) create-vm-outputs
+$(TESTSZIPFILE): $(PDFFILES) Makefile $(TESTS) $(PROVIDEDFILES) $(VM) create-vm-outputs
 	$(RM) $(TESTSZIPFILE)
 	chmod u+w Makefile $(TESTS) $(PROVIDEDFILES)
-	$(ZIP) $(TESTSZIPFILE) Makefile $(TESTS) $(PROVIDEDFILES)
+	$(ZIP) $(TESTSZIPFILE) $(PDFFILES) Makefile $(TESTS) $(PROVIDEDFILES)
 
 %.bof: %.$(ASM)
 	./$(ASM) $<
