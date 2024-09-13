@@ -1,6 +1,4 @@
-//
-// Created by Matt on 9/12/2024.
-//
+
 #include "machine_types.h"
 #include "instruction.h"
 #include <stdio.h>
@@ -13,13 +11,17 @@ static union mem_u{
     bin_instr_t instrs[MEMORY_SIZE_IN_WORDS];
 } memory;
 
-int main(int argc, char **argv[]) {
-    if (argc > 1) {
+int main(int argc, char **argv){
+    if (argc > 1)
+    {
         // Print each argument as a string
-        for (int i = 1; i < argc; i++) {
+        for (int i = 1; i < argc; i++)
+        {
             printf("Argument %d as string: %s\n", i, argv[i]);
         }
-    } else {
+    }
+    else
+    {
         printf("No command-line arguments provided.\n");
     }
     return 0;
