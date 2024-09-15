@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bof.h"
+
+
 // a size for the memory (2^16 words = 32k words)
 #define MEMORY_SIZE_IN_WORDS 32768
 
@@ -50,30 +53,37 @@ void readFile(char* name, char** output) {
     fclose(file);
 }
 
-void printCharArray(char **array) {
-    int i = 0;
-    while (array[i] != NULL) { // Assume the array is NULL-terminated
-        printf("%s\n", array[i]);
-        i++;
-    }
+
+void handleBOFFile(char * file_name, int should_print);
+
+
+void handleBOFFile(char * file_name, int should_print) {
+    // BOFFILE boffile = bof_read_open(file_name);
+    // BOFHeader header = bof_read_header(boffile);
+    // printf("Text Length: %d\n",header.text_length);
+    // printf("data_length: %d\n",header.data_length);
+    // printf("magic: %s\n",header.magic);
 }
+
 int main(int argc, char **argv) {
-    printf("%d total args", argc);
 
-    printCharArray(argv);
-    if (argc == 3 && strcmp(argv[1], "-p") == 0) {
-        char *fileContents = NULL;
-        readFile(argv[2], &fileContents);
+    int shouldPrint = false;
+    char* fileName = 0;
 
-        if (fileContents != NULL) {
-            printf("File Contents:\n%s\n", fileContents);
-            free(fileContents); // Remember to free the allocated memory
-        } else {
-            printf("Failed to read file or allocate memory.\n");
-        }
+    if (argc==3 && strcmp(argv[1], "-p") == 0) {
+        shouldPrint = true;
+        fileName= argv[2];
+    } else if (argc==2 && strcmp(argv[1], "-p")==1) {
+        fileName = argv[1];
     } else {
-        printf("Invalid arguments. Use: %s -p <filename>\n", argv[0]);
+        fprintf(stderr, "Usage: %s [-p] <BOF file>\n", argv[0]);
+        return 0;
+
     }
+    printf("File Name: %s\n", fileName);
+    printf("Print?: %s\n", shouldPrint==1?"YES":"NO");
+    handleBOFFile(fileName,shouldPrint);
+
 
     return 0;
 }
