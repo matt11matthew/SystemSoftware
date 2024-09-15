@@ -37,6 +37,37 @@ void printStats() {
     printf("HI: %d\n", HI);
     printf("LO: %d\n", LO);
 }
+void executeSyscall(bin_instr_t instruction) {
+    // Example of handling different syscalls
+    switch (instruction.syscall.func) {
+        case SYS_F:  // Replace with actual syscall function codes as needed
+            printf("Executing syscall: %s, with register: %s and offset: %d\n",
+                   instruction_mnemonic(instruction),
+                   "$r3",
+                   instruction.syscall.offset);
+        // Implement the behavior for the syscall here
+        break;
+
+        default:
+            fprintf(stderr, "Unknown syscall function: %d\n", instruction.syscall.func);
+        break;
+    }
+}
+
+
+void handleInstruction(bin_instr_t instruction, instr_type type, int i ) {
+
+
+    if (type == syscall_instr_type) {
+        executeSyscall(instruction);
+    } else {
+        // Otherwise, store the instruction in memory
+        memory.instrs[PC + i] = instruction;
+
+        // Print the instruction type using the printInstr function
+    }
+}
+
 void handleBOFFile(char * file_name, int should_print) {
     BOFFILE file = bof_read_open(file_name);
     BOFHeader header = bof_read_header(file);
@@ -50,7 +81,7 @@ void handleBOFFile(char * file_name, int should_print) {
     PC = header.text_start_address;
 
     SP = MEMORY_SIZE_IN_WORDS - 1;
-    FP = header.stack_bottom_addr;
+    // FP = header.stack_bottom_addr;
 
 
     for (int i = 0; i < header.text_length; i++) { //loop header
@@ -59,9 +90,15 @@ void handleBOFFile(char * file_name, int should_print) {
             bof_close(file);
             return;
         }
-        memory.instrs[i] = instruction_read(file);
+
+        bin_instr_t instruction = instruction_read(file);
+        instr_type  type = instruction_type(instruction);
+        handleInstruction(instruction, type, i );
+
+
+
         if (should_print) {
-            printf("%d %s\n", instruction_assembly_form(i, memory.instrs[i]));
+           // printf("%d %s\n", instruction_assembly_form(i, instruction));
         }
     }
     bof_close(file);
