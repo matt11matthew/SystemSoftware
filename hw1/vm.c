@@ -25,44 +25,48 @@ static union mem_u{
 
 //Function Prototypes
 
-void readFile(char* name, char** output) {
-    FILE *file = fopen(name, "r");
-    if (file == NULL) {
-        perror("Failed to open file");
-        *output = NULL;
-        return;
-    }
-
-    // Move the file pointer to the end to get the size
-    fseek(file, 0, SEEK_END);
-    long fileSize = ftell(file);
-    rewind(file); // Reset pointer to the beginning
-
-    // Allocate memory for the file contents plus a null terminator
-    *output = (char*)malloc((fileSize + 1) * sizeof(char));
-    if (*output == NULL) {
-        perror("Failed to allocate memory");
-        fclose(file);
-        return;
-    }
-
-    // Read the file into the allocated buffer
-    fread(*output, sizeof(char), fileSize, file);
-    (*output)[fileSize] = '\0'; // Null-terminate the string
-
-    fclose(file);
-}
 
 
 void handleBOFFile(char * file_name, int should_print);
 
 
+void printStats() {
+    printf("PC: %d\n", PC);
+    printf("SP: %d\n", SP);
+    printf("FP: %d\n", FP);
+    printf("HI: %d\n", HI);
+    printf("LO: %d\n", LO);
+}
 void handleBOFFile(char * file_name, int should_print) {
-    // BOFFILE boffile = bof_read_open(file_name);
-    // BOFHeader header = bof_read_header(boffile);
-    // printf("Text Length: %d\n",header.text_length);
-    // printf("data_length: %d\n",header.data_length);
-    // printf("magic: %s\n",header.magic);
+    BOFFILE file = bof_read_open(file_name);
+    BOFHeader header = bof_read_header(file);
+
+    if (!bof_has_correct_magic_number(header)) {
+        fprintf(stderr, "Error: Invalid magic number in BOF file.\n");
+        bof_close(file);
+        return;
+    }
+
+    PC = header.text_start_address;
+
+    SP = MEMORY_SIZE_IN_WORDS - 1;
+    FP = header.stack_bottom_addr;
+
+
+    for (int i = 0; i < header.text_length; i++) { //loop header
+        if (i > MEMORY_SIZE_IN_WORDS) {
+            fprintf(stderr, "Error: Too many words in BOF file.\n");
+            bof_close(file);
+            return;
+        }
+        memory.instrs[i] = instruction_read(file);
+        if (should_print) {
+            printf("%d %s\n", instruction_assembly_form(i, memory.instrs[i]));
+        }
+    }
+    bof_close(file);
+
+
 }
 
 int main(int argc, char **argv) {
@@ -78,10 +82,7 @@ int main(int argc, char **argv) {
     } else {
         fprintf(stderr, "Usage: %s [-p] <BOF file>\n", argv[0]);
         return 0;
-
     }
-    printf("File Name: %s\n", fileName);
-    printf("Print?: %s\n", shouldPrint==1?"YES":"NO");
     handleBOFFile(fileName,shouldPrint);
 
 
