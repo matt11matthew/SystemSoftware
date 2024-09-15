@@ -37,34 +37,35 @@ void printStats() {
     printf("HI: %d\n", HI);
     printf("LO: %d\n", LO);
 }
-void executeSyscall(bin_instr_t instruction) {
-    // Example of handling different syscalls
-    switch (instruction.syscall.func) {
-        case SYS_F:  // Replace with actual syscall function codes as needed
-            printf("Executing syscall: %s, with register: %s and offset: %d\n",
-                   instruction_mnemonic(instruction),
-                   "$r3",
-                   instruction.syscall.offset);
-        // Implement the behavior for the syscall here
-        break;
 
-        default:
-            fprintf(stderr, "Unknown syscall function: %d\n", instruction.syscall.func);
-        break;
-    }
+void executeSyscall(bin_instr_t instruction) {
+
 }
 
 
+
+
 void handleInstruction(bin_instr_t instruction, instr_type type, int i ) {
+    switch (type) {
+        case comp_instr_type:
+            break;
+        case other_comp_instr_type:
+            break;
+        case immed_instr_type:
 
+            break;
+        case jump_instr_type:
+            break;
+        case syscall_instr_type:
+            executeSyscall(instruction);
+        break;
+        case error_instr_type:
 
-    if (type == syscall_instr_type) {
-        executeSyscall(instruction);
-    } else {
-        // Otherwise, store the instruction in memory
+            break;
+    }
+    if (type != syscall_instr_type) {
+        printf("%d %s\n", instruction_assembly_form(i, instruction));
         memory.instrs[PC + i] = instruction;
-
-        // Print the instruction type using the printInstr function
     }
 }
 
