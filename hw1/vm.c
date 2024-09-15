@@ -50,8 +50,17 @@ void readFile(char* name, char** output) {
     fclose(file);
 }
 
-
+void printCharArray(char **array) {
+    int i = 0;
+    while (array[i] != NULL) { // Assume the array is NULL-terminated
+        printf("%s\n", array[i]);
+        i++;
+    }
+}
 int main(int argc, char **argv) {
+    printf("%d total args", argc);
+
+    printCharArray(argv);
     if (argc == 3 && strcmp(argv[1], "-p") == 0) {
         char *fileContents = NULL;
         readFile(argv[2], &fileContents);
