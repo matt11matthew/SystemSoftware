@@ -23,7 +23,6 @@ static union mem_u{
     bin_instr_t instrs[MEMORY_SIZE_IN_WORDS];
 } memory;
 
-//Function Prototypes
 
 
 
@@ -98,8 +97,6 @@ void handleBOFFile(char * file_name, int should_print) {
 
     }
     bof_close(file);
-
-
 }
 
 int main(int argc, char **argv) {
@@ -110,7 +107,7 @@ int main(int argc, char **argv) {
     if (argc==3 && strcmp(argv[1], "-p") == 0) {
         shouldPrint = true;
         fileName= argv[2];
-    } else if (argc == 2 && strcmp(argv[1], "-p")==1) {
+    } else if (argc == 2 && strcmp(argv[1], "-p") ==1) {
         fileName = argv[1];
     } else {
         fprintf(stderr, "Usage: %s [-p] <BOF file>\n", argv[0]);
