@@ -64,7 +64,6 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int i ) {
             break;
     }
     if (type != syscall_instr_type) {
-        printf("%d %s\n", instruction_assembly_form(i, instruction));
         memory.instrs[PC + i] = instruction;
     }
 }
@@ -97,10 +96,6 @@ void handleBOFFile(char * file_name, int should_print) {
         handleInstruction(instruction, type, i );
 
 
-
-        if (should_print) {
-           // printf("%d %s\n", instruction_assembly_form(i, instruction));
-        }
     }
     bof_close(file);
 
