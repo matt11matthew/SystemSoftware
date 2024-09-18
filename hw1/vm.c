@@ -58,7 +58,7 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int i ) {
             break;
         case syscall_instr_type:
             executeSyscall(instruction);
-        break;
+        return;
         case error_instr_type:
 
             break;
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
     if (argc==3 && strcmp(argv[1], "-p") == 0) {
         shouldPrint = true;
         fileName= argv[2];
-    } else if (argc==2 && strcmp(argv[1], "-p")==1) {
+    } else if (argc == 2 && strcmp(argv[1], "-p")==1) {
         fileName = argv[1];
     } else {
         fprintf(stderr, "Usage: %s [-p] <BOF file>\n", argv[0]);
