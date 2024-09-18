@@ -7,6 +7,7 @@
 #include "utilities.h"
 #include "machine_types.h"
 #include "asm.tab.h"
+#include <stdio.h>
 
 #define INSTR_BUF_SIZE 512
 
