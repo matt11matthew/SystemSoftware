@@ -128,7 +128,7 @@ void handleBOFFile(char * file_name, int should_print) {
          bin_instr_t instruction = instruction_read(file);
          instr_type  type = instruction_type(instruction);
          int res = handleInstruction(instruction, type, i );
-         if (res == -1) break;
+         if (res == -1) continue;
 
 
 
