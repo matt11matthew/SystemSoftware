@@ -44,6 +44,7 @@ void printStats() {
 
 int handleInstruction(bin_instr_t instruction, instr_type type, int i ) {
     //Call approiate function based on the type being fed
+    printf("%d %s\n", i, instruction_assembly_form(i, instruction));
     switch (type) {
         case comp_instr_type://Computational Instructions, with opcode 0
             printf("comp_instr_type\n");
@@ -84,6 +85,9 @@ void jumpFormatInstr(){
 int executeSyscall(syscall_instr_t instruction, int i) {
     printf("\n %d NEW CODE: %d \n",i, instruction.code);
 
+    if (instruction.code == start_tracing_sc) {
+        printf("340340-334434");
+    }
     switch(instruction.code){
         case 1://EXIT
             break;
@@ -127,8 +131,7 @@ void handleBOFFile(char * file_name, int should_print) {
 
          bin_instr_t instruction = instruction_read(file);
          instr_type  type = instruction_type(instruction);
-         int res = handleInstruction(instruction, type, i );
-         if (res == -1) continue;
+         handleInstruction(instruction, type, i );
 
 
 
