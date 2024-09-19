@@ -83,7 +83,7 @@ void jumpFormatInstr(){
 
 int executeSyscall(syscall_instr_t instruction, int i) {
     printf("\n %d NEW CODE: %d \n",i, instruction.code);
-    
+
     switch(instruction.code){
         case 1://EXIT
             break;
