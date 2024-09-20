@@ -5,7 +5,7 @@ VM = vm
 CC = gcc
 # on Linux, the following can be used with gcc:
 # CFLAGS = -fsanitize=address -static-libasan -g -std=c17 -Wall
-CFLAGS = -g -std=c11 -Wall
+CFLAGS = -g -std=c17 -Wall
 MV = mv
 RM = rm -f
 SUBMISSIONZIPFILE = submission.zip
