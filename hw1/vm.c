@@ -12,7 +12,6 @@
 
 //Global variables
 int PC = 0;
-
 int HI = 0 ;
 int LO = 0;
 
@@ -54,7 +53,7 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
             jumpFormatInstr(instruction.jump, address);
             break;
         case syscall_instr_type://System Callse
-            executeSyscall(instruction.syscall, address );
+            executeSyscall(instruction.syscall, address);
         case error_instr_type:
             //stdeer
             break;
@@ -62,18 +61,21 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
 }
 
 void compFormatInstr(comp_instr_t instruction, int address) {
-    switch(instruction.func){// Switch to handle operation based on func code
+    switch (instruction.func) {// Switch to handle operation based on func code
         case NOP_F:
 
             break; //Does nothing
         case ADD_F:// Add
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
-                memory.words[GPR[SP]] + (memory.words[GPR[instruction.rs]]
-                + machine_types_formOffset(instruction.os));
+                    memory.words[GPR[SP]] + (memory.words[GPR[instruction.rs]]
+                                             + machine_types_formOffset(instruction.os));
 
             break;
         case SUB_F:// Subtract
-            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = memory.words[GPR[SP]] - (memory.words[GPR[instruction.rs]] + machine_types_formOffset(instruction.os));
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = memory.words[GPR[SP]] -
+                                                                                           (memory.words[GPR[instruction.rs]] +
+                                                                                            machine_types_formOffset(
+                                                                                                    instruction.os));
             break;
         case CPW_F:// Copy Word
             break;
@@ -100,10 +102,10 @@ void compFormatInstr(comp_instr_t instruction, int address) {
 
 
 void otherCompInstr(other_comp_instr_t i, int address) {
-    switch(i.func){
+    switch (i.func) {
         case LIT_F:// Literal
-        // (load)
-            memory.words[GPR[i.reg+ machine_types_formOffset(i.offset)]] = machine_types_sgnExt(i.arg);
+            // (load)
+            memory.words[GPR[i.reg + machine_types_formOffset(i.offset)]] = machine_types_sgnExt(i.arg);
             break;
         case ARI_F:// Add register immediate
             memory.words[GPR[i.reg]] = GPR[i.reg] + machine_types_sgnExt(i.arg);
@@ -112,11 +114,11 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             memory.words[GPR[i.reg]] = GPR[i.reg] - machine_types_sgnExt(i.arg);
             break;
         case MUL_F:// Multiply
-        //CONFUSING
+            //CONFUSING
             break;
         case DIV_F:// Divide
-            HI = memory.words[GPR[SP]] % (memory.words[GPR[i.reg]]+ machine_types_formOffset(i.offset));
-            LO = memory.words[GPR[SP]] / (memory.words[GPR[i.reg]]+ machine_types_formOffset(i.offset));
+            HI = memory.words[GPR[SP]] % (memory.words[GPR[i.reg]] + machine_types_formOffset(i.offset));
+            LO = memory.words[GPR[SP]] / (memory.words[GPR[i.reg]] + machine_types_formOffset(i.offset));
             break;
         case CFHI_F:// Copy from HI
 
@@ -137,18 +139,14 @@ void otherCompInstr(other_comp_instr_t i, int address) {
 }
 
 void immediateFormatInstr(immed_instr_t i, int address) {
-    switch(i.op){
+    switch (i.op) {
         case ADDI_O:// Add Immediate
-            memory.words[ GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] + machine_types_sgnExt(i.immed);
-//            printf("\nGPR[%s][%d] %d: \n", regname_get(i.reg), index, memory.words[index]);
-
-//Everything look fine here ?
-//Just on NORI should be | no? Not sure
-        break;
+            memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] =
+                    memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] + machine_types_sgnExt(i.immed);
+            break;
         case ANDI_O:// Bitwise And immediate
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
-                    (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)]) && machine_types_zeroExt(i.immed);
-
+                    (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)]) & machine_types_zeroExt(i.immed);
             break;
         case BORI_O:// Bitwise Or Immediate
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
@@ -158,56 +156,51 @@ void immediateFormatInstr(immed_instr_t i, int address) {
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
                     ~(memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] | machine_types_zeroExt(i.immed));
             break;
-
         case XORI_O:// Bitwise Exclusive-Or Immediate
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
                     (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] ^ machine_types_zeroExt(i.immed));
-
-            //^ this is xor
             break;
         case BEQ_O:// Branch on Equal
-            if(memory.words[GPR[SP] = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]]){
+            if (memory.words[GPR[SP] = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]]) {
                 PC = (PC - 1 + machine_types_formOffset(i.immed));
             }
             break;
         case BGEZ_O:// Branch >= 0
-            if(memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] >= 0){
+            if (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] >= 0) {
                 PC = (PC - 1 + machine_types_formOffset(i.immed));
             }
             break;
         case BGTZ_O:// Branch > 0
-            if(memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] > 0){
+            if (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] > 0) {
                 PC = (PC - 1 + machine_types_formOffset(i.immed));
             }
             break;
         case BLEZ_O:// Branch <= 0
-            if(memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] <= 0){
+            if (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] <= 0) {
                 PC = (PC - 1 + machine_types_formOffset(i.immed));
             }
             break;
         case BLTZ_O:// Branch < 0
-            if(memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] < 0){
+            if (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] < 0) {
                 PC = (PC - 1 + machine_types_formOffset(i.immed));
             }
             break;
         case BNE_O:// Branch Not Equal
-            if(memory.words[GPR[SP] != memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]]){
+            if (memory.words[GPR[SP] != memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]]) {
                 PC = (PC - 1 + machine_types_formOffset(i.immed));
             }
             break;
     }
 }
 
-
-
-void jumpFormatInstr(jump_instr_t instruction, int address){
-    switch(instruction.addr){// Handle jump instruction based on op code
+void jumpFormatInstr(jump_instr_t instruction, int address) {
+    switch (instruction.addr) {// Handle jump instruction based on op code
         case JMPA_O:// Jump To given Address
-            PC = machine_types_formAddress(PC - 1,instruction.addr );
+            PC = machine_types_formAddress(PC - 1, instruction.addr);
             break;
         case CALL_O:// Call Subroutine
             GPR[RA] = PC;
-            PC = machine_types_formAddress(PC -1, instruction.addr);
+            PC = machine_types_formAddress(PC - 1, instruction.addr);
             break;
         case RTN_O:// Return from Subroutine
             PC = GPR[RA];
@@ -217,12 +210,13 @@ void jumpFormatInstr(jump_instr_t instruction, int address){
 
 void executeSyscall(syscall_instr_t instruction, int i) {
 
-    switch(instruction.code){
+    switch (instruction.code) {
         case exit_sc://EXIT
             exit(machine_types_sgnExt(instruction.offset));
             break;
         case print_str_sc://PSTR
-            memory.words[GPR[SP]] = printf("%s", &memory.words[GPR[instruction.reg]+ machine_types_formOffset(instruction.offset)]);
+            memory.words[GPR[SP]] = printf("%s", &memory.words[GPR[instruction.reg] +
+                                                               machine_types_formOffset(instruction.offset)]);
             break;
         case print_char_sc://PCH
             break;
@@ -236,9 +230,7 @@ void executeSyscall(syscall_instr_t instruction, int i) {
         case stop_tracing_sc://No VM tracing; Stop the tracing output
             break;
     }
-
 }
-
 
 void readInInstructions(int length,   BOFFILE file) {
     for (int i = 0; i < length; i++) { //loop header
@@ -263,7 +255,7 @@ void printInstructions(int length) {
 void processInstructions(int length) {
     for (int i = 0; i < length; i++) {
         bin_instr_t instruction = memory.instrs[i];
-        instr_type  type = instruction_type(instruction);
+        instr_type type = instruction_type(instruction);
         handleInstruction(instruction, type, i);
     }
 }
@@ -304,12 +296,12 @@ void handleBOFFile(char * file_name, int should_print) {
 int main(int argc, char **argv) {
 
     int shouldPrint = false;
-    char* fileName;
+    char *fileName;
 
     // based on the arguments handle specific cases
     if (argc == 3 && strcmp(argv[1], "-p") == 0) {// -p flag is not present
         shouldPrint = true;
-        fileName= argv[2];
+        fileName = argv[2];
     } else if (argc == 2 && strcmp(argv[1], "-p") == 1) {// -p flag is present
         fileName = argv[1];
     } else {
@@ -317,8 +309,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    handleBOFFile(fileName,shouldPrint);//Begin reading the BOF file
-
+    handleBOFFile(fileName, shouldPrint);//Begin reading the BOF file
 
     return 0;
 }
