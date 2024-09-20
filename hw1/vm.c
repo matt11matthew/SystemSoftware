@@ -26,8 +26,8 @@ static union mem_u{
 //Function Prototypes
 void printStats();
 int handleInstruction(bin_instr_t instruction, instr_type type, int i );
-void compFormatInstr();
-void otherCompInstr();
+void compFormatInstr(comp_instr_t instruction);
+void otherCompInstr(other);
 void immediateFormatInstr();
 void jumpFormatInstr();
 int executeSyscall(syscall_instr_t instruction, int i );
