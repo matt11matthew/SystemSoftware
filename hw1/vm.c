@@ -131,8 +131,9 @@ void immediateFormatInstr(immed_instr_t instruction, int address) {
         case ADDI_O:// Add Immediate
             int index = GPR[instruction.reg] + machine_types_formOffset(instruction.offset);
 
-        printf("%d", memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] + machine_types_sgnExt(instruction.immed));
-        memory.words[index] = memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] + machine_types_sgnExt(instruction.immed);
+            printf("\nIndex: %d\n", index);
+            memory.words[index] = memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] + machine_types_sgnExt(instruction.immed);
+            printf("\nGPR[%s][%d] %d: \n", regname_get(instruction.reg),index, memory.words[index]);
 
 
         break;
@@ -234,6 +235,10 @@ void handleBOFFile(char * file_name, int should_print) {
     }
 
     PC = header.text_start_address;
+
+    GPR[GP] = header.data_start_address;
+    GPR[SP] = header.stack_bottom_addr;
+    GPR[FP] = GPR[SP];
 
     //SP = MEMORY_SIZE_IN_WORDS - 1;
     // FP = header.stack_bottom_addr;  print
