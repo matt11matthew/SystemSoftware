@@ -256,7 +256,7 @@ int main(int argc, char **argv) {
     int shouldPrint = false;
     char* fileName = 0;
 
-    // based on the arguments handle
+    // based on the arguments handle specific cases
     if (argc == 3 && strcmp(argv[1], "-p") == 0) {// -p flag is not present
         shouldPrint = true;
         fileName= argv[2];
