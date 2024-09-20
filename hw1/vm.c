@@ -14,7 +14,6 @@
 int PC = 0;
 int HI = 0 ;
 int LO = 0;
-
 static int GPR[MEMORY_SIZE_IN_WORDS];
 
 static union mem_u{// Used to represent the memory of the VM
@@ -35,11 +34,8 @@ void compFormatInstr(comp_instr_t instruction, int address);
 
 //Functions
 void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
-    //Call approiate function based on the type being fed
-
-    // printf("%d %s\n", i, instruction_assembly_form(i, instruction));
-    PC++;
-    switch (type) {
+    PC++;//Increment the Program Counter
+    switch (type) {//Call approiate function based on the type being fed
         case comp_instr_type://Computational Instructions, with opcode 0
             compFormatInstr(instruction.comp, address);
             break;
@@ -63,36 +59,22 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
 void compFormatInstr(comp_instr_t instruction, int address) {
     switch (instruction.func) {// Switch to handle operation based on func code
         case NOP_F:
-
             break; //Does nothing
         case ADD_F:// Add
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
-                    memory.words[GPR[SP]] + (memory.words[GPR[instruction.rs]]
-                                             + machine_types_formOffset(instruction.os));
-
+                    memory.words[GPR[SP]] + (memory.words[GPR[instruction.rs]] + machine_types_formOffset(instruction.os));
             break;
         case SUB_F:// Subtract
-            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = memory.words[GPR[SP]] -
-                                                                                           (memory.words[GPR[instruction.rs]] +
-                                                                                            machine_types_formOffset(
-                                                                                                    instruction.os));
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = 
+                memory.words[GPR[SP]] - (memory.words[GPR[instruction.rs]] + machine_types_formOffset(                                                           instruction.os));
             break;
         case CPW_F:// Copy Word
-        /*
-         * T: Target Register
-S: Source Register  (RS)
-         T: RT
-OS: Offset from source register
-OT: Offset from target register
-         */
-            memory.words[GPR[instruction.rt]+ machine_types_formOffset(instruction.ot)]
-            = memory.words[GPR[instruction.rs]+ machine_types_formOffset(instruction.os)];
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)]
+            = memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)];
             break;
         case AND_F:// Bitwise And
-            memory.uwords[GPR[instruction.rt]
-            + machine_types_formOffset(instruction.ot)]
-            = memory.uwords[GPR[SP]]
-                    && (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
+            memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = 
+                memory.uwords[GPR[SP]] & (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
             break;
         case BOR_F:// Bitwise Or
             memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
@@ -100,8 +82,7 @@ OT: Offset from target register
             break;
         case NOR_F:// Bitwise Not-Or
             memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
-                    ~(memory.uwords[GPR[instruction.rs]] | (memory.uwords[GPR[instruction.rs] +
-                            machine_types_formOffset(instruction.os)]));
+                    ~(memory.uwords[GPR[instruction.rs]] | (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]));
             break;
         case XOR_F:// Bitwise Exclusive-Or
             memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
@@ -118,8 +99,8 @@ OT: Offset from target register
                     (GPR[instruction.rs] + machine_types_formOffset(instruction.rs));
             break;
         case LWI_F:// Load Word Indirect
-            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot) =
-                memory.words[memory[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]]];
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
+                memory.words[memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]];
             break;
         case NEG_F:// Negate
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
@@ -149,9 +130,10 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             LO = memory.words[GPR[SP]] / (memory.words[GPR[i.reg]] + machine_types_formOffset(i.offset));
             break;
         case CFHI_F:// Copy from HI
-
+            memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] = HI;
             break;
         case CFLO_F:// Copy from LO
+            memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] = LO;
             break;
         case SLL_F:// Shift Left Logical
             break;
