@@ -78,24 +78,52 @@ void compFormatInstr(comp_instr_t instruction, int address) {
                                                                                                     instruction.os));
             break;
         case CPW_F:// Copy Word
+        /*
+         * T: Target Register
+S: Source Register  (RS)
+         T: RT
+OS: Offset from source register
+OT: Offset from target register
+         */
+            memory.words[GPR[instruction.rt]+ machine_types_formOffset(instruction.ot)]
+            = memory.words[GPR[instruction.rs]+ machine_types_formOffset(instruction.os)];
             break;
         case AND_F:// Bitwise And
+            memory.uwords[GPR[instruction.rt]
+            + machine_types_formOffset(instruction.ot)]
+            = memory.uwords[GPR[SP]]
+                    && (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
             break;
         case BOR_F:// Bitwise Or
+            memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
+                    memory.uwords[GPR[instruction.rs]] | (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)];
             break;
         case NOR_F:// Bitwise Not-Or
+            memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
+                    ~(memory.uwords[GPR[instruction.rs]] | (memory.uwords[GPR[instruction.rs] +
+                            machine_types_formOffset(instruction.os)]));
             break;
         case XOR_F:// Bitwise Exclusive-Or
+            memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
+                    memory.uwords[GPR[SP]] ^ (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
             break;
         case LWR_F:// Load word into Register
+            GPR[instruction.rt] = memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)];
             break;
         case SWR_F:// Store word from register
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = GPR[instruction.rs];
             break;
         case SCA_F:// Store Computed address
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
+                    (GPR[instruction.rs] + machine_types_formOffset(instruction.rs));
             break;
         case LWI_F:// Load Word Indirect
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot) =
+                memory.words[memory[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]]];
             break;
         case NEG_F:// Negate
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
+                    -memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)];
             break;
     }
 }
