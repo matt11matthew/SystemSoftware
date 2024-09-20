@@ -12,10 +12,10 @@
 
 //Global variables
 int PC = 0;
-//int SP = 0;
-//int FP = 0;
-//int HI = 0;
-//int LO = 0;
+
+int HI = 0 ;
+int LO = 0;
+
 static int GPR[MEMORY_SIZE_IN_WORDS];
 
 static union mem_u{// Used to represent the memory of the VM
@@ -27,11 +27,12 @@ static union mem_u{// Used to represent the memory of the VM
 // Function Prototypes
 void printStats();
 void otherCompInstr(other_comp_instr_t instruction, int address);
-void immediateFormatInstr(immed_instr_t instruction, int address);
+void immediateFormatInstr(immed_instr_t i, int address);
 void jumpFormatInstr(jump_instr_t instruction, int address);
 void executeSyscall(syscall_instr_t instruction, int i );
 void handleBOFFile(char * file_name, int should_print);
 void compFormatInstr(comp_instr_t instruction, int address);
+
 
 //Functions
 void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
@@ -97,19 +98,28 @@ void compFormatInstr(comp_instr_t instruction, int address) {
     }
 }
 
-void otherCompInstr(other_comp_instr_t instruction, int address) {
-    switch(instruction.func){
-        case LIT_F:// Literal (load)
+
+void otherCompInstr(other_comp_instr_t i, int address) {
+    switch(i.func){
+        case LIT_F:// Literal
+        // (load)
+            memory.words[GPR[i.reg+ machine_types_formOffset(i.offset)]] = machine_types_sgnExt(i.arg);
             break;
         case ARI_F:// Add register immediate
+            memory.words[GPR[i.reg]] = GPR[i.reg] + machine_types_sgnExt(i.arg);
             break;
         case SRI_F:// Subtract register immediate
+            memory.words[GPR[i.reg]] = GPR[i.reg] - machine_types_sgnExt(i.arg);
             break;
         case MUL_F:// Multiply
+        //CONFUSING
             break;
         case DIV_F:// Divide
+            HI = memory.words[GPR[SP]] % (memory.words[GPR[i.reg]]+ machine_types_formOffset(i.offset));
+            LO = memory.words[GPR[SP]] / (memory.words[GPR[i.reg]]+ machine_types_formOffset(i.offset));
             break;
         case CFHI_F:// Copy from HI
+
             break;
         case CFLO_F:// Copy from LO
             break;
@@ -126,39 +136,69 @@ void otherCompInstr(other_comp_instr_t instruction, int address) {
     }
 }
 
-void immediateFormatInstr(immed_instr_t instruction, int address) {
-    switch(instruction.op){
+void immediateFormatInstr(immed_instr_t i, int address) {
+    switch(i.op){
         case ADDI_O:// Add Immediate
-            int index = GPR[instruction.reg] + machine_types_formOffset(instruction.offset);
-
-            printf("\nIndex: %d\n", index);
-            memory.words[index] = memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] + machine_types_sgnExt(instruction.immed);
-            printf("\nGPR[%s][%d] %d: \n", regname_get(instruction.reg),index, memory.words[index]);
-
+            memory.words[ GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] + machine_types_sgnExt(i.immed);
+//            printf("\nGPR[%s][%d] %d: \n", regname_get(i.reg), index, memory.words[index]);
 
         break;
         case ANDI_O:// Bitwise And immediate
+            memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)] =
+                    (memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)]) && machine_types_zeroExt(i.immed);
+
             break;
         case BORI_O:// Bitwise Or Immediate
+            memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)] =
+                    (memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)]) || machine_types_zeroExt(i.immed);
+
             break;
         case NORI_O:// Bitwise Nor Immediate
-            break;
+            memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)] =
+                    ~(memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)]) && machine_types_zeroExt(i.immed);
+
+            //So do we just use !? or inverse?      
+            break;//I think ~(stuff | other stuff)
         case XORI_O:// Bitwise Exclusive-Or Immediate
+            memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
+                    (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] ^ machine_types_zeroExt(i.immed));
+
+            //^ this is xor
             break;
         case BEQ_O:// Branch on Equal
+            if(memory.words[GPR[SP] = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]]){
+                PC = (PC - 1 + machine_types_formOffset(i.immed));
+            }
             break;
         case BGEZ_O:// Branch >= 0
+            if(memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] >= 0){
+                PC = (PC - 1 + machine_types_formOffset(i.immed));
+            }
             break;
         case BGTZ_O:// Branch > 0
+            if(memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] > 0){
+                PC = (PC - 1 + machine_types_formOffset(i.immed));
+            }
             break;
         case BLEZ_O:// Branch <= 0
+            if(memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] <= 0){
+                PC = (PC - 1 + machine_types_formOffset(i.immed));
+            }
             break;
         case BLTZ_O:// Branch < 0
+            if(memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] < 0){
+                PC = (PC - 1 + machine_types_formOffset(i.immed));
+            }
             break;
         case BNE_O:// Branch Not Equal
+            if(memory.words[GPR[SP] != memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]]){
+                PC = (PC - 1 + machine_types_formOffset(i.immed));
+            }
             break;
     }
 }
+
+
 
 void jumpFormatInstr(jump_instr_t instruction, int address){
     switch(instruction.addr){// Handle jump instruction based on op code
@@ -167,6 +207,7 @@ void jumpFormatInstr(jump_instr_t instruction, int address){
             break;
         case CALL_O:// Call Subroutine
             GPR[RA] = PC;
+            PC = machine_types_formAddress(PC -1, instruction.addr);
             break;
         case RTN_O:// Return from Subroutine
             PC = GPR[RA];
@@ -181,11 +222,14 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             exit(machine_types_sgnExt(instruction.offset));
             break;
         case print_str_sc://PSTR
+            memory.words[GPR[SP]] = printf("%s", &memory.words[GPR[instruction.reg]+ machine_types_formOffset(instruction.offset)]);
             break;
         case print_char_sc://PCH
             break;
         case read_char_sc://RCH
-
+            //memory.instrs[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(file);
+            //The getc command needs to be looked at
+            //Table 7, Page 14, RCH function
             break;
         case start_tracing_sc://Start VM tracing output
             break;
@@ -238,7 +282,8 @@ void handleBOFFile(char * file_name, int should_print) {
 
     GPR[GP] = header.data_start_address;
     GPR[SP] = header.stack_bottom_addr;
-    GPR[FP] = GPR[SP];
+    GPR[FP] = header.stack_bottom_addr;
+    GPR[RA] = 0;
 
     //SP = MEMORY_SIZE_IN_WORDS - 1;
     // FP = header.stack_bottom_addr;  print
@@ -259,7 +304,7 @@ void handleBOFFile(char * file_name, int should_print) {
 int main(int argc, char **argv) {
 
     int shouldPrint = false;
-    char* fileName = 0;
+    char* fileName;
 
     // based on the arguments handle specific cases
     if (argc == 3 && strcmp(argv[1], "-p") == 0) {// -p flag is not present
