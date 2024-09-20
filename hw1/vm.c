@@ -142,23 +142,23 @@ void immediateFormatInstr(immed_instr_t i, int address) {
             memory.words[ GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] + machine_types_sgnExt(i.immed);
 //            printf("\nGPR[%s][%d] %d: \n", regname_get(i.reg), index, memory.words[index]);
 
+//Everything look fine here ?
+//Just on NORI should be | no? Not sure
         break;
         case ANDI_O:// Bitwise And immediate
-            memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)] =
-                    (memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)]) && machine_types_zeroExt(i.immed);
+            memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
+                    (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)]) && machine_types_zeroExt(i.immed);
 
             break;
         case BORI_O:// Bitwise Or Immediate
-            memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)] =
-                    (memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)]) || machine_types_zeroExt(i.immed);
-
+            memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
+                    (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)]) | machine_types_zeroExt(i.immed);
             break;
-        case NORI_O:// Bitwise Nor Immediate
-            memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)] =
-                    ~(memory.uwords[GPR[i.reg]+ machine_types_formOffset(i.offset)]) && machine_types_zeroExt(i.immed);
+        case NORI_O:  // Bitwise NOR Immediate
+            memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
+                    ~(memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] | machine_types_zeroExt(i.immed));
+            break;
 
-            //So do we just use !? or inverse?      
-            break;//I think ~(stuff | other stuff)
         case XORI_O:// Bitwise Exclusive-Or Immediate
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
                     (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] ^ machine_types_zeroExt(i.immed));
