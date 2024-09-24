@@ -298,6 +298,20 @@ void processInstructions(int length) {
         handleInstruction(instruction, type, i);
     }
 }
+/*
+ *
+ */
+
+void initRegisters(BOFHeader header) {
+    PC = header.text_start_address;
+
+    GPR[GP] = header.data_start_address;
+    GPR[SP] = header.stack_bottom_addr;
+    GPR[FP] = header.stack_bottom_addr;
+    GPR[RA] = 0;
+
+    
+}
 
 void handleBOFFile(char * file_name, int should_print) {
     BOFFILE file = bof_read_open(file_name);
@@ -310,21 +324,14 @@ void handleBOFFile(char * file_name, int should_print) {
         return;
     }
 
-    PC = header.text_start_address;
+    initRegisters(header);
 
-    GPR[GP] = header.data_start_address;
-    GPR[SP] = header.stack_bottom_addr;
-    GPR[FP] = header.stack_bottom_addr;
-    GPR[RA] = 0;
 
-    //SP = MEMORY_SIZE_IN_WORDS - 1;
-    // FP = header.stack_bottom_addr;  print
     int length = header.text_length;
 
     readInInstructions(length, file);
 
 
-    printf("MAGIC %d: \n",    memory.);
 
 
     if (should_print) {
