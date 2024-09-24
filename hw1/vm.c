@@ -68,7 +68,7 @@ void compFormatInstr(comp_instr_t instruction, int address) {
             break;
         case SUB_F:// Subtract
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = 
-                memory.words[GPR[SP]] - (memory.words[GPR[instruction.rs]] + machine_types_formOffset(                                                           instruction.os));
+                memory.words[GPR[SP]] - (memory.words[GPR[instruction.rs]] + machine_types_formOffset(instruction.os));
             break;
         case CPW_F:// Copy Word
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)]
@@ -266,7 +266,6 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(stdin);
             break;
         case start_tracing_sc://Start VM tracing output
-
             break;
         case stop_tracing_sc://No VM tracing; Stop the tracing output
             break;
