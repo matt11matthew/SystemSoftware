@@ -78,7 +78,7 @@ void compFormatInstr(comp_instr_t instruction, int address) {
             break;
         case BOR_F:// Bitwise Or
             memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
-                    memory.uwords[GPR[instruction.rs]] | (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)];
+                    memory.uwords[GPR[instruction.rs]] | (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
             break;
         case NOR_F:// Bitwise Not-Or
             memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
@@ -136,14 +136,26 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] = LO;
             break;
         case SLL_F:// Shift Left Logical
+            // memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.uwords[GPR[]] <<;
+
+                
             break;
         case SRL_F:// Shift Right Logical
+            memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =  memory.uwords[GPR[SP]]>>i.arg;
             break;
         case JMP_F:// Jump
+            PC = memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)];
             break;
         case CSI_F:// Call Subroutine Indirectly
+            GPR[RA] = PC;
+            PC = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)];
+            break;
+        case SYS_F:
+
+
             break;
         case JREL_F:// Jump Relative to address
+            PC = (PC - 1)+ machine_types_formOffset(i.offset);
             break;
     }
 }
