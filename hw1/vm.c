@@ -138,7 +138,7 @@ void otherCompInstr(other_comp_instr_t i, int address) {
         case SLL_F:// Shift Left Logical
             // memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.uwords[GPR[]] <<;
 
-                
+
             break;
         case SRL_F:// Shift Right Logical
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =  memory.uwords[GPR[SP]]>>i.arg;
