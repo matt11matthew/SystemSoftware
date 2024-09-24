@@ -123,7 +123,13 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             memory.words[GPR[i.reg]] = GPR[i.reg] - machine_types_sgnExt(i.arg);
             break;
         case MUL_F:// Multiply
-            //CONFUSING
+//            Multiply
+//            stack top by memory[GPR[s] + formOffset(o)],
+//            putting the most significant bits in HI
+//            and the least significant bits in LO.
+//            (HI, LO)
+//            ← memory[GPR[$sp]]
+//            × (memory[GPR[s] + formOffset(o)])
             break;
         case DIV_F:// Divide
             HI = memory.words[GPR[SP]] % (memory.words[GPR[i.reg]] + machine_types_formOffset(i.offset));
@@ -136,9 +142,7 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] = LO;
             break;
         case SLL_F:// Shift Left Logical
-            // memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.uwords[GPR[]] <<;
-
-
+            memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.uwords[GPR[SP]] << i.arg;
             break;
         case SRL_F:// Shift Right Logical
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =  memory.uwords[GPR[SP]]>>i.arg;
@@ -150,12 +154,10 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             GPR[RA] = PC;
             PC = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)];
             break;
-        case SYS_F:
-
-
-            break;
         case JREL_F:// Jump Relative to address
             PC = (PC - 1)+ machine_types_formOffset(i.offset);
+            break;
+        case SYS_F:
             break;
     }
 }
@@ -237,10 +239,14 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             exit(machine_types_sgnExt(instruction.offset));
             break;
         case print_str_sc://PSTR
-            memory.words[GPR[SP]] = printf("%s", &memory.words[GPR[instruction.reg] +
-                                                               machine_types_formOffset(instruction.offset)]);
+//            memory.words[GPR[SP]] = printf("%s", &memory.words[GPR[instruction.reg] +
+//                                                               machine_types_formOffset(instruction.offset)]);
+
+            memory.words[GPR[SP]]= printf("%s",&memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.off)]);
             break;
         case print_char_sc://PCH
+            memory.words[GPR[SP]]
+            = fputc(memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)], stdout)
             break;
         case read_char_sc://RCH
             //memory.instrs[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(file);
@@ -271,6 +277,7 @@ void printInstructions(int length) {
         bin_instr_t instruction = memory.instrs[i];
         printf("%5d: %s\n", i, instruction_assembly_form(i, instruction));
     }
+    //Print memory
 }
 
 
@@ -306,11 +313,11 @@ void handleBOFFile(char * file_name, int should_print) {
     readInInstructions(length, file);
 
     //HANDLE PRINT
+
+    processInstructions(length);
     if (should_print) {
         printInstructions(length);
     }
-
-    processInstructions(length);
 
     bof_close(file);
 }
