@@ -323,9 +323,9 @@ void handleBOFFile(char * file_name, int should_print) {
 
     readInInstructions(length, file);
 
-    for (int i = 0; i < 4;i++){
-        printf("MAGIC %d: %d\n", i, header.magic[i]);
-    }
+
+    printf("MAGIC %d: \n",    memory.);
+
 
     if (should_print) {
         printInstructions(length);
@@ -340,8 +340,7 @@ void handleBOFFile(char * file_name, int should_print) {
         // Iterate through the memory words
         for (int i = data_start; i < data_end; i++) {
             printf("%8u: %d", i, memory.words[i]);
-
-
+            
             // Print a newline after every 5th value or at the end
             if (tempCount == 4 ) {
                 tempCount = 0;
@@ -352,15 +351,8 @@ void handleBOFFile(char * file_name, int should_print) {
             tempCount++;
         }
 
-        // Append "..." at the end of the data output
         printf("        ...\n");
 
-//        // Print instructions, assuming they have already been processed into an array
-//        for (int i = 0; i < instruction_count; i++) {
-//            printf("%5d: %d\n", i, memory.words[i]);
-//        }
-
-        // Optional: Add final newline for a clean break after all output
         printf("\n");
     }
 
