@@ -284,32 +284,13 @@ void readInInstructions(int length,   BOFFILE file) {
     }
 }
 
-/*
- * void instruction_print_table_heading(FILE *out) {
-    fprintf(out, "%s %s\n", "Address", "Instruction");
-}
-
-// Requires: out is an open FILE, and instr is found at address addr.
-// Print addr on out, ": ", then the instruction's symbolic
-// (assembly language) form, and finally a newline character (all on one line)
-void instruction_print(FILE *out, address_type addr, bin_instr_t instr) {
-    fprintf(out, "%8u: %s\n", addr, instruction_assembly_form(addr, instr));
-}
-
-
- */
-
-
-
 void printInstructions( int length) {
     printf("%s %s\n", "Address", "Instruction");
     for (int i = 0; i < length; i++) {
         bin_instr_t instruction = memory.instrs[i];
         printf( "%8u: %s\n", i, instruction_assembly_form(i, instruction));
-
     }
 }
-
 
 void processInstructions(int length) {
     for (int i = 0; i < length; i++) {
@@ -322,6 +303,7 @@ void processInstructions(int length) {
 void handleBOFFile(char * file_name, int should_print) {
     BOFFILE file = bof_read_open(file_name);
     BOFHeader header = bof_read_header(file);
+    int tempCount = 0;//Track if a \n needs to be printed
 
     if (!bof_has_correct_magic_number(header)) {
         fprintf(stderr, "Error: Invalid magic number in BOF file.\n");
@@ -342,42 +324,46 @@ void handleBOFFile(char * file_name, int should_print) {
 
     readInInstructions(length, file);
 
-    //HANDLE PRINT
+    for (int i = 0; i < 4;i++){
+        printf("MAGIC %d: %d\n", i, header.magic[i]);
+    }
 
     if (should_print) {
-        printInstructions( length);
+        printInstructions(length);
     }
 
     processInstructions(length);
 
-    /*
-     * #define GP 0
-#define SP 1
-#define FP 2
-#define RA 7
+    if (should_print) {
+        int data_start = header.data_start_address;
+        int data_end = data_start + header.data_length+1;
 
-     */
-    printf("\nGPR[%s] %d\n", regname_get(GP), GPR[GP]);
-//    printf("\nGPR[%s] %d\n", regname_get(SP), GPR[SP]);
-//    printf("\nGPR[%s] %d\n", regname_get(FP), GPR[FP]);
-//    printf("\nGPR[%s] %d\n", regname_get(RA), GPR[RA]);
-//    printf("\nPC %d\n",PC);
-//    printf("\n4095 %d\n",memory.words[4095]);
-//    printf("\n4095 %d\n",memory.words[4095]);
+        // Iterate through the memory words
+        for (int i = data_start; i < data_end; i++) {
+            printf("%8u: %d", i, memory.words[i]);
 
-//    for (int i = 0; i< MEMORY_SIZE_IN_WORDS;i++){
-//
-//
-//        if (memory.words[i]==0) continue;
-//        if (memory.words[i]==-1) continue;
-//        printf("%d:%d \n",i, memory.words[i] );
-//    }
-//    for (int i = 0; i< MEMORY_SIZE_IN_WORDS;i++){
-//        if (memory.uwords[i]==-1) continue;
-//        if (memory.uwords[i]==0) continue;
-//        printf("%d:%d \n",i, memory.uwords[i] );
-//    }
 
+            // Print a newline after every 5th value or at the end
+            if (tempCount == 4 ) {
+                tempCount = 0;
+                printf("\n");  // Add newline after every 5th value or at the end
+            } else {
+                printf("\t");  // Add tab between values for alignment
+            }
+            tempCount++;
+        }
+
+        // Append "..." at the end of the data output
+        printf("        ...\n");
+
+//        // Print instructions, assuming they have already been processed into an array
+//        for (int i = 0; i < instruction_count; i++) {
+//            printf("%5d: %d\n", i, memory.words[i]);
+//        }
+
+        // Optional: Add final newline for a clean break after all output
+        printf("\n");
+    }
 
     bof_close(file);
 }
@@ -402,4 +388,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-
