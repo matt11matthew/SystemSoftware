@@ -7,7 +7,6 @@
 #include "utilities.h"
 #include "machine_types.h"
 #include "asm.tab.h"
-#include <stdio.h>
 
 #define INSTR_BUF_SIZE 512
 
@@ -170,7 +169,6 @@ void instruction_write_jumpInstr(BOFFILE bf, jump_instr_t ji)
 
 // Return the assembly language name (mnemonic) for bi
 const char *instruction_mnemonic(bin_instr_t bi) {
-	// printf("\n %s \n", bi.comp.func);
     switch (bi.comp.op) { // pretending a type is needed to get the op field
     case COMP_O:
 	return instruction_compFunc2name(bi);
@@ -254,7 +252,6 @@ const char *instruction_assembly_form(address_type addr,
     int cwr = sprintf(buf, "%s ", instruction_mnemonic(instr));
     // point buf to the null char that was printed into instr_buf
     buf += cwr;
-//	printf("1123");
 
     instr_type it = instruction_type(instr);
     switch (it) {
@@ -429,7 +426,7 @@ const char *instruction_syscall_mnemonic(syscall_type code)
 // (i.e., instr.syscall.op == OTHC_O and instr.syscall.func == SYS_F).
 // Return the code field that tells what kind of system call is being made
 syscall_type instruction_syscall_number(bin_instr_t instr) {
-    // assert(instr.syscall.op == OTHC_O && instr.syscall.func == SYS_F);
+    assert(instr.syscall.op == OTHC_O && instr.syscall.func == SYS_F);
     return instr.syscall.code;
 }
 

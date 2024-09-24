@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.53 2024/09/13 18:26:01 leavens Exp leavens $
+# $Id: Makefile,v 1.58 2024/09/24 20:35:27 leavens Exp leavens $
 
 # Add .exe to the end of target to get that suffix in the rules
 VM = vm
@@ -8,11 +8,10 @@ CC = gcc
 CFLAGS = -g -std=c17 -Wall
 MV = mv
 RM = rm -f
+CHMOD = chmod
 SUBMISSIONZIPFILE = submission.zip
 ZIP = zip -9
 # Add the names of your own files with a .o suffix to link them into the VM
-#VM_OBJECTS = vm.o bof.o instruction.o
-
 VM_OBJECTS = vm.o \
              machine_types.o instruction.o bof.o \
              regname.o utilities.o
@@ -30,6 +29,8 @@ STUDENTTESTOUTPUTS = $(TESTS:.bof=.myo)
 # if you add more tests, you can add more to this list,
 # or just add to TESTS above
 STUDENTTESTLISTINGS = $(TESTS:.bof=.myp)
+# Don't remove these outputs if there are errors
+.PRECIOUS: $(STUDENTTESTOUTPUTS) $(STUDENTTESTLISTINGS)
 
 # create the VM executable
 .PRECIOUS: $(VM)
@@ -260,8 +261,12 @@ zip $(ZIPFILE): $(TESTSZIPFILE)
 
 $(TESTSZIPFILE): $(PDFFILES) Makefile $(TESTS) $(PROVIDEDFILES) $(VM) create-vm-outputs
 	$(RM) $(TESTSZIPFILE)
-	chmod u+w Makefile $(TESTS) $(PROVIDEDFILES)
+	$(CHMOD) a-w *.lst *.asm *.bof *.lst *.[ch] \
+		$(EXPECTEDOUTPUTS) $(EXPECTEDLISTINGS)
+	$(CHMOD) a+r Makefile $(TESTS) $(PROVIDEDFILES)
+	$(CHMOD) u+w Makefile asm.tab.h asm.tab.c
 	$(ZIP) $(TESTSZIPFILE) $(PDFFILES) Makefile $(TESTS) $(PROVIDEDFILES)
+	$(CHMOD) u+rw Makefile $(TESTS) $(PROVIDEDFILES) *.[ch]
 
 %.bof: %.$(ASM)
 	./$(ASM) $<
