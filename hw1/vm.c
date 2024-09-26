@@ -302,7 +302,7 @@ void processInstructions(int length) {
  *
  */
 
-void initRegisters(BOFHeader header) {
+void initRegisters(BOFFILE file,BOFHeader header) {
     PC = header.text_start_address;
 
     GPR[GP] = header.data_start_address;
@@ -310,7 +310,11 @@ void initRegisters(BOFHeader header) {
     GPR[FP] = header.stack_bottom_addr;
     GPR[RA] = 0;
 
-    
+
+    for (int i = 0; i < header.data_length; i++){
+
+        printf("TEST INPUT: %d\n", bof_read_word(file));
+    }
 }
 
 void handleBOFFile(char * file_name, int should_print) {
@@ -324,7 +328,7 @@ void handleBOFFile(char * file_name, int should_print) {
         return;
     }
 
-    initRegisters(header);
+    initRegisters(file, header);
 
 
     int length = header.text_length;
