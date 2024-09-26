@@ -51,6 +51,7 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
             break;
         case syscall_instr_type://System Callse
             executeSyscall(instruction.syscall, address);
+            break;
         case error_instr_type:
             //stdeer
 
@@ -124,9 +125,6 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             break;
 
         case SRI_F: // Subtract register immediate
-//            printf("PLEASE: %d\n", GPR[i.reg]);
-//            printf("SET TO: %d\n", GPR[i.reg] - machine_types_sgnExt(i.arg));
-//            memory.words[GPR[i.reg]] = GPR[i.reg] - machine_types_sgnExt(i.arg);
 
             GPR[i.reg] = (GPR[i.reg] - machine_types_sgnExt(i.arg));
             break;
@@ -209,7 +207,7 @@ void immediateFormatInstr(immed_instr_t i, int address) {
                     (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] ^ machine_types_zeroExt(i.immed));
             break;
         case BEQ_O:// Branch on Equal
-            if (memory.words[GPR[SP] = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]]) {
+            if (memory.words[GPR[SP] == memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]]) {
                 PC = (PC - 1 + machine_types_formOffset(i.immed));
             }
             break;
@@ -255,18 +253,46 @@ void jumpFormatInstr(jump_instr_t instruction, int address) {
             break;
     }
 }
+char finalPrintBuffer[256];
+
+#define BUFFER_SIZE 1024  // Adjust size as necessary
+
+char print_buffer[BUFFER_SIZE];
+int buffer_index = 0;
+
+void flush_buffer() {
+    if (buffer_index > 0) {
+        print_buffer[buffer_index] = '\0';  // Null-terminate the string
+        printf("%s", print_buffer);
+        buffer_index = 0;  // Reset buffer index
+    }
+}
 
 void executeSyscall(syscall_instr_t instruction, int i) {
-
     switch (instruction.code) {
         case exit_sc://EXIT
 //            exit(machine_types_sgnExt(instruction.offset));
             break;
         case print_str_sc://PSTR
-            memory.words[GPR[SP]]= printf("%s",&memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]);
+            int length = snprintf(finalPrintBuffer, sizeof(finalPrintBuffer), "%s", &memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]);
+            memory.words[GPR[SP]] = length;
             break;
         case print_char_sc://PCH
-            memory.words[GPR[SP]] = fputc(memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)], stdout);
+//            memory.words[GPR[SP]] = fputc(memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)], stdout);
+
+            char ch = memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)];
+
+            // Store character in the buffer
+            if (buffer_index < BUFFER_SIZE - 1) {
+                print_buffer[buffer_index++] = ch;
+            } else {
+                // If buffer is full, flush and reset
+                flush_buffer();
+                print_buffer[buffer_index++] = ch;
+            }
+
+            // Store the return value (number of characters written) in memory
+            memory.words[GPR[SP]] = buffer_index;
             break;
         case read_char_sc://RCH
             memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(stdin);
@@ -280,7 +306,7 @@ void executeSyscall(syscall_instr_t instruction, int i) {
 
 void readInInstructions(int length,   BOFFILE file) {
     for (int i = 0; i < length; i++) { //loop header
-        if (i > MEMORY_SIZE_IN_WORDS) {
+        if (i >= MEMORY_SIZE_IN_WORDS) {
             fprintf(stderr, "Error: Too many words in BOF file.\n");
             bof_close(file);
             return;
