@@ -118,11 +118,17 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             break;
 
         case ARI_F: // Add register immediate
-            memory.words[GPR[i.reg]] = GPR[i.reg] + machine_types_sgnExt(i.arg);
+//            memory.words[GPR[i.reg]] = GPR[i.reg] + machine_types_sgnExt(i.arg);
+
+            GPR[i.reg] = (GPR[i.reg] + machine_types_sgnExt(i.arg));
             break;
 
         case SRI_F: // Subtract register immediate
-            memory.words[GPR[i.reg]] = GPR[i.reg] - machine_types_sgnExt(i.arg);
+//            printf("PLEASE: %d\n", GPR[i.reg]);
+//            printf("SET TO: %d\n", GPR[i.reg] - machine_types_sgnExt(i.arg));
+//            memory.words[GPR[i.reg]] = GPR[i.reg] - machine_types_sgnExt(i.arg);
+
+            GPR[i.reg] = (GPR[i.reg] - machine_types_sgnExt(i.arg));
             break;
 
         case MUL_F: // Multiply
@@ -302,7 +308,8 @@ void processInstructions(int length) {
  *
  */
 
-void initRegisters(BOFFILE file,BOFHeader header) {
+void initRegisters(BOFFILE file) {
+    BOFHeader header = bof_read_header(file);
     PC = header.text_start_address;
 
     GPR[GP] = header.data_start_address;
@@ -311,11 +318,30 @@ void initRegisters(BOFFILE file,BOFHeader header) {
     GPR[RA] = 0;
 
 
-    for (int i = 0; i < header.data_length; i++){
 
-        printf("TEST INPUT: %d\n", bof_read_word(file));
+    // Print the data section
+//    for (int i = data_start_address; i < data_start_address+data_length+1; i++) {
+//        int t = bof_read_word(file);
+//        printf("%d: %d\n", i, t);
+//    }
+
+    int startIndex = 0;
+
+    for (int  j = 0; j< header.data_length+header.text_length; j++) {
+        int t = bof_read_word(file);
+        if (j >=header.text_length){
+
+            int memoryIndex = header.data_start_address+startIndex;
+
+            memory.words[memoryIndex] = t;
+//            printf("%d: %d\n", memoryIndex, t);
+            startIndex++;
+        }
     }
+
+    bof_close(file);
 }
+
 
 void handleBOFFile(char * file_name, int should_print) {
     BOFFILE file = bof_read_open(file_name);
@@ -328,12 +354,11 @@ void handleBOFFile(char * file_name, int should_print) {
         return;
     }
 
-    initRegisters(file, header);
-
-
     int length = header.text_length;
 
     readInInstructions(length, file);
+    initRegisters( bof_read_open(file_name));
+
 
 
 
