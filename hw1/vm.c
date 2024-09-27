@@ -1,3 +1,4 @@
+
 //Includes
 #include "machine_types.h"
 #include "instruction.h"
@@ -19,6 +20,7 @@ static int GPR[MEMORY_SIZE_IN_WORDS];
 char finalPrintBuffer[256];
 char print_buffer[BUFFER_SIZE];
 int buffer_index = 0;
+int tracing = 0;
 
 
 static union mem_u{// Used to represent the memory of the VM
@@ -33,11 +35,13 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address);
 void otherCompInstr(other_comp_instr_t instruction, int address);
 void immediateFormatInstr(immed_instr_t i, int address);
 void jumpFormatInstr(jump_instr_t instruction, int address);
-void flush_buffer(); 
+void flush_buffer();
 void executeSyscall(syscall_instr_t instruction, int i );
 void handleBOFFile(char * file_name, int should_print);
 void compFormatInstr(comp_instr_t instruction, int address);
 void readInInstructions(int length, BOFFILE file);
+void openTraceFile();
+void printRegContent();
 void printTrace(bin_instr_t instruction, instr_type type, int address);
 void printInstructions( int length);
 void processInstructions(int length);
@@ -72,22 +76,22 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
 void compFormatInstr(comp_instr_t instruction, int address) {
     switch (instruction.func) {// Switch to handle operation based on func code
         case NOP_F://Does nothing
-            break; 
+            break;
         case ADD_F:// Add
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
                     memory.words[GPR[SP]] + (memory.words[GPR[instruction.rs]] + machine_types_formOffset(instruction.os));
             break;
         case SUB_F:// Subtract
-            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = 
-                memory.words[GPR[SP]] - (memory.words[GPR[instruction.rs]] + machine_types_formOffset(instruction.os));
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
+                    memory.words[GPR[SP]] - (memory.words[GPR[instruction.rs]] + machine_types_formOffset(instruction.os));
             break;
         case CPW_F:// Copy Word
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)]
-            = memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)];
+                    = memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)];
             break;
         case AND_F:// Bitwise And
-            memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = 
-                memory.uwords[GPR[SP]] & (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
+            memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
+                    memory.uwords[GPR[SP]] & (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
             break;
         case BOR_F:// Bitwise Or
             memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
@@ -113,7 +117,7 @@ void compFormatInstr(comp_instr_t instruction, int address) {
             break;
         case LWI_F:// Load Word Indirect
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
-                memory.words[memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]];
+                    memory.words[memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]];
             break;
         case NEG_F:// Negate
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
@@ -305,7 +309,7 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(stdin);
             break;
         case start_tracing_sc://Start VM tracing output
-            start_tracing_sc
+//            start_tracing_sc
             break;
         case stop_tracing_sc://No VM tracing; Stop the tracing output
             break;
@@ -324,15 +328,32 @@ void readInInstructions(int length,   BOFFILE file) {
 }
 
 
-void printTrace(bin_instr_t instruction, instr_type type, int address) {
-    if (address == 0) {
-        //      PC: 0
-        printf("      PC: %d\n",PC);
-        
+char* currentTestCase;
+
+FILE *traceFile;
+void openTraceFile() {
+    traceFile = fopen(strcat(currentTestCase, ".myo"), "w");
+    if (traceFile == NULL) {
+        perror("Failed to open file");
+        return;
     }
 }
 
+void printRegContent() {
+    fprintf(traceFile,"TODO");
 
+}
+void printTrace( bin_instr_t instruction, instr_type type, int address) {
+  openTraceFile();
+
+    fprintf(traceFile, "      PC: %d\n",PC);
+
+
+    fprintf(traceFile,  "==> %8u: %s\n",address, instruction_assembly_form(address, instruction));
+    printRegContent();
+
+
+}
 
 void printInstructions( int length) {
     printf("%s %s\n", "Address", "Instruction");
@@ -375,6 +396,8 @@ void initRegisters(BOFFILE file) {
     }
 
     bof_close(file);
+    printf("      PC: %d\n",PC);
+    printRegContent();
 }
 
 
@@ -444,5 +467,6 @@ int main(int argc, char **argv) {
     // Begin reading the BOF file and handle printing if enabled
     handleBOFFile(fileName, shouldPrint);
 
+    currentTestCase = fileName;
     return 0;
 }
