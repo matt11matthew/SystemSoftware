@@ -7,14 +7,18 @@
 #include "bof.h"
 #include "regname.h"
 
-// a size for the memory (2^16 words = 32k words)
-#define MEMORY_SIZE_IN_WORDS 32768
+//Defines
+#define MEMORY_SIZE_IN_WORDS 32768// a size for the memory (2^16 words = 32k words)
+#define BUFFER_SIZE 1024  // Adjust size as necessary
 
 //Global variables
 int PC = 0;
 int HI = 0 ;
 int LO = 0;
 static int GPR[MEMORY_SIZE_IN_WORDS];
+char finalPrintBuffer[256];
+char print_buffer[BUFFER_SIZE];
+int buffer_index = 0;
 
 static union mem_u{// Used to represent the memory of the VM
     word_type words[MEMORY_SIZE_IN_WORDS];
@@ -23,15 +27,18 @@ static union mem_u{// Used to represent the memory of the VM
 } memory;
 
 // Function Prototypes
+void handleInstruction(bin_instr_t instruction, instr_type type, int address);
 void otherCompInstr(other_comp_instr_t instruction, int address);
 void immediateFormatInstr(immed_instr_t i, int address);
 void jumpFormatInstr(jump_instr_t instruction, int address);
+void flush_buffer(); 
 void executeSyscall(syscall_instr_t instruction, int i );
 void handleBOFFile(char * file_name, int should_print);
 void compFormatInstr(comp_instr_t instruction, int address);
 void readInInstructions(int length, BOFFILE file);
 void printInstructions( int length);
 void processInstructions(int length);
+void initRegisters(BOFFILE file);
 
 //Functions
 void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
@@ -54,15 +61,14 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
             break;
         case error_instr_type:
             //stdeer
-
             break;
     }
 }
 
 void compFormatInstr(comp_instr_t instruction, int address) {
     switch (instruction.func) {// Switch to handle operation based on func code
-        case NOP_F:
-            break; //Does nothing
+        case NOP_F://Does nothing
+            break; 
         case ADD_F:// Add
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
                     memory.words[GPR[SP]] + (memory.words[GPR[instruction.rs]] + machine_types_formOffset(instruction.os));
@@ -253,12 +259,6 @@ void jumpFormatInstr(jump_instr_t instruction, int address) {
             break;
     }
 }
-char finalPrintBuffer[256];
-
-#define BUFFER_SIZE 1024  // Adjust size as necessary
-
-char print_buffer[BUFFER_SIZE];
-int buffer_index = 0;
 
 void flush_buffer() {
     if (buffer_index > 0) {
@@ -330,9 +330,6 @@ void processInstructions(int length) {
         handleInstruction(instruction, type, i);
     }
 }
-/*
- *
- */
 
 void initRegisters(BOFFILE file) {
     BOFHeader header = bof_read_header(file);
@@ -342,8 +339,6 @@ void initRegisters(BOFFILE file) {
     GPR[SP] = header.stack_bottom_addr;
     GPR[FP] = header.stack_bottom_addr;
     GPR[RA] = 0;
-
-
 
     // Print the data section
 //    for (int i = data_start_address; i < data_start_address+data_length+1; i++) {
@@ -384,10 +379,6 @@ void handleBOFFile(char * file_name, int should_print) {
 
     readInInstructions(length, file);
     initRegisters( bof_read_open(file_name));
-
-
-
-
 
     if (should_print) {
         printInstructions(length);
