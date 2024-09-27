@@ -20,11 +20,13 @@ char finalPrintBuffer[256];
 char print_buffer[BUFFER_SIZE];
 int buffer_index = 0;
 
+
 static union mem_u{// Used to represent the memory of the VM
     word_type words[MEMORY_SIZE_IN_WORDS];
     uword_type uwords[MEMORY_SIZE_IN_WORDS];
     bin_instr_t instrs[MEMORY_SIZE_IN_WORDS];
 } memory;
+
 
 // Function Prototypes
 void handleInstruction(bin_instr_t instruction, instr_type type, int address);
@@ -36,6 +38,7 @@ void executeSyscall(syscall_instr_t instruction, int i );
 void handleBOFFile(char * file_name, int should_print);
 void compFormatInstr(comp_instr_t instruction, int address);
 void readInInstructions(int length, BOFFILE file);
+void printTrace(bin_instr_t instruction, instr_type type, int address);
 void printInstructions( int length);
 void processInstructions(int length);
 void initRegisters(BOFFILE file);
@@ -56,7 +59,7 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
         case jump_instr_type://Jump Format Instructions
             jumpFormatInstr(instruction.jump, address);
             break;
-        case syscall_instr_type://System Callse
+        case syscall_instr_type://System Calls
             executeSyscall(instruction.syscall, address);
             break;
         case error_instr_type:
@@ -64,6 +67,7 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
             break;
     }
 }
+
 
 void compFormatInstr(comp_instr_t instruction, int address) {
     switch (instruction.func) {// Switch to handle operation based on func code
@@ -270,6 +274,9 @@ void flush_buffer() {
 
 void executeSyscall(syscall_instr_t instruction, int i) {
     switch (instruction.code) {
+        case print_int_sc:
+
+            break;
         case exit_sc://EXIT
 //            exit(machine_types_sgnExt(instruction.offset));
             break;
@@ -298,6 +305,7 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(stdin);
             break;
         case start_tracing_sc://Start VM tracing output
+            start_tracing_sc
             break;
         case stop_tracing_sc://No VM tracing; Stop the tracing output
             break;
@@ -314,6 +322,17 @@ void readInInstructions(int length,   BOFFILE file) {
         memory.instrs[i] = instruction_read(file);
     }
 }
+
+
+void printTrace(bin_instr_t instruction, instr_type type, int address) {
+    if (address == 0) {
+        //      PC: 0
+        printf("      PC: %d\n",PC);
+        
+    }
+}
+
+
 
 void printInstructions( int length) {
     printf("%s %s\n", "Address", "Instruction");
@@ -340,11 +359,6 @@ void initRegisters(BOFFILE file) {
     GPR[FP] = header.stack_bottom_addr;
     GPR[RA] = 0;
 
-    // Print the data section
-//    for (int i = data_start_address; i < data_start_address+data_length+1; i++) {
-//        int t = bof_read_word(file);
-//        printf("%d: %d\n", i, t);
-//    }
 
     int startIndex = 0;
 
