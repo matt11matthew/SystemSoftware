@@ -40,7 +40,7 @@ void executeSyscall(syscall_instr_t instruction, int i );
 void handleBOFFile(char * file_name, int should_print);
 void compFormatInstr(comp_instr_t instruction, int address);
 void readInInstructions(int length, BOFFILE file);
-void openTraceFile();
+void openTraceFile(const char *currentTestCase);
 void printRegContent();
 void printTrace(bin_instr_t instruction, instr_type type, int address);
 void printInstructions( int length);
@@ -49,6 +49,7 @@ void initRegisters(BOFFILE file);
 
 //Functions
 void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
+
     PC++;//Increment the Program Counter
     switch (type) {//Call appropriate function based on the type being fed
         case comp_instr_type://Computational Instructions, with opcode 0
@@ -70,6 +71,8 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
             //stdeer
             break;
     }
+    printTrace(instruction, type, address);
+
 }
 
 
@@ -327,12 +330,13 @@ void readInInstructions(int length,   BOFFILE file) {
     }
 }
 
-
-char* currentTestCase;
-
 FILE *traceFile;
-void openTraceFile() {
-    traceFile = fopen(strcat(currentTestCase, ".myo"), "w");
+
+void openTraceFile(const char *currentTestCase) {
+    char filename[256];
+    snprintf(filename, sizeof(filename), "%s.myo", currentTestCase); // Format filename with .myo extension
+
+    traceFile = fopen(filename, "w");
     if (traceFile == NULL) {
         perror("Failed to open file");
         return;
@@ -340,16 +344,23 @@ void openTraceFile() {
 }
 
 void printRegContent() {
-    fprintf(traceFile,"TODO");
 
+    for (int i = 0; i < 8; i++) {
+        fprintf(traceFile, "GPR[%s] %d\t", regname_get(i), GPR[i]);
+        if(i == 4){
+            fprintf(traceFile, "\n");
+        }
+
+    }
 }
-void printTrace( bin_instr_t instruction, instr_type type, int address) {
-  openTraceFile();
 
-    fprintf(traceFile, "      PC: %d\n",PC);
+void printTrace( bin_instr_t instruction, instr_type type, int address) {
+
+
 
 
     fprintf(traceFile,  "==> %8u: %s\n",address, instruction_assembly_form(address, instruction));
+    fprintf(traceFile, "      PC: %d\n",PC);
     printRegContent();
 
 
@@ -396,15 +407,26 @@ void initRegisters(BOFFILE file) {
     }
 
     bof_close(file);
-    printf("      PC: %d\n",PC);
+
+    fprintf(traceFile, "      PC: %d\n",PC);
     printRegContent();
 }
 
 
 void handleBOFFile(char * file_name, int should_print) {
+    char base_name[256];
+    strncpy(base_name, file_name, sizeof(base_name));
+    base_name[sizeof(base_name) - 1] = '\0';  // Ensure null termination
+
+    // Find the last occurrence of ".bof" and terminate the string there
+    char *dot = strrchr(base_name, '.');
+    if (dot != NULL && strcmp(dot, ".bof") == 0) {
+        *dot = '\0';  // Remove the ".bof" extension
+    }
+
     BOFFILE file = bof_read_open(file_name);
     BOFHeader header = bof_read_header(file);
-    int tempCount = 0;//Track if a \n needs to be printed
+    int tempCount = 0;  // Track if a \n needs to be printed
 
     if (!bof_has_correct_magic_number(header)) {
         fprintf(stderr, "Error: Invalid magic number in BOF file.\n");
@@ -412,10 +434,11 @@ void handleBOFFile(char * file_name, int should_print) {
         return;
     }
 
+    openTraceFile(base_name);  // Pass the modified base name to openTraceFile
     int length = header.text_length;
 
     readInInstructions(length, file);
-    initRegisters( bof_read_open(file_name));
+    initRegisters(bof_read_open(file_name));
 
     if (should_print) {
         printInstructions(length);
@@ -467,6 +490,5 @@ int main(int argc, char **argv) {
     // Begin reading the BOF file and handle printing if enabled
     handleBOFFile(fileName, shouldPrint);
 
-    currentTestCase = fileName;
     return 0;
 }
