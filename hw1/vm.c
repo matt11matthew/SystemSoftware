@@ -3,7 +3,6 @@
 #include "machine_types.h"
 #include "instruction.h"
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "bof.h"
 #include "regname.h"
@@ -16,9 +15,10 @@
 int PC = 0;
 int HI = 0 ;
 int LO = 0;
+int exitCode = -999;
+int planStopTracing = 0;
 static int GPR[MEMORY_SIZE_IN_WORDS];
 char finalPrintBuffer[256];
-
 int tracing = 1;
 FILE *traceFile;
 BOFHeader globalHeader;
@@ -40,7 +40,7 @@ void handleBOFFile(char * file_name, int should_print);
 void compFormatInstr(comp_instr_t instruction, int address);
 void readInInstructions(int length, BOFFILE file);
 void openTraceFile(const char *currentTestCase);
-void printRegContent();
+void printRegContent(int lst);
 void printProgramCounter();
 void printTrace(bin_instr_t instruction, instr_type type, int address);
 void printInstructions( int length);
@@ -81,12 +81,12 @@ void compFormatInstr(comp_instr_t instruction, int address) {
         case NOP_F://Does nothing
             break;
         case ADD_F:// Add
-            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
-                    memory.words[GPR[SP]] + (memory.words[GPR[instruction.rs]] + machine_types_formOffset(instruction.os));
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)]
+            = memory.words[GPR[SP]] + (memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
             break;
         case SUB_F:// Subtract
-            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
-                    memory.words[GPR[SP]] - (memory.words[GPR[instruction.rs]] + machine_types_formOffset(instruction.os));
+            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)]
+            = memory.words[GPR[SP]] - (memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
             break;
         case CPW_F:// Copy Word
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)]
@@ -134,18 +134,12 @@ void otherCompInstr(other_comp_instr_t i, int address) {
         case LIT_F: // Literal
             memory.words[GPR[i.reg + machine_types_formOffset(i.offset)]] = machine_types_sgnExt(i.arg);
             break;
-
         case ARI_F: // Add register immediate
-//            memory.words[GPR[i.reg]] = GPR[i.reg] + machine_types_sgnExt(i.arg);
-
             GPR[i.reg] = (GPR[i.reg] + machine_types_sgnExt(i.arg));
             break;
-
         case SRI_F: // Subtract register immediate
-
             GPR[i.reg] = (GPR[i.reg] - machine_types_sgnExt(i.arg));
             break;
-
         case MUL_F: // Multiply
             // Multiply stack top by memory[GPR[s] + formOffset(o)],
             // putting the most significant bits in HI
@@ -154,41 +148,32 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] =
                     memory.words[GPR[SP]] * (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]);
             break;
-
         case DIV_F: // Divide
             HI = memory.words[GPR[SP]] % (memory.words[GPR[i.reg]] + machine_types_formOffset(i.offset));
             LO = memory.words[GPR[SP]] / (memory.words[GPR[i.reg]] + machine_types_formOffset(i.offset));
             break;
-
         case CFHI_F: // Copy from HI
             memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] = HI;
             break;
-
         case CFLO_F: // Copy from LO
             memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] = LO;
             break;
-
         case SLL_F: // Shift Left Logical
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.uwords[GPR[SP]] << i.arg;
             break;
-
         case SRL_F: // Shift Right Logical
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.uwords[GPR[SP]] >> i.arg;
             break;
-
         case JMP_F: // Jump
             PC = memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)];
             break;
-
         case CSI_F: // Call Subroutine Indirectly
             GPR[RA] = PC;
             PC = memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)];
             break;
-
         case JREL_F: // Jump Relative to address
             PC = (PC - 1) + machine_types_formOffset(i.offset);
             break;
-
         case SYS_F: // System Call
             syscall_instr_t si;
             si.op = OTHC_O;
@@ -271,10 +256,6 @@ void jumpFormatInstr(jump_instr_t instruction, int address) {
     }
 }
 
-
-int exitCode = -999;
-int planStopTracing = 0;
-
 void executeSyscall(syscall_instr_t instruction, int i) {
     switch (instruction.code) {
         case print_int_sc:
@@ -291,7 +272,7 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             memory.words[GPR[SP]] =
                     fputc(memory.words[GPR[instruction.reg] +
                     machine_types_formOffset(instruction.offset)], traceFile);
-
+            fflush(traceFile);
             break;
         case read_char_sc://RCH
             memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(stdin);
@@ -327,7 +308,7 @@ void openTraceFile(const char *currentTestCase) {//Function to handle opening fi
     }
 }
 
-void printRegContent() {
+void printRegContent(int lst) {
     if (exitCode != -999)return;
 
     if (planStopTracing) {
@@ -344,20 +325,29 @@ void printRegContent() {
         }
     }
     fprintf(traceFile, "\n");
-    printData(traceFile, globalHeader.data_start_address,  globalHeader.data_start_address+globalHeader.data_length+1, 0);
+
+
+    printData(traceFile, globalHeader.data_start_address,  GPR[SP], lst);
+
     printData(traceFile, GPR[SP],  GPR[FP]+1, 1);
 }
 
 void printProgramCounter() {
-    if(exitCode!=-999)return;
-    fprintf(traceFile, "\tPC: %d",PC);
-    if (HI!=0) {
+    if(exitCode != -999)return;
+    if(tracing == 0)return;
+    if(planStopTracing)return;
+
+    fprintf(traceFile, "\tPC: %d",PC);//Print the Program counter
+
+    if (HI!=0) {//Check if HI needs to be printed
         fprintf(traceFile, "\tHI: %d", HI);
     }
-    if (LO !=0){
+
+    if (LO !=0){//Check if LO needs to be printed
         fprintf(traceFile, "\tLO: %d", LO);
 
     }
+
     fprintf(traceFile, "\n");
 }
 
@@ -365,7 +355,7 @@ void printTrace( bin_instr_t instruction, instr_type type, int address) {
     if (!tracing)return;
     fprintf(traceFile,  "\n==> %8u: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
     printProgramCounter();//Print info for program counter, HI, and LO
-    printRegContent();//print the contents of each register.
+    printRegContent(0);//print the contents of each register.
 }
 
 void printInstructions( int length) {
@@ -409,63 +399,63 @@ void initRegisters(BOFFILE file) {
     }
 
     printProgramCounter();
-    printRegContent();
+    printRegContent(0);
 
     bof_close(file);//Close file
 }
 
-void printData(FILE* stream, int data_start, int data_end, int passEasyCases) {
-//    int data_start = globalHeader.data_start_address;
-//    int data_end = data_start + globalHeader.data_length+1;
+void printData(FILE* stream, int data_start, int data_end, int lst) {
+    //Variable Declarations
     int needsNewLine = 0;
     int consecZero = 0;
+    int insertionAmount = 0;
 
-//    printf("START: %d END: %d\n", data_start, data_end);
-    // Iterate through the memory words
-    if (!passEasyCases){
-        for (int i = data_start; i < data_end; i++) {
-            fprintf(stream, "%8u: %d", i, memory.words[i]);
-            needsNewLine++;
-            if(needsNewLine == 5){
-                fprintf(stream, "\n");
-                needsNewLine = 0;
-            }
-        }
-    }
-    else {
+    int newLineCount = 0;
 
-//        int lastZeroIndex = -1;
-//        int idx = 0;
-
-        for (int i = data_start; i < data_end; i++) {
-            if(memory.words[i] == 0){
-//                if (lastZeroIndex!=-1 && lastZeroIndex) {
-//
-//                }
-//                lastZeroIndex = i;
-
-                if(consecZero==0) {
-                    fprintf(stream, "%8u: %d", i, memory.words[i]);
-                    consecZero = 1;
-                }
-                else if(consecZero == 1){// Print "..." if a second 0 is found
-                    fprintf(stream, "        ...");
-                    consecZero = 2;//Don't print another "..."
-                }
-            }
-            else{
+    for (int i = data_start; i < data_end; i++) {
+//        printf("[%d] ", needsNewLine);
+        if (memory.words[i] == 0) {
+            if (consecZero == 0) {//First time a 0 is encountered
                 fprintf(stream, "%8u: %d", i, memory.words[i]);
-                consecZero = 0;//Reset consecZero
-            }
-        }
-        fprintf(stream, "\n");
-    }
+                needsNewLine++;
+                insertionAmount++;
+                consecZero = 1;
+            } else if (consecZero == 1) {//start of a zero loop
 
-    if (!passEasyCases){
-        fprintf(stream, "        ...\n");
-        needsNewLine++;
+                if (needsNewLine ==5) {
+                    fprintf(stream, "\n");
+                    needsNewLine = 0;
+                    newLineCount++;
+                }
+                fprintf(stream, "        ...     ");
+                insertionAmount++;
+
+                consecZero = 2;//Don't print another "..."
+            }
+        } else {//Outside of zero loop
+            needsNewLine++;
+            fprintf(stream, "%8u: %d", i, memory.words[i]);
+            insertionAmount++;
+            consecZero = 0;//Reset consecZero
+        }
+
+        if(needsNewLine == 5 && consecZero < 1){//Print \n if we have 5 values AND we aren't in a "..." print
+            fprintf(stream, "\n");
+            needsNewLine = 0;
+            newLineCount++;
+        }
+
     }
-    if (needsNewLine==5){
+//    printf("\nINsertion Amount: %d\n", insertionAmount);
+    if (insertionAmount>=5){
+        fprintf(stream, "\n");
+        newLineCount++;
+    }
+//    if(needsNewLine == 5){
+//        fprintf(stream, "\n");
+//    }
+    if (newLineCount < 1) {
+
         fprintf(stream, "\n");
     }
 }
@@ -505,7 +495,8 @@ void handleBOFFile(char * file_name, int should_print) {
 
 
     if (should_print) {
-       printData(stdout, globalHeader.data_start_address,  globalHeader.data_start_address+globalHeader.data_length+1, 0);
+//       printData(stdout, globalHeader.data_start_address,  globalHeader.data_start_address+globalHeader.data_length+1, 1);
+       printData(stdout, globalHeader.data_start_address,  GPR[SP]-1, 1);
     }
 
     bof_close(file);
