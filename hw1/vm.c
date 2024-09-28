@@ -363,7 +363,7 @@ void printProgramCounter() {
 
 void printTrace( bin_instr_t instruction, instr_type type, int address) {
     if (!tracing)return;
-    fprintf(traceFile,  "==> %8u: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
+    fprintf(traceFile,  "\n==> %8u: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
     printProgramCounter();//Print info for program counter, HI, and LO
     printRegContent();//print the contents of each register.
 }
@@ -417,6 +417,7 @@ void initRegisters(BOFFILE file) {
 void printData(FILE* stream, int data_start, int data_end, int passEasyCases) {
 //    int data_start = globalHeader.data_start_address;
 //    int data_end = data_start + globalHeader.data_length+1;
+    int needsNewLine = 0;
     int consecZero = 0;
 
 //    printf("START: %d END: %d\n", data_start, data_end);
@@ -424,32 +425,49 @@ void printData(FILE* stream, int data_start, int data_end, int passEasyCases) {
     if (!passEasyCases){
         for (int i = data_start; i < data_end; i++) {
             fprintf(stream, "%8u: %d", i, memory.words[i]);
+            needsNewLine++;
+            if(needsNewLine == 5){
+                fprintf(stream, "\n");
+                needsNewLine = 0;
+            }
         }
     }
     else {
 
+//        int lastZeroIndex = -1;
+//        int idx = 0;
+
         for (int i = data_start; i < data_end; i++) {
             if(memory.words[i] == 0){
-                if(!consecZero){
+//                if (lastZeroIndex!=-1 && lastZeroIndex) {
+//
+//                }
+//                lastZeroIndex = i;
+
+                if(consecZero==0) {
                     fprintf(stream, "%8u: %d", i, memory.words[i]);
-                    fprintf(stream, "        ...");
                     consecZero = 1;
+                }
+                else if(consecZero == 1){// Print "..." if a second 0 is found
+                    fprintf(stream, "        ...");
+                    consecZero = 2;//Don't print another "..."
                 }
             }
             else{
                 fprintf(stream, "%8u: %d", i, memory.words[i]);
-                consecZero = 0;
+                consecZero = 0;//Reset consecZero
             }
         }
+        fprintf(stream, "\n");
     }
-
 
     if (!passEasyCases){
-     
         fprintf(stream, "        ...\n");
+        needsNewLine++;
     }
-
-    fprintf(stream, "\n");
+    if (needsNewLine==5){
+        fprintf(stream, "\n");
+    }
 }
 
 void handleBOFFile(char * file_name, int should_print) {
