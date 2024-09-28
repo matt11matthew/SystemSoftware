@@ -325,7 +325,7 @@ void printRegContent(int lst) {
         }
     }
     fprintf(traceFile, "\n");
-    
+
     printData(traceFile, globalHeader.data_start_address,  GPR[SP], lst);
 
     printData(traceFile, GPR[SP],  GPR[FP]+1, 1);
