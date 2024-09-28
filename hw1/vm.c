@@ -18,9 +18,10 @@ int HI = 0 ;
 int LO = 0;
 static int GPR[MEMORY_SIZE_IN_WORDS];
 char finalPrintBuffer[256];
-char print_buffer[BUFFER_SIZE];
-int buffer_index = 0;
-int tracing = 0;
+
+int tracing = 1;
+FILE *traceFile;
+BOFHeader globalHeader;
 
 
 static union mem_u{// Used to represent the memory of the VM
@@ -29,23 +30,23 @@ static union mem_u{// Used to represent the memory of the VM
     bin_instr_t instrs[MEMORY_SIZE_IN_WORDS];
 } memory;
 
-
 // Function Prototypes
 void handleInstruction(bin_instr_t instruction, instr_type type, int address);
 void otherCompInstr(other_comp_instr_t instruction, int address);
 void immediateFormatInstr(immed_instr_t i, int address);
 void jumpFormatInstr(jump_instr_t instruction, int address);
-void flush_buffer();
 void executeSyscall(syscall_instr_t instruction, int i );
 void handleBOFFile(char * file_name, int should_print);
 void compFormatInstr(comp_instr_t instruction, int address);
 void readInInstructions(int length, BOFFILE file);
 void openTraceFile(const char *currentTestCase);
 void printRegContent();
+void printProgramCounter();
 void printTrace(bin_instr_t instruction, instr_type type, int address);
 void printInstructions( int length);
 void processInstructions(int length);
 void initRegisters(BOFFILE file);
+void printData(FILE* stream, int data_start, int data_end, int passEasyCases);
 
 //Functions
 void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
@@ -66,15 +67,14 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
             break;
         case syscall_instr_type://System Calls
             executeSyscall(instruction.syscall, address);
+
             break;
         case error_instr_type:
             //stdeer
             break;
     }
     printTrace(instruction, type, address);
-
 }
-
 
 void compFormatInstr(comp_instr_t instruction, int address) {
     switch (instruction.func) {// Switch to handle operation based on func code
@@ -271,13 +271,9 @@ void jumpFormatInstr(jump_instr_t instruction, int address) {
     }
 }
 
-void flush_buffer() {
-    if (buffer_index > 0) {
-        print_buffer[buffer_index] = '\0';  // Null-terminate the string
-        printf("%s", print_buffer);
-        buffer_index = 0;  // Reset buffer index
-    }
-}
+
+int exitCode = -999;
+int planStopTracing = 0;
 
 void executeSyscall(syscall_instr_t instruction, int i) {
     switch (instruction.code) {
@@ -285,36 +281,26 @@ void executeSyscall(syscall_instr_t instruction, int i) {
 
             break;
         case exit_sc://EXIT
-//            exit(machine_types_sgnExt(instruction.offset));
+            exitCode = machine_types_sgnExt(instruction.offset);
             break;
         case print_str_sc://PSTR
             int length = snprintf(finalPrintBuffer, sizeof(finalPrintBuffer), "%s", &memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]);
             memory.words[GPR[SP]] = length;
             break;
         case print_char_sc://PCH
-//            memory.words[GPR[SP]] = fputc(memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)], stdout);
+            memory.words[GPR[SP]] =
+                    fputc(memory.words[GPR[instruction.reg] +
+                    machine_types_formOffset(instruction.offset)], traceFile);
 
-            char ch = memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)];
-
-            // Store character in the buffer
-            if (buffer_index < BUFFER_SIZE - 1) {
-                print_buffer[buffer_index++] = ch;
-            } else {
-                // If buffer is full, flush and reset
-                flush_buffer();
-                print_buffer[buffer_index++] = ch;
-            }
-
-            // Store the return value (number of characters written) in memory
-            memory.words[GPR[SP]] = buffer_index;
             break;
         case read_char_sc://RCH
             memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(stdin);
             break;
         case start_tracing_sc://Start VM tracing output
-//            start_tracing_sc
+            tracing = 1;
             break;
         case stop_tracing_sc://No VM tracing; Stop the tracing output
+            planStopTracing = 1;
             break;
     }
 }
@@ -330,9 +316,7 @@ void readInInstructions(int length,   BOFFILE file) {
     }
 }
 
-FILE *traceFile;
-
-void openTraceFile(const char *currentTestCase) {
+void openTraceFile(const char *currentTestCase) {//Function to handle opening file
     char filename[256];
     snprintf(filename, sizeof(filename), "%s.myo", currentTestCase); // Format filename with .myo extension
 
@@ -344,26 +328,44 @@ void openTraceFile(const char *currentTestCase) {
 }
 
 void printRegContent() {
+    if (exitCode != -999)return;
 
+    if (planStopTracing) {
+        tracing = 0;
+        planStopTracing = 0;
+        return;
+    }
+
+    //Print the info for each register
     for (int i = 0; i < 8; i++) {
-        fprintf(traceFile, "GPR[%s] %d\t", regname_get(i), GPR[i]);
+        fprintf(traceFile, "GPR[%s]: %d\t", regname_get(i), GPR[i]);
         if(i == 4){
             fprintf(traceFile, "\n");
         }
+    }
+    fprintf(traceFile, "\n");
+    printData(traceFile, globalHeader.data_start_address,  globalHeader.data_start_address+globalHeader.data_length+1, 0);
+    printData(traceFile, GPR[SP],  GPR[FP]+1, 1);
+}
+
+void printProgramCounter() {
+    if(exitCode!=-999)return;
+    fprintf(traceFile, "\tPC: %d",PC);
+    if (HI!=0) {
+        fprintf(traceFile, "\tHI: %d", HI);
+    }
+    if (LO !=0){
+        fprintf(traceFile, "\tLO: %d", LO);
 
     }
+    fprintf(traceFile, "\n");
 }
 
 void printTrace( bin_instr_t instruction, instr_type type, int address) {
-
-
-
-
-    fprintf(traceFile,  "==> %8u: %s\n",address, instruction_assembly_form(address, instruction));
-    fprintf(traceFile, "      PC: %d\n",PC);
-    printRegContent();
-
-
+    if (!tracing)return;
+    fprintf(traceFile,  "==> %8u: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
+    printProgramCounter();//Print info for program counter, HI, and LO
+    printRegContent();//print the contents of each register.
 }
 
 void printInstructions( int length) {
@@ -383,16 +385,16 @@ void processInstructions(int length) {
 }
 
 void initRegisters(BOFFILE file) {
+    //Declarations
     BOFHeader header = bof_read_header(file);
-    PC = header.text_start_address;
+    int startIndex = 0;
 
+    //Store values
+    PC = header.text_start_address;
     GPR[GP] = header.data_start_address;
     GPR[SP] = header.stack_bottom_addr;
     GPR[FP] = header.stack_bottom_addr;
     GPR[RA] = 0;
-
-
-    int startIndex = 0;
 
     for (int  j = 0; j< header.data_length+header.text_length; j++) {
         int t = bof_read_word(file);
@@ -401,17 +403,54 @@ void initRegisters(BOFFILE file) {
             int memoryIndex = header.data_start_address+startIndex;
 
             memory.words[memoryIndex] = t;
-//            printf("%d: %d\n", memoryIndex, t);
+
             startIndex++;
         }
     }
 
-    bof_close(file);
-
-    fprintf(traceFile, "      PC: %d\n",PC);
+    printProgramCounter();
     printRegContent();
+
+    bof_close(file);//Close file
 }
 
+void printData(FILE* stream, int data_start, int data_end, int passEasyCases) {
+//    int data_start = globalHeader.data_start_address;
+//    int data_end = data_start + globalHeader.data_length+1;
+    int consecZero = 0;
+
+//    printf("START: %d END: %d\n", data_start, data_end);
+    // Iterate through the memory words
+    if (!passEasyCases){
+        for (int i = data_start; i < data_end; i++) {
+            fprintf(stream, "%8u: %d", i, memory.words[i]);
+        }
+    }
+    else {
+
+        for (int i = data_start; i < data_end; i++) {
+            if(memory.words[i] == 0){
+                if(!consecZero){
+                    fprintf(stream, "%8u: %d", i, memory.words[i]);
+                    fprintf(stream, "        ...");
+                    consecZero = 1;
+                }
+            }
+            else{
+                fprintf(stream, "%8u: %d", i, memory.words[i]);
+                consecZero = 0;
+            }
+        }
+    }
+
+
+    if (!passEasyCases){
+     
+        fprintf(stream, "        ...\n");
+    }
+
+    fprintf(stream, "\n");
+}
 
 void handleBOFFile(char * file_name, int should_print) {
     char base_name[256];
@@ -426,7 +465,6 @@ void handleBOFFile(char * file_name, int should_print) {
 
     BOFFILE file = bof_read_open(file_name);
     BOFHeader header = bof_read_header(file);
-    int tempCount = 0;  // Track if a \n needs to be printed
 
     if (!bof_has_correct_magic_number(header)) {
         fprintf(stderr, "Error: Invalid magic number in BOF file.\n");
@@ -438,6 +476,7 @@ void handleBOFFile(char * file_name, int should_print) {
     int length = header.text_length;
 
     readInInstructions(length, file);
+    globalHeader = header;
     initRegisters(bof_read_open(file_name));
 
     if (should_print) {
@@ -446,27 +485,9 @@ void handleBOFFile(char * file_name, int should_print) {
 
     processInstructions(length);
 
+
     if (should_print) {
-        int data_start = header.data_start_address;
-        int data_end = data_start + header.data_length+1;
-
-        // Iterate through the memory words
-        for (int i = data_start; i < data_end; i++) {
-            printf("%8u: %d", i, memory.words[i]);
-            
-            // Print a newline after every 5th value or at the end
-            if (tempCount == 4 ) {
-                tempCount = 0;
-                printf("\n");  // Add newline after every 5th value or at the end
-            } else {
-                printf("\t");  // Add tab between values for alignment
-            }
-            tempCount++;
-        }
-
-        printf("        ...\n");
-
-        printf("\n");
+       printData(stdout, globalHeader.data_start_address,  globalHeader.data_start_address+globalHeader.data_length+1, 0);
     }
 
     bof_close(file);
