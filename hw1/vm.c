@@ -1,4 +1,3 @@
-
 //Includes
 #include "machine_types.h"
 #include "instruction.h"
@@ -22,7 +21,7 @@ int firstExitTrace = -999;
 FILE *traceFile;
 BOFHeader globalHeader;
 
-
+//Unions
 static union mem_u{// Used to represent the memory of the VM
     word_type words[MEMORY_SIZE_IN_WORDS];
     uword_type uwords[MEMORY_SIZE_IN_WORDS];
@@ -31,12 +30,13 @@ static union mem_u{// Used to represent the memory of the VM
 
 // Function Prototypes
 void handleInstruction( );
+void compFormatInstr(comp_instr_t instruction, int address);
 void otherCompInstr(other_comp_instr_t instruction, int address);
 void immediateFormatInstr(immed_instr_t i, int address);
 void jumpFormatInstr(jump_instr_t instruction, int address);
 void executeSyscall(syscall_instr_t instruction, int i );
+void exitErrorCode(int errorCode);
 void handleBOFFile(char * file_name, int should_print);
-void compFormatInstr(comp_instr_t instruction, int address);
 void readInInstructions(int length, BOFFILE file);
 void openTraceFile(const char *currentTestCase);
 void printRegContent(int lst);
@@ -46,7 +46,7 @@ void printInstructions( int length);
 void processInstructions(int length);
 void initRegisters(BOFFILE file);
 void printData(FILE* stream, int data_start, int data_end, int lst);
-void exitErrorCode(int errorCode);
+void updateMemory();
 
 //Functions
 // Handles a given instruction, calling the appropriate function based on the type of instruction.
@@ -72,10 +72,9 @@ void handleInstruction() {
             break;
         case syscall_instr_type://System Calls
             executeSyscall(instruction.syscall, address);
-
             break;
         case error_instr_type:
-            //stdeer
+            //exitErrorCode(2);
             break;
     }
 
@@ -105,6 +104,7 @@ void compFormatInstr(comp_instr_t instruction, int address) {
                     memory.uwords[GPR[SP]] & (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
             break;
         case BOR_F:// Bitwise Or
+
             memory.uwords[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
                     memory.uwords[GPR[SP]] | (memory.uwords[GPR[instruction.rs] + machine_types_formOffset(instruction.os)]);
             break;
@@ -119,12 +119,20 @@ void compFormatInstr(comp_instr_t instruction, int address) {
         case LWR_F:// Load word into Register
             GPR[instruction.rt] = memory.words[GPR[instruction.rs] + machine_types_formOffset(instruction.os)];
             break;
+
         case SWR_F:// Store word from register
-            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = GPR[instruction.rs];
+          int index = GPR[instruction.rt] + machine_types_formOffset(instruction.ot);
+
+//            printf("CURRENT INDEX: %d\n", index);
+//            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = GPR[instruction.rs];
+            memory.words[index] =  GPR[instruction.rs];
+
             break;
         case SCA_F:// Store Computed address
+
+
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
-                    (GPR[instruction.rs] + machine_types_formOffset(instruction.rs));
+                    (GPR[instruction.rs] + machine_types_formOffset(instruction.os));
             break;
         case LWI_F:// Load Word Indirect
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
@@ -141,7 +149,16 @@ void compFormatInstr(comp_instr_t instruction, int address) {
 void otherCompInstr(other_comp_instr_t i, int address) {
     switch (i.func) {
         case LIT_F: // Literal
-            memory.words[GPR[i.reg + machine_types_formOffset(i.offset)]] = machine_types_sgnExt(i.arg);
+//          memory[GPR[t] + formOffset(o)] ← sgnExt(i)
+//            word_type res = machine_types_sgnExt(i.arg);
+            word_type index =(word_type) ( GPR[i.reg] + machine_types_formOffset(i.offset));
+
+            memory.words[index] = machine_types_sgnExt(i.arg);
+            //            word_type ind = (word_type) (GPR[i.reg] + machine_types_formOffset(i.offset)); //CORRECT
+//            uint16_t  result =    memory.uwords[ind] | machine_types_zeroExt(i.immed);
+
+//            memory[GPR[i.reg] + machine_types_formOffset(i.offset)]
+//           memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]   = machine_types_sgnExt(i.arg);
             break;
         case ARI_F: // Add register immediate
             GPR[i.reg] = (GPR[i.reg] + machine_types_sgnExt(i.arg));
@@ -150,27 +167,23 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             GPR[i.reg] = (GPR[i.reg] - machine_types_sgnExt(i.arg));
             break;
         case MUL_F: // Multiply
-            long long result = (long long) memory.words[GPR[SP]] * (long long) (memory.words[GPR[i.reg]] + machine_types_formOffset(i.offset));
-
-            // Store the result in HI and LO
-
+            long mult = (long) (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]);
+            long stackTop =(long) memory.words[GPR[i.reg]];
+            long result = (long) (long) mult * stackTop;
             HI = (int) (result >> 32);  // Most significant 32 bits
             LO = (int) (result & 0xFFFFFFFF);  // Least significant 32 bits
-
             break;
         case DIV_F: // Divide
             // Check if we are dividing by 0
             if((memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]) == 0){
-                //TODO ADD ERROR
+                //fprintf(stderr, "Can't divide by 0\n");
             }
 
-            // Divisor
-            HI = memory.words[GPR[SP]]
-                 % (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]);
+            // Remainder
+            HI = memory.words[GPR[SP]] % (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]);
 
             // Quotient
-            LO = memory.words[GPR[SP]]
-                 / (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]);
+            LO = memory.words[GPR[SP]] / (memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]);
             break;
         case CFHI_F: // Copy from HI
             memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)] = HI;
@@ -185,7 +198,6 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.uwords[GPR[SP]] >> i.arg;
             break;
         case JMP_F: // Jump
-//            PC ← umemory[GPR[s] + formOffset(o)];
             PC = memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)];
             break;
         case CSI_F: // Call Subroutine Indirectly
@@ -203,7 +215,7 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             si.offset = i.offset;
             si.code = i.op;
             si.func = SYS_F;
-            printf("SUB SYSTEM CALL");
+//            printf("SUB SYSTEM CALL");
             executeSyscall(si, address);// Pass back to Sys call
             break;
     }
@@ -220,16 +232,18 @@ void immediateFormatInstr(immed_instr_t i, int address) {
                     (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)]) & machine_types_zeroExt(i.immed);
             break;
         case BORI_O:// Bitwise Or Immediate
-            memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
-                    memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] | machine_types_zeroExt(i.immed);
+            word_type ind = (word_type) (GPR[i.reg] + machine_types_formOffset(i.offset)); //CORRECT
+            uint16_t  result =    memory.uwords[ind] | machine_types_zeroExt(i.immed);
+            memory.uwords[ind] = result;
             break;
         case NORI_O:  // Bitwise NOR Immediate
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
                     ~memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] | machine_types_zeroExt(i.immed);
             break;
         case XORI_O:// Bitwise Exclusive-Or Immediate
-            memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] =
-                    (memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] ^ machine_types_zeroExt(i.immed));
+            ind = (word_type) (GPR[i.reg] + machine_types_formOffset(i.offset)); //CORRECT
+            result =(uint16_t)    memory.uwords[ind] ^ machine_types_zeroExt(i.immed);
+            memory.uwords[ind] = result;
             break;
         case BEQ_O:// Branch on Equal
             if (memory.words[GPR[SP] == memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]]) {
@@ -286,6 +300,9 @@ void jumpFormatInstr(jump_instr_t instruction, int address) {
 void executeSyscall(syscall_instr_t instruction, int i) {
     switch (instruction.code) {
         case print_int_sc:
+            memory.words[GPR[SP]]
+            = fprintf(traceFile, "%d",memory.words[GPR[instruction.reg] +
+            machine_types_formOffset(instruction.offset)]);
             break;
         case exit_sc://EXIT
             exitCode = machine_types_sgnExt(instruction.offset);
@@ -305,6 +322,7 @@ void executeSyscall(syscall_instr_t instruction, int i) {
            int len = fprintf(traceFile, "%s",content);
             memory.words[GPR[SP]] = len;
             break;
+
         case print_char_sc://PCH
             memory.words[GPR[SP]] =
                     fputc(memory.words[GPR[instruction.reg] +
@@ -422,7 +440,6 @@ void printInstructions( int length) {
 
 void processInstructions(int totalAmount) {
     PC = 0;
-
     while (PC < totalAmount) {
         PC++;//Increment the Program Counter
         handleInstruction();
@@ -467,9 +484,29 @@ void printData(FILE* stream, int data_start, int data_end, int lst) {
     int printedChars = 0;
 
     for (int i = data_start; i < data_end; i++) {
+//        memory.words[i];
+
+
+        int intValue = 0;
+        unsigned unsignedValue  = 0;
+
+        int isInt = 1;
+
+        if (memory.words[i] != 0) {
+            intValue = memory.words[i];
+        }
+        if (memory.uwords[i]!=0) {
+            unsignedValue = memory.uwords[i];
+            isInt = 0;
+        }
         if (memory.words[i] == 0) {
             if (consecZero == 0) {//First time a 0 is encountered
-                printedChars += fprintf(stream, "%8d: %d\t", i, memory.words[i]);
+                if (!isInt){
+                    printedChars += fprintf(stream, "%8d: %d\t", i,unsignedValue);
+                } else {
+
+                    printedChars += fprintf(stream, "%8d: %d\t", i,intValue);
+                }
                 consecZero = 1;
             } else if (consecZero == 1) {// Start of a zero loop
                 printedChars += fprintf(stream, "        ...     ");
@@ -477,7 +514,13 @@ void printData(FILE* stream, int data_start, int data_end, int lst) {
             }
         }
         else {// Outside of zero loop
-            printedChars += fprintf(stream, "%8d: %d\t", i, memory.words[i]);
+            if (!isInt){
+
+                printedChars += fprintf(stream, "%8d: %d\t", i, unsignedValue);
+            } else {
+                printedChars += fprintf(stream, "%8d: %d\t", i, intValue);
+
+            }
             consecZero = 0;//Reset consecZero
         }
 
