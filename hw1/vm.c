@@ -61,6 +61,7 @@ void handleInstruction() {
         printTraceYet = 1;
         printTrace(instruction, type, address);
     }
+
     switch (type) {//Call appropriate function based on the type being fed
         case comp_instr_type://Computational Instructions, with opcode 0
             compFormatInstr(instruction.comp, address);
@@ -278,7 +279,7 @@ void jumpFormatInstr(jump_instr_t instruction, int address) {
         case CALL_O:// Call Subroutine
             GPR[RA] = PC;
             PC = machine_types_formAddress(PC - 1, instruction.addr);
-
+            sprintf(traceFile, "GOING TO ADDRESS: %d\n", PC);
 //            GPR[$ra] =  PC; //STORE CURRENT ADDRESS
 //            PC ← formAddress(PC − 1, a)
             break;
@@ -300,7 +301,9 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             firstExitTrace = -999; //SETS TO TRASH VALUE
             break;
         case print_str_sc://PSTR
-            memory.words[GPR[SP]] = printf("%ls", (&memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]));
+
+            int len = sprintf(traceFile, "%s", (&memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]));
+            memory.words[GPR[SP]] =len;
             break;
         case print_char_sc://PCH
             memory.words[GPR[SP]] =
@@ -405,9 +408,9 @@ void printTrace( bin_instr_t instruction, instr_type type, int address) {
             return;
         }
     }
+
     fprintf(traceFile,  "\n==>\t %3d: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
 }
-
 
 void printInstructions( int length) {
     printf("%s %s\n", "Address", "Instruction");
@@ -418,16 +421,10 @@ void printInstructions( int length) {
 }
 
 void processInstructions(int totalAmount) {
-
     PC = 0;
-
     while (PC < totalAmount) {
-
-
         PC++;//Increment the Program Counter
-        handleInstruction(PC-1);
-
-
+        handleInstruction();
     }
 }
 
