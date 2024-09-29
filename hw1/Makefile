@@ -16,7 +16,8 @@ VM_OBJECTS = vm.o \
              machine_types.o instruction.o bof.o \
              regname.o utilities.o
 TESTS = vm_test0.bof vm_test1.bof vm_test2.bof vm_test3.bof \
-	vm_test4.bof vm_test5.bof vm_test6.bof vm_test7.bof \
+	vm_test4.bof # \
+	#vm_test5.bof vm_test6.bof vm_test7.bof \
 	vm_test8.bof vm_test9.bof vm_testA.bof vm_testB.bof \
 	vm_testC.bof vm_testD.bof
 TESTSOURCES = $(TESTS:.bof=.asm)

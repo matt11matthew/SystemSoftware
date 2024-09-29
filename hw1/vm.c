@@ -6,6 +6,7 @@
 #include <string.h>
 #include "bof.h"
 #include "regname.h"
+#include <stdlib.h>
 
 //Defines
 #define MEMORY_SIZE_IN_WORDS 32768// a size for the memory (2^16 words = 32k words)
@@ -55,12 +56,6 @@ void handleInstruction() {
     bin_instr_t instruction = memory.instrs[address];
     instr_type type = instruction_type(instruction);
 
-    int printTraceYet = 0;
-    if (type != syscall_instr_type || instruction.syscall.code==print_char_sc || instruction.syscall.code == stop_tracing_sc) {
-
-        printTraceYet = 1;
-        printTrace(instruction, type, address);
-    }
     printTrace(instruction, type, address);
     switch (type) {//Call appropriate function based on the type being fed
         case comp_instr_type://Computational Instructions, with opcode 0
@@ -83,10 +78,7 @@ void handleInstruction() {
             //stdeer
             break;
     }
-    if (!printTraceYet){
-        printTrace(instruction, type, address);
-        printTraceYet=1;
-    }
+
     printProgramCounter();//Print info for program counter, HI, and LO
     printRegContent(0);//print the contents of each register.
 }
@@ -158,12 +150,13 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             GPR[i.reg] = (GPR[i.reg] - machine_types_sgnExt(i.arg));
             break;
         case MUL_F: // Multiply
-            long long result = (long long) memory.words[GPR[SP]] *
-                               (long long) (memory.words[GPR[i.reg]] + machine_types_formOffset(i.offset));
+            long long result = (long long) memory.words[GPR[SP]] * (long long) (memory.words[GPR[i.reg]] + machine_types_formOffset(i.offset));
 
             // Store the result in HI and LO
+
             HI = (int) (result >> 32);  // Most significant 32 bits
             LO = (int) (result & 0xFFFFFFFF);  // Least significant 32 bits
+
             break;
         case DIV_F: // Divide
             // Check if we are dividing by 0
@@ -296,9 +289,16 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             break;
         case exit_sc://EXIT
             exitCode = machine_types_sgnExt(instruction.offset);
-            //exitErrorCode(exitCode);
-//            firstExitTrace = 1;
-            firstExitTrace = -999; //SETS TO TRASH VALUE
+            if (exitCode == 0){
+                firstExitTrace = 1;
+                exit(exitCode);
+                return;
+            } else if (exitCode > 1) {
+                //EXIT SUB
+                PC = GPR[RA];
+//                PC = GPR[RA];
+            }
+//            firstExitTrace = -999; //SETS TO TRASH VALUE
             break;
         case print_str_sc://PSTR
              char* content = (char *) (&memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]);
@@ -422,6 +422,7 @@ void printInstructions( int length) {
 
 void processInstructions(int totalAmount) {
     PC = 0;
+
     while (PC < totalAmount) {
         PC++;//Increment the Program Counter
         handleInstruction();
