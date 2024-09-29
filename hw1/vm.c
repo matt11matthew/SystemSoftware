@@ -16,7 +16,7 @@ int HI = 0;
 int LO = 0;
 int exitCode = -999;
 static int GPR[MEMORY_SIZE_IN_WORDS];
-int tracing = 1;
+int tracing = 1;// Variable to track if we're tracing or not
 int firstExitTrace = -999;
 FILE *traceFile;
 BOFHeader globalHeader;
@@ -120,16 +120,10 @@ void compFormatInstr(comp_instr_t instruction, int address) {
             break;
 
         case SWR_F:// Store word from register
-          int index = GPR[instruction.rt] + machine_types_formOffset(instruction.ot);
-
-//            printf("CURRENT INDEX: %d\n", index);
-//            memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] = GPR[instruction.rs];
+            int index = GPR[instruction.rt] + machine_types_formOffset(instruction.ot);
             memory.words[index] =  GPR[instruction.rs];
-
             break;
         case SCA_F:// Store Computed address
-
-
             memory.words[GPR[instruction.rt] + machine_types_formOffset(instruction.ot)] =
                     (GPR[instruction.rs] + machine_types_formOffset(instruction.os));
             break;
@@ -148,16 +142,8 @@ void compFormatInstr(comp_instr_t instruction, int address) {
 void otherCompInstr(other_comp_instr_t i, int address) {
     switch (i.func) {
         case LIT_F: // Literal
-//          memory[GPR[t] + formOffset(o)] ← sgnExt(i)
-//            word_type res = machine_types_sgnExt(i.arg);
             word_type index =(word_type) ( GPR[i.reg] + machine_types_formOffset(i.offset));
-
             memory.words[index] = machine_types_sgnExt(i.arg);
-            //            word_type ind = (word_type) (GPR[i.reg] + machine_types_formOffset(i.offset)); //CORRECT
-//            uint16_t  result =    memory.uwords[ind] | machine_types_zeroExt(i.immed);
-
-//            memory[GPR[i.reg] + machine_types_formOffset(i.offset)]
-//           memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]   = machine_types_sgnExt(i.arg);
             break;
         case ARI_F: // Add register immediate
             GPR[i.reg] = (GPR[i.reg] + machine_types_sgnExt(i.arg));
@@ -214,7 +200,6 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             si.offset = i.offset;
             si.code = i.op;
             si.func = SYS_F;
-//            printf("SUB SYSTEM CALL");
             executeSyscall(si, address);// Pass back to Sys call
             break;
     }
@@ -285,13 +270,9 @@ void jumpFormatInstr(jump_instr_t instruction, int address) {
         case CALL_O:// Call Subroutine
             GPR[RA] = PC;
             PC = machine_types_formAddress(PC - 1, instruction.addr);
-//            sprintf(traceFile, "GOING TO ADDRESS: %d\n", PC);
-//            GPR[$ra] =  PC; //STORE CURRENT ADDRESS
-//            PC ← formAddress(PC − 1, a)
             break;
         case RTN_O:// Return from Subroutine
             PC = GPR[RA];
-//            printf("RETURN TO: %d\n", PC);
             break;
     }
 }
@@ -299,9 +280,9 @@ void jumpFormatInstr(jump_instr_t instruction, int address) {
 void executeSyscall(syscall_instr_t instruction, int i) {
     switch (instruction.code) {
         case print_int_sc:
-            memory.words[GPR[SP]]
-            = fprintf(traceFile, "%d",memory.words[GPR[instruction.reg] +
-            machine_types_formOffset(instruction.offset)]);
+            memory.words[GPR[SP]] =
+                    fprintf(traceFile, "%d",memory.words[GPR[instruction.reg] +
+                    machine_types_formOffset(instruction.offset)]);
             break;
         case exit_sc://EXIT
             exitCode = machine_types_sgnExt(instruction.offset);
@@ -312,16 +293,13 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             } else if (exitCode > 1) {
                 //EXIT SUB
                 PC = GPR[RA];
-//                PC = GPR[RA];
             }
-//            firstExitTrace = -999; //SETS TO TRASH VALUE
             break;
         case print_str_sc://PSTR
-             char* content = (char *) (&memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]);
-           int len = fprintf(traceFile, "%s",content);
+            char* content = (char *) (&memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]);
+            int len = fprintf(traceFile, "%s",content);
             memory.words[GPR[SP]] = len;
             break;
-
         case print_char_sc://PCH
             memory.words[GPR[SP]] =
                     fputc(memory.words[GPR[instruction.reg] +
@@ -377,7 +355,7 @@ void readInInstructions(int length,   BOFFILE file) {
 }
 
 void openTraceFile(const char *currentTestCase) {//Function to handle opening file
-    char filename[256];
+    char filename[256];//TODO Fix
     snprintf(filename, sizeof(filename), "%s.myo", currentTestCase); // Format filename with .myo extension
 
     traceFile = fopen(filename, "w");
@@ -417,7 +395,6 @@ void printProgramCounter() {
 }
 
 void printTrace( bin_instr_t instruction, instr_type type, int address) {
-//    if (type== syscall_instr_type && instruction.syscall.code==)
     if (!tracing)return;
     if (exitCode!=-999 ){
         if (firstExitTrace!= -999) {
@@ -438,7 +415,7 @@ void printInstructions( int length) {
 }
 
 void processInstructions(int totalAmount) {
-    PC = 0;
+    PC = 0;//TODO REMOVE?
     while (PC < totalAmount) {
         PC++;//Increment the Program Counter
         handleInstruction();
@@ -469,7 +446,6 @@ void initRegisters(BOFFILE file) {
         }
     }
 
-
     printProgramCounter();
     printRegContent(0);
 
@@ -477,15 +453,11 @@ void initRegisters(BOFFILE file) {
 }
 
 void printData(FILE* stream, int data_start, int data_end, int lst) {
-
     //Variable Declarations
     int consecZero = 0;
     int printedChars = 0;
 
     for (int i = data_start; i < data_end; i++) {
-//        memory.words[i];
-
-
         int intValue = 0;
         unsigned unsignedValue  = 0;
 
@@ -514,11 +486,9 @@ void printData(FILE* stream, int data_start, int data_end, int lst) {
         }
         else {// Outside of zero loop
             if (!isInt){
-
                 printedChars += fprintf(stream, "%8d: %d\t", i, unsignedValue);
             } else {
                 printedChars += fprintf(stream, "%8d: %d\t", i, intValue);
-
             }
             consecZero = 0;//Reset consecZero
         }
@@ -551,7 +521,7 @@ void handleBOFFile(char * file_name, int should_print) {
         return;
     }
 
-    openTraceFile(base_name);  // Pass the modified base name to openTraceFile
+    openTraceFile(base_name); // Pass the modified base name to openTraceFile
     int length = header.text_length;
 
     readInInstructions(length, file);
