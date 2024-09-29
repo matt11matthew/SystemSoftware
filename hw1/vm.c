@@ -403,7 +403,7 @@ void printTrace( bin_instr_t instruction, instr_type type, int address) {
         }
     }
 
-    fprintf(traceFile,  "\n==> %8d: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
+    fprintf(traceFile,  "\n==> %3d: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
     printProgramCounter();//Print info for program counter, HI, and LO
     printRegContent(0);//print the contents of each register.
 }
