@@ -9,16 +9,13 @@
 
 //Defines
 #define MEMORY_SIZE_IN_WORDS 32768// a size for the memory (2^16 words = 32k words)
-//#define BUFFER_SIZE 1024  // Adjust size as necessary
 
 //Global variables
 int PC = 0;
 int HI = 0;
 int LO = 0;
 int exitCode = -999;
-int planStopTracing = 0;
 static int GPR[MEMORY_SIZE_IN_WORDS];
-char finalPrintBuffer[256];
 int tracing = 1;
 int firstExitTrace = -999;
 FILE *traceFile;
@@ -32,7 +29,7 @@ static union mem_u{// Used to represent the memory of the VM
 } memory;
 
 // Function Prototypes
-void handleInstruction(bin_instr_t instruction, instr_type type, int address);
+void handleInstruction( );
 void otherCompInstr(other_comp_instr_t instruction, int address);
 void immediateFormatInstr(immed_instr_t i, int address);
 void jumpFormatInstr(jump_instr_t instruction, int address);
@@ -52,9 +49,18 @@ void exitErrorCode(int errorCode);
 
 //Functions
 // Handles a given instruction, calling the appropriate function based on the type of instruction.
-void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
+void handleInstruction() {
+    int address = PC - 1;
 
-    PC++;//Increment the Program Counter
+    bin_instr_t instruction = memory.instrs[address];
+    instr_type type = instruction_type(instruction);
+
+    int printTraceYet = 0;
+    if (type != syscall_instr_type || instruction.syscall.code==print_char_sc || instruction.syscall.code == stop_tracing_sc) {
+
+        printTraceYet = 1;
+        printTrace(instruction, type, address);
+    }
     switch (type) {//Call appropriate function based on the type being fed
         case comp_instr_type://Computational Instructions, with opcode 0
             compFormatInstr(instruction.comp, address);
@@ -76,7 +82,12 @@ void handleInstruction(bin_instr_t instruction, instr_type type, int address) {
             //stdeer
             break;
     }
-    printTrace(instruction, type, address);
+    if (!printTraceYet){
+        printTrace(instruction, type, address);
+        printTraceYet=1;
+    }
+    printProgramCounter();//Print info for program counter, HI, and LO
+    printRegContent(0);//print the contents of each register.
 }
 
 // Handles computational format instructions based on the function code
@@ -180,6 +191,7 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)] = memory.uwords[GPR[SP]] >> i.arg;
             break;
         case JMP_F: // Jump
+//            PC ← umemory[GPR[s] + formOffset(o)];
             PC = memory.uwords[GPR[i.reg] + machine_types_formOffset(i.offset)];
             break;
         case CSI_F: // Call Subroutine Indirectly
@@ -197,6 +209,7 @@ void otherCompInstr(other_comp_instr_t i, int address) {
             si.offset = i.offset;
             si.code = i.op;
             si.func = SYS_F;
+            printf("SUB SYSTEM CALL");
             executeSyscall(si, address);// Pass back to Sys call
             break;
     }
@@ -265,9 +278,13 @@ void jumpFormatInstr(jump_instr_t instruction, int address) {
         case CALL_O:// Call Subroutine
             GPR[RA] = PC;
             PC = machine_types_formAddress(PC - 1, instruction.addr);
+
+//            GPR[$ra] =  PC; //STORE CURRENT ADDRESS
+//            PC ← formAddress(PC − 1, a)
             break;
         case RTN_O:// Return from Subroutine
             PC = GPR[RA];
+//            printf("RETURN TO: %d\n", PC);
             break;
     }
 }
@@ -289,7 +306,6 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             memory.words[GPR[SP]] =
                     fputc(memory.words[GPR[instruction.reg] +
                     machine_types_formOffset(instruction.offset)], traceFile);
-            fflush(traceFile);
             break;
         case read_char_sc://RCH
             memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(stdin);
@@ -298,7 +314,7 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             tracing = 1;
             break;
         case stop_tracing_sc://No VM tracing; Stop the tracing output
-            planStopTracing = 1;
+            tracing = 0;
             break;
     }
 }
@@ -352,13 +368,8 @@ void openTraceFile(const char *currentTestCase) {//Function to handle opening fi
 }
 
 void printRegContent(int lst) {
-    if (exitCode != -999)return;
-
-    if (planStopTracing) {
-        tracing = 0;
-        planStopTracing = 0;
-        return;
-    }
+    if (exitCode != -999) return;
+    if(!tracing) return;
 
     //Print the info for each register
     for (int i = 0; i < 8; i++) {
@@ -368,16 +379,13 @@ void printRegContent(int lst) {
         }
     }
     fprintf(traceFile, "\n");
-
     printData(traceFile, globalHeader.data_start_address,  GPR[SP], lst);
-
     printData(traceFile, GPR[SP],  GPR[FP]+1, 0);
 }
 
 void printProgramCounter() {
     if(exitCode != -999)return;
-    if(tracing == 0)return;
-    if(planStopTracing)return;
+    if(!tracing)return;
 
     fprintf(traceFile, "\tPC: %d",PC);//Print the Program counter
 
@@ -385,28 +393,21 @@ void printProgramCounter() {
         fprintf(traceFile, "\tHI: %d", HI);
         fprintf(traceFile, "\tLO: %d", LO);
     }
-
-
-
     fprintf(traceFile, "\n");
 }
 
 void printTrace( bin_instr_t instruction, instr_type type, int address) {
+//    if (type== syscall_instr_type && instruction.syscall.code==)
     if (!tracing)return;
-
     if (exitCode!=-999 ){
-
-
         if (firstExitTrace!= -999) {
             firstExitTrace = 0;
             return;
         }
     }
-
-    fprintf(traceFile,  "\n==> %3d: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
-    printProgramCounter();//Print info for program counter, HI, and LO
-    printRegContent(0);//print the contents of each register.
+    fprintf(traceFile,  "\n==>\t %3d: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
 }
+
 
 void printInstructions( int length) {
     printf("%s %s\n", "Address", "Instruction");
@@ -416,11 +417,17 @@ void printInstructions( int length) {
     }
 }
 
-void processInstructions(int length) {
-    for (int i = 0; i < length; i++) {
-        bin_instr_t instruction = memory.instrs[i];
-        instr_type type = instruction_type(instruction);
-        handleInstruction(instruction, type, i);
+void processInstructions(int totalAmount) {
+
+    PC = 0;
+
+    while (PC < totalAmount) {
+
+
+        PC++;//Increment the Program Counter
+        handleInstruction(PC-1);
+
+
     }
 }
 
@@ -516,9 +523,7 @@ void handleBOFFile(char * file_name, int should_print) {
         printData(stdout, globalHeader.data_start_address,  GPR[SP]-1, 1);
     }
 
-
     processInstructions(length);
-
 
     bof_close(file);
 }
