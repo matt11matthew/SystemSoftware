@@ -36,7 +36,6 @@ void immediateFormatInstr(immed_instr_t i, int address);
 void jumpFormatInstr(jump_instr_t instruction, int address);
 void executeSyscall(syscall_instr_t instruction, int i );
 void exitErrorCode(int errorCode);
-void handleBOFFile(char * file_name, int should_print);
 void readInInstructions(int length, BOFFILE file);
 void openTraceFile(const char *currentTestCase);
 void printRegContent(int lst);
@@ -46,7 +45,7 @@ void printInstructions( int length);
 void processInstructions(int length);
 void initRegisters(BOFFILE file);
 void printData(FILE* stream, int data_start, int data_end, int lst);
-void updateMemory();
+void handleBOFFile(char * file_name, int should_print);
 
 //Functions
 // Handles a given instruction, calling the appropriate function based on the type of instruction.
