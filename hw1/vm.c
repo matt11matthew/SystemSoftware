@@ -317,7 +317,7 @@ void executeSyscall(syscall_instr_t instruction, int i) {
     }
 }
 
-void exitErrorCode(int errorCode){
+void exitErrorCode(int errorCode){//TODO
     switch(errorCode){
         case 0:// Dividing by 0
             fprintf(stderr, "can't divide by 0\n");
