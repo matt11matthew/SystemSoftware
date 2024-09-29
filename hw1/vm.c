@@ -20,7 +20,7 @@ int planStopTracing = 0;
 static int GPR[MEMORY_SIZE_IN_WORDS];
 char finalPrintBuffer[256];
 int tracing = 1;
-int firstExitTrace = 1;
+int firstExitTrace = -999;
 FILE *traceFile;
 BOFHeader globalHeader;
 
@@ -47,8 +47,8 @@ void printTrace(bin_instr_t instruction, instr_type type, int address);
 void printInstructions( int length);
 void processInstructions(int length);
 void initRegisters(BOFFILE file);
-void printLSTData(FILE* stream, int data_start, int data_end);
 void printData(FILE* stream, int data_start, int data_end, int lst);
+void exitErrorCode(int errorCode);
 
 //Functions
 // Handles a given instruction, calling the appropriate function based on the type of instruction.
@@ -132,6 +132,7 @@ void compFormatInstr(comp_instr_t instruction, int address) {
             break;
     }
 }
+
 // Handles other computational format instructions based on the function code
 void otherCompInstr(other_comp_instr_t i, int address) {
     switch (i.func) {
@@ -155,7 +156,7 @@ void otherCompInstr(other_comp_instr_t i, int address) {
         case DIV_F: // Divide
             // Check if we are dividing by 0
             if((memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]) == 0){
-
+                //TODO ADD ERROR
             }
 
             // Divisor
@@ -277,10 +278,12 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             break;
         case exit_sc://EXIT
             exitCode = machine_types_sgnExt(instruction.offset);
+            //exitErrorCode(exitCode);
+//            firstExitTrace = 1;
+            firstExitTrace = -999; //SETS TO TRASH VALUE
             break;
         case print_str_sc://PSTR
-                int length = snprintf(finalPrintBuffer, sizeof(finalPrintBuffer), "%s", &memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]);
-            memory.words[GPR[SP]] = length;
+            memory.words[GPR[SP]] = printf("%ls", (&memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)]));
             break;
         case print_char_sc://PCH
             memory.words[GPR[SP]] =
@@ -296,6 +299,32 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             break;
         case stop_tracing_sc://No VM tracing; Stop the tracing output
             planStopTracing = 1;
+            break;
+    }
+}
+
+void exitErrorCode(int errorCode){
+    switch(errorCode){
+        case 0:// Dividing by 0
+            fprintf(stderr, "can't divide by 0\n");
+            break;
+        case 1:
+            fprintf(stderr, "0 <= GPR[$gp]");
+            break;
+        case 2:
+            fprintf(stderr, "GPR[$gp] < GPR[$sp]");
+            break;
+        case 3:
+            fprintf(stderr, "GPR[$sp] < GPR[$fp]");
+            break;
+        case 4:
+            fprintf(stderr, "GPR[$fp] < MEMORY_SIZE_IN_WORDS");
+            break;
+        case 5:
+            fprintf(stderr, "0 <= PC");
+            break;
+        case 6:
+            fprintf(stderr, "PC < MEMORY_SIZE_IN_WORDS");
             break;
     }
 }
@@ -364,10 +393,17 @@ void printProgramCounter() {
 
 void printTrace( bin_instr_t instruction, instr_type type, int address) {
     if (!tracing)return;
-    if (exitCode!=-999 && !firstExitTrace)return;
-    firstExitTrace = 0;
 
-    fprintf(traceFile,  "\n==> %8u: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
+    if (exitCode!=-999 ){
+
+
+        if (firstExitTrace!= -999) {
+            firstExitTrace = 0;
+            return;
+        }
+    }
+
+    fprintf(traceFile,  "\n==> %8d: %s\n",address, instruction_assembly_form(address, instruction));//Print Current instruction info
     printProgramCounter();//Print info for program counter, HI, and LO
     printRegContent(0);//print the contents of each register.
 }
@@ -419,79 +455,33 @@ void initRegisters(BOFFILE file) {
     bof_close(file);//Close file
 }
 
-void printLSTData(FILE* stream, int data_start, int data_end){
-    // Variable Declarations
-
-
-    for (int i = data_start; i < data_end; i++) {
-        fprintf(stream, "%8u: %d", i, memory.words[i]);
-        
-    }
-
-}
-
 void printData(FILE* stream, int data_start, int data_end, int lst) {
 
-    if (lst) {// If we are printing LST call printLSTData
-        printLSTData(stream, data_start, data_end);
-        return;
-    }
-
     //Variable Declarations
-    int needsNewLine = 0;
     int consecZero = 0;
-    int insertionAmount = 0;
-    int newLineCount = 0;
+    int printedChars = 0;
 
     for (int i = data_start; i < data_end; i++) {
-//        printf("[%d] ", needsNewLine);
         if (memory.words[i] == 0) {
             if (consecZero == 0) {//First time a 0 is encountered
-                fprintf(stream, "%8u: %d", i, memory.words[i]);
-                needsNewLine++;
-                insertionAmount++;
+                printedChars += fprintf(stream, "%8d: %d\t", i, memory.words[i]);
                 consecZero = 1;
-            }
-            else if (consecZero == 1) {// Start of a zero loop
-
-                if (needsNewLine ==5) {
-                    fprintf(stream, "\n");//Checked
-                    needsNewLine = 0;
-                    newLineCount++;
-                }
-                fprintf(stream, "        ...     ");
-                insertionAmount++;
-
+            } else if (consecZero == 1) {// Start of a zero loop
+                printedChars += fprintf(stream, "        ...     ");
                 consecZero = 2;//Don't print another "..."
             }
         }
         else {// Outside of zero loop
-            needsNewLine++;
-            fprintf(stream, "%8u: %d", i, memory.words[i]);
-            insertionAmount++;
+            printedChars += fprintf(stream, "%8d: %d\t", i, memory.words[i]);
             consecZero = 0;//Reset consecZero
         }
 
-        if(needsNewLine == 5 && consecZero < 1){//Print \n if we have 5 values AND we aren't in a "..." print
-//            fprintf(stream, "\n(2)");
+        if (printedChars > 59) {// Print a newline after 59 chars then reset
             fprintf(stream, "\n");
-            needsNewLine = 0;
-            newLineCount++;
+            printedChars = 0;
         }
-
     }
-//    printf("\nINsertion Amount: %d\n", insertionAmount);
-    if (insertionAmount>=(5)){
-        fprintf(stream, "\n");
-//        fprintf(stream, "\n(3)");
-        newLineCount++;
-    }
-
-    if (newLineCount < 1) {
-
-        fprintf(stream, "\n");
-//        fprintf(stream, "\n(4)");
-    }
+    fprintf(stream, "\n");
 }
 
 void handleBOFFile(char * file_name, int should_print) {

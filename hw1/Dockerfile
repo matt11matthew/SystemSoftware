@@ -20,8 +20,8 @@ COPY . .
 RUN apt-get update && apt-get install -y composer
 
 # Copy a helper script to handle rebuilds
-COPY rebuild.sh /usr/local/bin/rebuild.sh
-RUN chmod +x /usr/local/bin/rebuild.sh
+#COPY rebuild.sh /usr/local/bin/rebuild.sh
+#RUN chmod +x /usr/local/bin/rebuild.sh
 
 # Keep the container running
 CMD tail -f /dev/null
