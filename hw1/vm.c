@@ -51,11 +51,11 @@ void handleBOFFile(char * file_name, int should_print);
 // Handles a given instruction, calling the appropriate function based on the type of instruction.
 void handleInstruction() {
     int address = PC - 1;
-
     bin_instr_t instruction = memory.instrs[address];
     instr_type type = instruction_type(instruction);
 
     printTrace(instruction, type, address);
+
     switch (type) {//Call appropriate function based on the type being fed
         case comp_instr_type://Computational Instructions, with opcode 0
             compFormatInstr(instruction.comp, address);
