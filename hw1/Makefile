@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.66 2024/09/25 19:47:36 leavens Exp leavens $
+# $Id: Makefile,v 1.67 2024/09/30 04:35:23 leavens Exp leavens $
 
 # Add .exe to the end of target to get that suffix in the rules
 VM = vm
@@ -16,12 +16,9 @@ VM_OBJECTS = vm.o \
              machine_types.o instruction.o bof.o \
              regname.o utilities.o
 TESTS = vm_test0.bof vm_test1.bof vm_test2.bof vm_test3.bof \
-	vm_test4.bof vm_test5.bof vm_test6.bof vm_test7.bof vm_test8.bof vm_test9.bof  \
-	vm_testA.bof vm_testB.bof \
+	vm_test4.bof vm_test5.bof vm_test6.bof vm_test7.bof \
+	vm_test8.bof vm_test9.bof vm_testA.bof vm_testB.bof \
 	vm_testC.bof vm_testD.bof
-#TESTS = vm_testA.bof vm_testB.bof vm_testD.bof
-#TESTS = vm_testD.bof
-#TESTS = vm_testB.bof
 TESTSOURCES = $(TESTS:.bof=.asm)
 EXPECTEDOUTPUTS = $(TESTS:.bof=.out)
 EXPECTEDLISTINGS = $(TESTS:.bof=.lst)
@@ -143,9 +140,6 @@ $(ASM).tab.c $(ASM).tab.h: $(ASM).y ast.h parser_types.h machine_types.h
 	$(RM) $(ASM).tab.h $(ASM).tab.c
 	$(YACC) $(YACCFLAGS) $(ASM).y
 
-$(ASM).tab.c: RCS/$(ASM).tab.c,v
-
-
 lexer.o: lexer.c lexer.h $(ASM).tab.h
 	$(CC) $(CFLAGS) -c $<
 
@@ -255,7 +249,7 @@ bof-clean:
 	$(RM) *.bof
 
 ZIPFILE = hw1-tests.zip
-TESTSZIPFILE = ~/temp/$(ZIPFILE)
+TESTSZIPFILE = ../$(ZIPFILE)
 PROVIDEDFILES = Makefile asm_main.c asm.y asm_lexer.l \
 		asm_lexer.c asm.tab.[ch] parser_types.h \
 		asm_unparser.[ch] ast.[ch] bof.[ch] machine_types.[ch] \
