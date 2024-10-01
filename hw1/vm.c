@@ -140,7 +140,8 @@ void otherCompInstr(other_comp_instr_t i, int address) {
         case DIV_F: // Divide
             // Check if we are dividing by 0
             if((memory.words[GPR[i.reg] + machine_types_formOffset(i.offset)]) == 0){
-                //fprintf(stderr, "Can't divide by 0\n");
+                exitErrorCode(0);
+                break;
             }
 
             // Remainder
