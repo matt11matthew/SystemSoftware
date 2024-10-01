@@ -22,4 +22,6 @@ add_executable(hw1
         regname.c
         symtab.c
         utilities.c
-        vm.c)
+        vm.c
+        vm.h
+        vm_main.c)

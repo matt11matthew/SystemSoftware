@@ -12,7 +12,7 @@ CHMOD = chmod
 SUBMISSIONZIPFILE = submission.zip
 ZIP = zip -9
 # Add the names of your own files with a .o suffix to link them into the VM
-VM_OBJECTS = vm.o \
+VM_OBJECTS = vm.o vm_main.o \
              machine_types.o instruction.o bof.o \
              regname.o utilities.o
 TESTS = vm_test0.bof vm_test1.bof vm_test2.bof vm_test3.bof \

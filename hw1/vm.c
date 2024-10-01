@@ -6,49 +6,28 @@
 #include "bof.h"
 #include "regname.h"
 #include <stdlib.h>
-
+#include "vm.h"
 //Defines
-#define MEMORY_SIZE_IN_WORDS 32768// a size for the memory (2^16 words = 32k words)
 
 //Global variables
 int PC = 0;
 int HI = 0;
 int LO = 0;
-int exitCode = -999;
+int exitCode = TRASH_VALUE;
 static int GPR[MEMORY_SIZE_IN_WORDS];
-int tracing = 1;// Variable to track if we're tracing or not
-int firstExitTrace = -999;
+int tracing = ON;// Variable to track if we're tracing or not
+int firstExitTrace = TRASH_VALUE;
 FILE *traceFile;
 BOFHeader globalHeader;
 
 //Unions
+
 static union mem_u{// Used to represent the memory of the VM
     word_type words[MEMORY_SIZE_IN_WORDS];
     uword_type uwords[MEMORY_SIZE_IN_WORDS];
     bin_instr_t instrs[MEMORY_SIZE_IN_WORDS];
 } memory;
 
-// Function Prototypes
-void handleInstruction( );
-void compFormatInstr(comp_instr_t instruction, int address);
-void otherCompInstr(other_comp_instr_t instruction, int address);
-void immediateFormatInstr(immed_instr_t i, int address);
-void jumpFormatInstr(jump_instr_t instruction, int address);
-void executeSyscall(syscall_instr_t instruction, int i );
-void exitErrorCode(int errorCode);
-void readInInstructions(int length, BOFFILE file);
-void openTraceFile(const char *currentTestCase);
-void printRegContent(int lst);
-void printProgramCounter();
-void printTrace(bin_instr_t instruction, instr_type type, int address);
-void printInstructions( int length);
-void processInstructions(int length);
-void initRegisters(BOFFILE file);
-void printData(FILE* stream, int data_start, int data_end, int lst);
-void handleBOFFile(char * file_name, int should_print);
-
-//Functions
-// Handles a given instruction, calling the appropriate function based on the type of instruction.
 void handleInstruction() {
     int address = PC - 1;
     bin_instr_t instruction = memory.instrs[address];
@@ -73,12 +52,12 @@ void handleInstruction() {
             executeSyscall(instruction.syscall, address);
             break;
         case error_instr_type:
-            //exitErrorCode(2);
+            exitErrorCode(2);
             break;
     }
 
     printProgramCounter();//Print info for program counter, HI, and LO
-    printRegContent(0);//print the contents of each register.
+    printRegContent(OFF);//print the contents of each register.
 }
 
 // Handles computational format instructions based on the function code
@@ -341,6 +320,7 @@ void exitErrorCode(int errorCode){//TODO
             fprintf(stderr, "PC < MEMORY_SIZE_IN_WORDS");
             break;
     }
+    exit(2);
 }
 
 void readInInstructions(int length,   BOFFILE file) {
@@ -355,7 +335,7 @@ void readInInstructions(int length,   BOFFILE file) {
 }
 
 void openTraceFile(const char *currentTestCase) {//Function to handle opening file
-    char filename[256];//TODO Fix
+    char filename[256];
     snprintf(filename, sizeof(filename), "%s.myo", currentTestCase); // Format filename with .myo extension
 
     traceFile = fopen(filename, "w");
@@ -366,11 +346,11 @@ void openTraceFile(const char *currentTestCase) {//Function to handle opening fi
 }
 
 void printRegContent(int lst) {
-    if (exitCode != -999) return;
+    if (exitCode != TRASH_VALUE) return;
     if(!tracing) return;
 
     //Print the info for each register
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < NUM_REGISTERS; i++) {
         fprintf(traceFile, "GPR[%s]: %d\t", regname_get(i), GPR[i]);
         if(i == 4){
             fprintf(traceFile, "\n");
@@ -378,11 +358,11 @@ void printRegContent(int lst) {
     }
     fprintf(traceFile, "\n");
     printData(traceFile, globalHeader.data_start_address,  GPR[SP], lst);
-    printData(traceFile, GPR[SP],  GPR[FP]+1, 0);
+    printData(traceFile, GPR[SP],  GPR[FP]+1, OFF); //lst always off in this case
 }
 
 void printProgramCounter() {
-    if(exitCode != -999)return;
+    if(exitCode != TRASH_VALUE)return;
     if(!tracing)return;
 
     fprintf(traceFile, "\tPC: %d",PC);//Print the Program counter
@@ -396,9 +376,9 @@ void printProgramCounter() {
 
 void printTrace( bin_instr_t instruction, instr_type type, int address) {
     if (!tracing)return;
-    if (exitCode!=-999 ){
-        if (firstExitTrace!= -999) {
-            firstExitTrace = 0;
+    if (exitCode!=TRASH_VALUE ){
+        if (firstExitTrace!= TRASH_VALUE) {
+            firstExitTrace = OFF;
             return;
         }
     }
@@ -415,7 +395,7 @@ void printInstructions( int length) {
 }
 
 void processInstructions(int totalAmount) {
-    PC = 0;//TODO REMOVE?
+    PC = 0;
     while (PC < totalAmount) {
         PC++;//Increment the Program Counter
         handleInstruction();
@@ -493,13 +473,15 @@ void printData(FILE* stream, int data_start, int data_end, int lst) {
             consecZero = 0;//Reset consecZero
         }
 
-        if (printedChars > 59) {// Print a newline after 59 chars then reset
+        if (printedChars > NEW_LINE_AFTER) {// Print a newline after 59 chars then reset
             fprintf(stream, "\n");
             printedChars = 0;
         }
     }
     fprintf(stream, "\n");
 }
+
+
 
 void handleBOFFile(char * file_name, int should_print) {
     char base_name[256];
@@ -536,26 +518,4 @@ void handleBOFFile(char * file_name, int should_print) {
     processInstructions(length);
 
     bof_close(file);
-}
-
-int main(int argc, char **argv) {
-
-    int shouldPrint = false;
-    char *fileName;
-
-    if (argc == 3 && strcmp(argv[1], "-p") == 0) {
-        shouldPrint = true;  // Enable printing
-        fileName = argv[2];   // File name is the second argument
-    }
-    else if (argc == 2) {
-        fileName = argv[1];   // File name is the first argument
-    }
-    else {
-        fprintf(stderr, "Usage: %s [-p] <BOF file>\n", argv[0]);
-        return 1;  // Return non-zero for usage error
-    }
-
-    handleBOFFile(fileName, shouldPrint);// Begin reading the BOF file and handle printing if enabled
-
-    return 0;
 }
