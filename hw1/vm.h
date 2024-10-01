@@ -14,6 +14,7 @@
 #define MEMORY_SIZE_IN_WORDS 32768// a size for the memory (2^16 words = 32k words)
 #define TRASH_VALUE -999
 #define NEW_LINE_AFTER 59
+#define NL 4
 #define ON 1
 #define OFF 0
 

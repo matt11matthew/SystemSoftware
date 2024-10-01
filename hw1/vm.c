@@ -7,7 +7,7 @@
 #include "regname.h"
 #include <stdlib.h>
 #include "vm.h"
-//Defines
+
 
 //Global variables
 int PC = 0;
@@ -265,11 +265,11 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             break;
         case exit_sc://EXIT
             exitCode = machine_types_sgnExt(instruction.offset);
-            if (exitCode == 0){
-                firstExitTrace = 1;
+            if (exitCode == OFF){
+                firstExitTrace = ON;
                 exit(exitCode);
                 return;
-            } else if (exitCode > 1) {
+            } else if (exitCode > 1) { //Keeping as 1 since it can be >
                 //EXIT SUB
                 PC = GPR[RA];
             }
@@ -288,10 +288,10 @@ void executeSyscall(syscall_instr_t instruction, int i) {
             memory.words[GPR[instruction.reg] + machine_types_formOffset(instruction.offset)] = getc(stdin);
             break;
         case start_tracing_sc://Start VM tracing output
-            tracing = 1;
+            tracing = ON;
             break;
         case stop_tracing_sc://No VM tracing; Stop the tracing output
-            tracing = 0;
+            tracing = OFF;
             break;
     }
 }
@@ -320,7 +320,7 @@ void exitErrorCode(int errorCode){//TODO
             fprintf(stderr, "PC < MEMORY_SIZE_IN_WORDS");
             break;
     }
-    exit(2);
+    exit(ON);
 }
 
 void readInInstructions(int length,   BOFFILE file) {
@@ -352,7 +352,7 @@ void printRegContent(int lst) {
     //Print the info for each register
     for (int i = 0; i < NUM_REGISTERS; i++) {
         fprintf(traceFile, "GPR[%s]: %d\t", regname_get(i), GPR[i]);
-        if(i == 4){
+        if(i == NL){
             fprintf(traceFile, "\n");
         }
     }
@@ -427,7 +427,7 @@ void initRegisters(BOFFILE file) {
     }
 
     printProgramCounter();
-    printRegContent(0);
+    printRegContent(OFF);
 
     bof_close(file);//Close file
 }
@@ -441,14 +441,14 @@ void printData(FILE* stream, int data_start, int data_end, int lst) {
         int intValue = 0;
         unsigned unsignedValue  = 0;
 
-        int isInt = 1;
+        int isInt = ON;
 
         if (memory.words[i] != 0) {
             intValue = memory.words[i];
         }
-        if (memory.uwords[i]!=0) {
+        if (memory.uwords[i]!= 0) {
             unsignedValue = memory.uwords[i];
-            isInt = 0;
+            isInt = OFF;
         }
         if (memory.words[i] == 0) {
             if (consecZero == 0) {//First time a 0 is encountered
@@ -512,7 +512,7 @@ void handleBOFFile(char * file_name, int should_print) {
 
     if (should_print) {
         printInstructions(length);
-        printData(stdout, globalHeader.data_start_address,  GPR[SP]-1, 1);
+        printData(stdout, globalHeader.data_start_address, GPR[SP] - 1, 1);
     }
 
     processInstructions(length);
