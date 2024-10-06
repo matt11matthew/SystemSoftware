@@ -7,7 +7,7 @@
 #include "lexer.h"
 #include "ast.h"
 #include "spl_lexer_user_code.c"
-#include "spl.tab.h"
+//#include "spl.tab.h"
 
 // Global Vars
 
@@ -57,9 +57,13 @@ int main(int argc, char **argv) {
     }
     lexer_init(argv[1]);
     printf("INIT");
+    lexer_print_output_header();
 
-
+    if(lexer_has_errors()){// If lexer has no errors display output
+        lexer_output();
+    }
 //    loadFile(argv[1]);
 
+    yywrap();// Used to close file
     return 0;
 }
