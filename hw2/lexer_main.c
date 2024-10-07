@@ -9,7 +9,7 @@
 #include "spl_lexer_user_code.c"
 //#include "spl.tab.h"
 
-// Global Vars
+// Global Variables
 
 
 // Function Prototypes
