@@ -4,8 +4,10 @@
 // Includes
 #include <stdio.h>
 #include <stdlib.h>
-#include "lexer.h"
+//#include "lexer.h"
+#include "spl_lexer.h"
 #include "ast.h"
+#include "lexer.h"
 //#include "spl.tab.h"
 
 // Global Variables
@@ -55,14 +57,14 @@ int main(int argc, char **argv) {
         return 0;
     }
     lexer_init(argv[1]);
-    printf("INIT");
-    lexer_print_output_header();
-
-    if(lexer_has_errors()){// If lexer has no errors display output
-        lexer_output();
-    }
-//    loadFile(argv[1]);
-
+//    printf("INIT");
+//    lexer_print_output_header();
+//
+//    if(lexer_has_errors()){// If lexer has no errors display output
+//        lexer_output();
+//    }
+////    loadFile(argv[1]);
+//
 //    yywrap();// Used to close file
     return 0;
 }
