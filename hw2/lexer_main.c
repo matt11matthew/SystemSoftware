@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "lexer.h"
 #include "ast.h"
-#include "spl_lexer_user_code.c"
 //#include "spl.tab.h"
 
 // Global Variables
@@ -64,6 +63,6 @@ int main(int argc, char **argv) {
     }
 //    loadFile(argv[1]);
 
-    yywrap();// Used to close file
+//    yywrap();// Used to close file
     return 0;
 }
