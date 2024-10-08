@@ -84,9 +84,8 @@ static void number2ast(unsigned int val)
 
 %%
 
- /* fill in the rules for your lexer below! */
 
-/* $Id: spl_lexer_user_code.c,v 1.4 2024/10/06 18:43:01 leavens Exp leavens $ */
+
 
 %%
 
