@@ -84,9 +84,6 @@ static void number2ast(unsigned int val)
 
 %%
 
-
-
-
 %%
 
  /* This code goes in the user code section of the spl_lexer.l file,

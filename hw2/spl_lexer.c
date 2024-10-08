@@ -778,10 +778,7 @@ YY_DECL
 #line 86 "spl_lexer.l"
 
 
-
-
-
-#line 785 "spl_lexer.c"
+#line 782 "spl_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -850,10 +847,10 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 91 "spl_lexer.l"
+#line 88 "spl_lexer.l"
 ECHO;
 	YY_BREAK
-#line 857 "spl_lexer.c"
+#line 854 "spl_lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1870,7 +1867,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 91 "spl_lexer.l"
+#line 88 "spl_lexer.l"
 
 
  /* This code goes in the user code section of the spl_lexer.l file,

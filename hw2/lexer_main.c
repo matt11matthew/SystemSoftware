@@ -3,52 +3,12 @@
 //
 // Includes
 #include <stdio.h>
-#include <stdlib.h>
-//#include "lexer.h"
-#include "spl_lexer.h"
-#include "ast.h"
+
 #include "lexer.h"
-//#include "spl.tab.h"
-
-// Global Variables
-
-
-// Function Prototypes
-
-
-// Functions
+#include "parser_types.h"
 
 
 
-//
-//void lexer_output()
-//{
-//    lexer_print_output_header();
-//    AST dummy;
-//    yytoken_kind_t t;
-//    do {
-//        t = yylex(&dummy);
-//        if (t == YYEOF) {
-//            break;
-//        }
-//        lexer_print_token(t, yylineno, yytext);
-//    } while (t != YYEOF);
-//}
-//
-//void loadFile(char* name) {
-//    FILE *file = fopen(name, "r");
-//    if (!file) {
-//        fprintf(stderr, "Error: Could not open file %s\n", name);
-//        exit(1);
-//    }
-//
-//    // Assuming you have a function to set the file for the lexer
-//    yyin = file;
-//
-//    lexer_output();  // Start the lexing process
-//
-//    fclose(file);
-//}
 
 int main(int argc, char **argv) {
 
@@ -57,12 +17,11 @@ int main(int argc, char **argv) {
         return 0;
     }
     lexer_init(argv[1]);
-//    printf("INIT");
-//    lexer_print_output_header();
+    lexer_print_output_header();
 //
-//    if(lexer_has_errors()){// If lexer has no errors display output
-//        lexer_output();
-//    }
+    if(!lexer_has_errors()){// If lexer has no errors display output
+        lexer_output();
+    }
 ////    loadFile(argv[1]);
 //
 //    yywrap();// Used to close file
