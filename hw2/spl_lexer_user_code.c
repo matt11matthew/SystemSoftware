@@ -1,24 +1,9 @@
 /* $Id: spl_lexer_user_code.c,v 1.4 2024/10/06 18:43:01 leavens Exp leavens $ */
-#include <stdio.h>
-#include <stdlib.h>
-#include "lexer.h"
-#include "ast.h"
-#include "spl.tab.h"
-#include "utilities.h"
 
+%%
 
  /* This code goes in the user code section of the spl_lexer.l file,
    following the last %% above. */
-
-bool errors_noted = false;
-
-FILE *yyin;
-
-char *input_filename;
-
-unsigned int yylineno;
-
-const char *yytext;
 
 // Requires: fname != NULL
 // Requires: fname is the name of a readable file

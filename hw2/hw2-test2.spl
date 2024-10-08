@@ -1,4 +1,4 @@
-%%% $Id: hw2-test2.spl,v 1.2 2024/09/17 19:35:42 leavens Exp $ ###
+%%% $Id: hw2-test2.spl,v 1.3 2024/10/08 11:57:56 leavens Exp leavens $ ###
 
 % Another comment
 
@@ -9,5 +9,10 @@
 begin
   const big = 12345, two = 2;
   var x, y, z;
-  proc id; begin x := x end
+  proc id
+  begin
+    x := x
+  end;
+  x := 3402;
+  call id
 end.

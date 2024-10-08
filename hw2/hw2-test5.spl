@@ -1,8 +1,8 @@
-% $Id: hw2-test5.spl,v 1.4 2024/10/06 12:06:52 leavens Exp $
+% $Id: hw2-test5.spl,v 1.5 2024/10/08 11:57:56 leavens Exp leavens $
 begin
   var i, j, k;
-  var a b c     % syntax errors for SPL! missing commas!
-  const thirty 30, % syntax error, missing =
+  var a b c     % syntax errors for SPL! missing commas! missing semicolon!
+  const thirty  30, % syntax errors, const out of place, missing =
         fourty = 40. 
   proc aVeryLongName;  % syntax error, extra semicolon
      begin

@@ -1,4 +1,5 @@
-% $Id: hw2-test4.spl,v 1.3 2024/10/06 12:06:52 leavens Exp $
+% $Id: hw2-test4.spl,v 1.4 2024/10/08 11:57:56 leavens Exp leavens $
+% many lexical and syntax errors below!
 Notice that inputs to the lexer
 need not parse. This is the wrong procedure for SPL. write <>
 )( begin proc end print read if then else , ; divisible by
