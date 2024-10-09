@@ -7,6 +7,24 @@
 #include "lexer.h"
 #include "parser_types.h"
 #include "spl_lexer.h"
+#include "spl.tab.h"
+
+
+void t_lexer_output()
+{
+    lexer_print_output_header();
+    AST dummy;
+    yytoken_kind_t t;
+    do {
+        t = yylex(&dummy);
+
+        if (t == YYEOF) {
+
+            break;
+        }
+        lexer_print_token(t, yylineno, yytext);
+    } while (t != YYEOF);
+}
 
 
 int main(int argc, char **argv) {
@@ -16,17 +34,6 @@ int main(int argc, char **argv) {
         return 0;
     }
     lexer_init(argv[1]);
-    lexer_print_output_header();
-//
-
-    if(!lexer_has_errors()){// If lexer has no errors display output
-//        printf("NO ERRORS");
-        lexer_output();
-    } else {
-//        printf("ERRORS");
-    }
-////    loadFile(argv[1]);
-//
-    yywrap();// Used to close file
+    t_lexer_output();
     return 0;
 }
