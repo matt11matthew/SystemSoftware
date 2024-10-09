@@ -83,15 +83,28 @@ static void number2ast(unsigned int val)
  /* the rules section starts after the %% below */
 
 %%
-"%"[^\n]*      {}
-"var"                            {tok2ast(varsym); }
-"begin"                          { tok2ast(beginsym); }
-";"                              { tok2ast(semisym); }
-" " {}
-"\n" {}
-"."                                 { tok2ast(periodsym); }
 
-[A-Z]*       {ident2ast(yytext);}
+"%"[^\n]*       { }
+[\t]+ { }
+"\n" { }
+
+"var"                            {tok2ast(varsym);  return varsym;}
+"begin"                          { tok2ast(beginsym); return beginsym;}
+"end"                          { tok2ast(endsym); return endsym;}
+
+
+";"                              { tok2ast(semisym); return semisym;}
+":="                              { tok2ast(becomessym); return becomessym; }
+[0-9]                             { number2ast(atoi(yytext)); }
+
+"."                                 { tok2ast(periodsym); return periodsym; }
+
+
+
+
+
+
+
 %%
 
  /* This code goes in the user code section of the spl_lexer.l file,
@@ -176,6 +189,7 @@ void lexer_output()
     yytoken_kind_t t;
     do {
 	t = yylex(&dummy);
+
 	if (t == YYEOF) {
 	    break;
         }

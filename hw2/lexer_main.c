@@ -10,21 +10,7 @@
 #include "spl.tab.h"
 
 
-void t_lexer_output()
-{
-    lexer_print_output_header();
-    AST dummy;
-    yytoken_kind_t t;
-    do {
-        t = yylex(&dummy);
 
-        if (t == YYEOF) {
-
-            break;
-        }
-        lexer_print_token(t, yylineno, yytext);
-    } while (t != YYEOF);
-}
 
 
 int main(int argc, char **argv) {
@@ -34,6 +20,15 @@ int main(int argc, char **argv) {
         return 0;
     }
     lexer_init(argv[1]);
-    t_lexer_output();
+    lexer_output();
+////    lexer_output();
+//lexer_print_output_header();
+//
+//    AST dummy;
+//    yytoken_kind_t t = yylex(&dummy);
+//    lexer_print_token(t,1,"test");
+//    fflush(stdout);
+//
+
     return 0;
 }
