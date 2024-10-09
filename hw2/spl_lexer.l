@@ -84,6 +84,41 @@ static void number2ast(unsigned int val)
 
 %%
 
+"begin"                          { tok2ast(beginsym); }
+"var"                            { tok2ast(varsym); }
+"const"                          { tok2ast(constsym); }
+"proc"                           { tok2ast(procsym); }
+"call"                           { tok2ast(callsym); }
+"end"                            { tok2ast(endsym); }
+"if"                             { tok2ast(ifsym); }
+"then"                           { tok2ast(thensym); }
+"else"                           { tok2ast(elsesym); }
+"while"                          { tok2ast(whilesym); }
+"do"                             { tok2ast(dosym); }
+"read"                           { tok2ast(readsym); }
+"print"                          { tok2ast(printsym); }
+"divisible"                      { tok2ast(divisiblesym); }
+"by"                             { tok2ast(bysym); }
+
+"+"                              { tok2ast(plussym); }
+"-"                              { tok2ast(minussym); }
+"*"                              { tok2ast(multsym); }
+"/"                              { tok2ast(divsym); }
+"=="                             { tok2ast(eqeqsym); }
+"!="                             { tok2ast(neqsym); }
+"<="                             { tok2ast(leqsym); }
+">="                             { tok2ast(geqsym); }
+"<"                              { tok2ast(ltsym); }
+">"                              { tok2ast(gtsym); }
+"="                              { tok2ast(eqsym); }
+":="                             { tok2ast(becomessym); }
+";"                              { tok2ast(semisym); }
+","                              { tok2ast(commasym); }
+"\\."                            { tok2ast(periodsym); }
+"\\("                            { tok2ast(lparensym); }
+"\\)"                            { tok2ast(rparensym); }
+
+
 %%
 
  /* This code goes in the user code section of the spl_lexer.l file,
@@ -169,6 +204,7 @@ void lexer_output()
     do {
 	t = yylex(&dummy);
 	if (t == YYEOF) {
+
 	    break;
         }
         lexer_print_token(t, yylineno, yytext);
