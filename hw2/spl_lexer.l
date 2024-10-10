@@ -126,10 +126,10 @@ static void number2ast(unsigned int val)
 
 [A-Za-z][A-Za-z0-9]* {
 
-ident2ast(yytext); //saves word
-tok2ast(identsym);  //Casts token
+    ident2ast(yytext); //saves word
+    tok2ast(identsym);  //Casts token
 
-return identsym; //Return code
+    return identsym; //Return code
 }
 
 
@@ -138,17 +138,17 @@ return identsym; //Return code
 
 [0-9]+  {
 
-long long number = atoll(yytext); //Extract
+    long long number = atoll(yytext); //Extract
 
-if (number > INT_MAX) {
-  char buffer[200]; //Create buffer
-  sprintf(buffer, "Number (%s) is too large!", yytext); //Flush string to buffer
-  yyerror("", buffer); //Pushes into buffer
+    if (number > INT_MAX) {
+      char buffer[200]; //Create buffer
+      sprintf(buffer, "Number (%s) is too large!", yytext); //Flush string to buffer
+      yyerror("", buffer); //Pushes into buffer
 
-}
-number2ast(number); //Store number
-tok2ast(numbersym); //Craete token
-return numbersym; //Return symcode
+    }
+    number2ast(number); //Store number
+    tok2ast(numbersym); //Craete token
+    return numbersym; //Return symcode
 
 
 }
