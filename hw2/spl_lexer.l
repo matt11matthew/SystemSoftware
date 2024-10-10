@@ -84,26 +84,80 @@ static void number2ast(unsigned int val)
 
 %%
 
-"%"[^\n]*       { }
-[\t]+ { }
-"\n" { }
+"%"[^\n]*       {/* Ignore single-line comments */}
+[\t]+ { /* Ignore spaces and tabs */ }
+\n {  }
 
 "var"                            {tok2ast(varsym);  return varsym;}
 "begin"                          { tok2ast(beginsym); return beginsym;}
-"end"                          { tok2ast(endsym); return endsym;}
+"end"                            { tok2ast(endsym); return endsym;}
+"const"                          { tok2ast(constsym); return constsym; }
+"proc"                           { tok2ast(procsym); return procsym; }
+"call"                           { tok2ast(callsym); return callsym; }
+"if"                             { tok2ast(ifsym); return ifsym; }
+"then"                           { tok2ast(thensym); return thensym; }
+"else"                           { tok2ast(elsesym); return elsesym; }
+"while"                          { tok2ast(whilesym); return whilesym; }
+"do"                             { tok2ast(dosym); return dosym; }
+"read"                           { tok2ast(readsym); return readsym; }
+"print"                          { tok2ast(printsym); return printsym; }
+"divisible"                      { tok2ast(divisiblesym); return divisiblesym; }
+"by"                             { tok2ast(bysym); return bysym; }
 
 
 ";"                              { tok2ast(semisym); return semisym;}
-":="                              { tok2ast(becomessym); return becomessym; }
-[0-9]                             { number2ast(atoi(yytext)); }
+":="                             { tok2ast(becomessym); return becomessym; }
+"+"                              { tok2ast(plussym); return plussym; }
+"-"                              { tok2ast(minussym); return minussym; }
+"*"                              { tok2ast(multsym); return multsym; }
+"/"                              { tok2ast(divsym); return divsym; }
+"=="                             { tok2ast(eqeqsym); return eqeqsym; }
+"!="                             { tok2ast(neqsym); return neqsym; }
+"<="                             { tok2ast(leqsym); return leqsym; }
+">="                             { tok2ast(geqsym); return geqsym; }
+"<"                              { tok2ast(ltsym); return ltsym; }
+">"                              { tok2ast(gtsym); return gtsym; }
+"="                              { tok2ast(eqsym); return eqsym; }
+","                              { tok2ast(commasym); return commasym; }
+"("                              { tok2ast(lparensym); return lparensym; }
+")"                              { tok2ast(rparensym); return rparensym; }
+"."                              { tok2ast(periodsym); return periodsym; }
 
-"."                                 { tok2ast(periodsym); return periodsym; }
+
+[A-Za-z][A-Za-z0-9]* {ident2ast(yytext); tok2ast(identsym); return identsym;}
 
 
 
 
+[0-9]+  {
+
+long long number = atoll(yytext);
+
+if (number>INT_MAX) {
+  char buffer[200];
+   sprintf(buffer, "Number (%s) is too large!", yytext);
+   yyerror("", buffer);
+
+}
+number2ast(number);
+tok2ast(numbersym);
+return numbersym;
 
 
+}
+
+[#|!?'"&] {
+    char buffer[100];
+    sprintf(buffer, "invalid character: '%c' ('\\%03o')", yytext[0], yytext[0]);
+    yyerror("", buffer);
+}
+
+
+[}{_^] {
+    char buffer[100];
+    sprintf(buffer, "invalid character: '%c' ('\\%04o')", yytext[0], yytext[0]);
+    yyerror("", buffer);
+}
 
 %%
 

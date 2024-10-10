@@ -4,3 +4,4 @@ CMakeLists.txt
 *.exe
 *.o
 *.myo
+*.zip
