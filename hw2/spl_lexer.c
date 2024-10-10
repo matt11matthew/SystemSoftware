@@ -928,212 +928,218 @@ YY_RULE_SETUP
 case 4:
 YY_RULE_SETUP
 #line 92 "spl_lexer.l"
-{tok2ast(varsym);  return varsym;}
+/*Saves token and returns token*/   {tok2ast(varsym);  return varsym;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
 #line 93 "spl_lexer.l"
-{ tok2ast(beginsym); return beginsym;}
+/*Saves token and returns token*/  { tok2ast(beginsym); return beginsym;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
 #line 94 "spl_lexer.l"
-{ tok2ast(endsym); return endsym;}
+/*Saves token and returns token*/   { tok2ast(endsym); return endsym;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
 #line 95 "spl_lexer.l"
-{ tok2ast(constsym); return constsym; }
+/*Saves token and returns token*/   { tok2ast(constsym); return constsym; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
 #line 96 "spl_lexer.l"
-{ tok2ast(procsym); return procsym; }
+/*Saves token and returns token*/  { tok2ast(procsym); return procsym; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
 #line 97 "spl_lexer.l"
-{ tok2ast(callsym); return callsym; }
+/*Saves token and returns token*/  { tok2ast(callsym); return callsym; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
 #line 98 "spl_lexer.l"
-{ tok2ast(ifsym); return ifsym; }
+/*Saves token and returns token*/  { tok2ast(ifsym); return ifsym; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
 #line 99 "spl_lexer.l"
-{ tok2ast(thensym); return thensym; }
+/*Saves token and returns token*/  { tok2ast(thensym); return thensym; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 100 "spl_lexer.l"
-{ tok2ast(elsesym); return elsesym; }
+/*Saves token and returns token*/{ tok2ast(elsesym); return elsesym; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
 #line 101 "spl_lexer.l"
-{ tok2ast(whilesym); return whilesym; }
+/*Saves token and returns token*/{ tok2ast(whilesym); return whilesym; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
 #line 102 "spl_lexer.l"
-{ tok2ast(dosym); return dosym; }
+/*Saves token and returns token*/{ tok2ast(dosym); return dosym; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
 #line 103 "spl_lexer.l"
-{ tok2ast(readsym); return readsym; }
+/*Saves token and returns token*/{ tok2ast(readsym); return readsym; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
 #line 104 "spl_lexer.l"
-{ tok2ast(printsym); return printsym; }
+/*Saves token and returns token*/ { tok2ast(printsym); return printsym; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
 #line 105 "spl_lexer.l"
-{ tok2ast(divisiblesym); return divisiblesym; }
+/*Saves token and returns token*/  { tok2ast(divisiblesym); return divisiblesym; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 106 "spl_lexer.l"
-{ tok2ast(bysym); return bysym; }
+/*Saves token and returns token*/  { tok2ast(bysym); return bysym; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 109 "spl_lexer.l"
-{ tok2ast(semisym); return semisym;}
+/*Saves token and returns token*/  { tok2ast(semisym); return semisym;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
 #line 110 "spl_lexer.l"
-{ tok2ast(becomessym); return becomessym; }
+/*Saves token and returns token*/ { tok2ast(becomessym); return becomessym; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
 #line 111 "spl_lexer.l"
-{ tok2ast(plussym); return plussym; }
+/*Saves token and returns token*/ { tok2ast(plussym); return plussym; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 112 "spl_lexer.l"
-{ tok2ast(minussym); return minussym; }
+/*Saves token and returns token*/  { tok2ast(minussym); return minussym; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
 #line 113 "spl_lexer.l"
-{ tok2ast(multsym); return multsym; }
+/*Saves token and returns token*/  { tok2ast(multsym); return multsym; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 114 "spl_lexer.l"
-{ tok2ast(divsym); return divsym; }
+/*Saves token and returns token*/  { tok2ast(divsym); return divsym; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
 #line 115 "spl_lexer.l"
-{ tok2ast(eqeqsym); return eqeqsym; }
+/*Saves token and returns token*/ { tok2ast(eqeqsym); return eqeqsym; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
 #line 116 "spl_lexer.l"
-{ tok2ast(neqsym); return neqsym; }
+/*Saves token and returns token*/ { tok2ast(neqsym); return neqsym; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
 #line 117 "spl_lexer.l"
-{ tok2ast(leqsym); return leqsym; }
+/*Saves token and returns token*/ { tok2ast(leqsym); return leqsym; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
 #line 118 "spl_lexer.l"
-{ tok2ast(geqsym); return geqsym; }
+/*Saves token and returns token*/  { tok2ast(geqsym); return geqsym; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
 #line 119 "spl_lexer.l"
-{ tok2ast(ltsym); return ltsym; }
+/*Saves token and returns token*/  { tok2ast(ltsym); return ltsym; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
 #line 120 "spl_lexer.l"
-{ tok2ast(gtsym); return gtsym; }
+/*Saves token and returns token*/  { tok2ast(gtsym); return gtsym; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
 #line 121 "spl_lexer.l"
-{ tok2ast(eqsym); return eqsym; }
+/*Saves token and returns token*/  { tok2ast(eqsym); return eqsym; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
 #line 122 "spl_lexer.l"
-{ tok2ast(commasym); return commasym; }
+/*Saves token and returns token*/  { tok2ast(commasym); return commasym; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
 #line 123 "spl_lexer.l"
-{ tok2ast(lparensym); return lparensym; }
+/*Saves token and returns token*/ { tok2ast(lparensym); return lparensym; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
 #line 124 "spl_lexer.l"
-{ tok2ast(rparensym); return rparensym; }
+/*Saves token and returns token*/ { tok2ast(rparensym); return rparensym; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
 #line 125 "spl_lexer.l"
-{ tok2ast(periodsym); return periodsym; }
+/*Saves token and returns token*/ { tok2ast(periodsym); return periodsym; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
 #line 128 "spl_lexer.l"
-{ident2ast(yytext); tok2ast(identsym); return identsym;}
+{
+
+ident2ast(yytext); //saves word
+tok2ast(identsym);  //Casts token
+
+return identsym; //Return code
+}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 133 "spl_lexer.l"
+#line 140 "spl_lexer.l"
 {
 
-long long number = atoll(yytext);
+long long number = atoll(yytext); //Extract
 
-if (number>INT_MAX) {
-  char buffer[200];
-   sprintf(buffer, "Number (%s) is too large!", yytext);
-   yyerror("", buffer);
+if (number > INT_MAX) {
+  char buffer[200]; //Create buffer
+  sprintf(buffer, "Number (%s) is too large!", yytext); //Flush string to buffer
+  yyerror("", buffer); //Pushes into buffer
 
 }
-number2ast(number);
-tok2ast(numbersym);
-return numbersym;
+number2ast(number); //Store number
+tok2ast(numbersym); //Craete token
+return numbersym; //Return symcode
 
 
 }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 150 "spl_lexer.l"
+#line 157 "spl_lexer.l"
 {
     char buffer[100];
-    sprintf(buffer, "invalid character: '%c' ('\\%03o')", yytext[0], yytext[0]);
+    sprintf(buffer, "invalid character: '%c' ('\\%03o')", yytext[0], yytext[0]);//Push to buffer
     yyerror("", buffer);
 }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 157 "spl_lexer.l"
+#line 164 "spl_lexer.l"
 {
     char buffer[100];
-    sprintf(buffer, "invalid character: '%c' ('\\%04o')", yytext[0], yytext[0]);
+    sprintf(buffer, "invalid character: '%c' ('\\%04o')", yytext[0], yytext[0]); //Push to buffer
     yyerror("", buffer);
 }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 163 "spl_lexer.l"
+#line 170 "spl_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1137 "spl_lexer.c"
+#line 1143 "spl_lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2150,7 +2156,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 163 "spl_lexer.l"
+#line 170 "spl_lexer.l"
 
 
  /* This code goes in the user code section of the spl_lexer.l file,

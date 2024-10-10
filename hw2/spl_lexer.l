@@ -88,74 +88,81 @@ static void number2ast(unsigned int val)
 [\t]+ { /* Ignore spaces and tabs */ }
 \n {  }
 
-"var"                            {tok2ast(varsym);  return varsym;}
-"begin"                          { tok2ast(beginsym); return beginsym;}
-"end"                            { tok2ast(endsym); return endsym;}
-"const"                          { tok2ast(constsym); return constsym; }
-"proc"                           { tok2ast(procsym); return procsym; }
-"call"                           { tok2ast(callsym); return callsym; }
-"if"                             { tok2ast(ifsym); return ifsym; }
-"then"                           { tok2ast(thensym); return thensym; }
-"else"                           { tok2ast(elsesym); return elsesym; }
-"while"                          { tok2ast(whilesym); return whilesym; }
-"do"                             { tok2ast(dosym); return dosym; }
-"read"                           { tok2ast(readsym); return readsym; }
-"print"                          { tok2ast(printsym); return printsym; }
-"divisible"                      { tok2ast(divisiblesym); return divisiblesym; }
-"by"                             { tok2ast(bysym); return bysym; }
+"var"                         /*Saves token and returns token*/   {tok2ast(varsym);  return varsym;}
+"begin"                         /*Saves token and returns token*/  { tok2ast(beginsym); return beginsym;}
+"end"                          /*Saves token and returns token*/   { tok2ast(endsym); return endsym;}
+"const"                        /*Saves token and returns token*/   { tok2ast(constsym); return constsym; }
+"proc"                          /*Saves token and returns token*/  { tok2ast(procsym); return procsym; }
+"call"                          /*Saves token and returns token*/  { tok2ast(callsym); return callsym; }
+"if"                           /*Saves token and returns token*/  { tok2ast(ifsym); return ifsym; }
+"then"                          /*Saves token and returns token*/  { tok2ast(thensym); return thensym; }
+"else"                            /*Saves token and returns token*/{ tok2ast(elsesym); return elsesym; }
+"while"                           /*Saves token and returns token*/{ tok2ast(whilesym); return whilesym; }
+"do"                              /*Saves token and returns token*/{ tok2ast(dosym); return dosym; }
+"read"                            /*Saves token and returns token*/{ tok2ast(readsym); return readsym; }
+"print"                          /*Saves token and returns token*/ { tok2ast(printsym); return printsym; }
+"divisible"                     /*Saves token and returns token*/  { tok2ast(divisiblesym); return divisiblesym; }
+"by"                            /*Saves token and returns token*/  { tok2ast(bysym); return bysym; }
 
 
-";"                              { tok2ast(semisym); return semisym;}
-":="                             { tok2ast(becomessym); return becomessym; }
-"+"                              { tok2ast(plussym); return plussym; }
-"-"                              { tok2ast(minussym); return minussym; }
-"*"                              { tok2ast(multsym); return multsym; }
-"/"                              { tok2ast(divsym); return divsym; }
-"=="                             { tok2ast(eqeqsym); return eqeqsym; }
-"!="                             { tok2ast(neqsym); return neqsym; }
-"<="                             { tok2ast(leqsym); return leqsym; }
-">="                             { tok2ast(geqsym); return geqsym; }
-"<"                              { tok2ast(ltsym); return ltsym; }
-">"                              { tok2ast(gtsym); return gtsym; }
-"="                              { tok2ast(eqsym); return eqsym; }
-","                              { tok2ast(commasym); return commasym; }
-"("                              { tok2ast(lparensym); return lparensym; }
-")"                              { tok2ast(rparensym); return rparensym; }
-"."                              { tok2ast(periodsym); return periodsym; }
+";"                             /*Saves token and returns token*/  { tok2ast(semisym); return semisym;}
+":="                             /*Saves token and returns token*/ { tok2ast(becomessym); return becomessym; }
+"+"                              /*Saves token and returns token*/ { tok2ast(plussym); return plussym; }
+"-"                             /*Saves token and returns token*/  { tok2ast(minussym); return minussym; }
+"*"                             /*Saves token and returns token*/  { tok2ast(multsym); return multsym; }
+"/"                             /*Saves token and returns token*/  { tok2ast(divsym); return divsym; }
+"=="                             /*Saves token and returns token*/ { tok2ast(eqeqsym); return eqeqsym; }
+"!="                             /*Saves token and returns token*/ { tok2ast(neqsym); return neqsym; }
+"<="                             /*Saves token and returns token*/ { tok2ast(leqsym); return leqsym; }
+">="                            /*Saves token and returns token*/  { tok2ast(geqsym); return geqsym; }
+"<"                             /*Saves token and returns token*/  { tok2ast(ltsym); return ltsym; }
+">"                             /*Saves token and returns token*/  { tok2ast(gtsym); return gtsym; }
+"="                             /*Saves token and returns token*/  { tok2ast(eqsym); return eqsym; }
+","                             /*Saves token and returns token*/  { tok2ast(commasym); return commasym; }
+"("                              /*Saves token and returns token*/ { tok2ast(lparensym); return lparensym; }
+")"                              /*Saves token and returns token*/ { tok2ast(rparensym); return rparensym; }
+"."                              /*Saves token and returns token*/ { tok2ast(periodsym); return periodsym; }
 
 
-[A-Za-z][A-Za-z0-9]* {ident2ast(yytext); tok2ast(identsym); return identsym;}
+[A-Za-z][A-Za-z0-9]* {
+
+ident2ast(yytext); //saves word
+tok2ast(identsym);  //Casts token
+
+return identsym; //Return code
+}
+
 
 
 
 
 [0-9]+  {
 
-long long number = atoll(yytext);
+long long number = atoll(yytext); //Extract
 
-if (number>INT_MAX) {
-  char buffer[200];
-   sprintf(buffer, "Number (%s) is too large!", yytext);
-   yyerror("", buffer);
+if (number > INT_MAX) {
+  char buffer[200]; //Create buffer
+  sprintf(buffer, "Number (%s) is too large!", yytext); //Flush string to buffer
+  yyerror("", buffer); //Pushes into buffer
 
 }
-number2ast(number);
-tok2ast(numbersym);
-return numbersym;
+number2ast(number); //Store number
+tok2ast(numbersym); //Craete token
+return numbersym; //Return symcode
 
 
 }
 
 [#|!?'"&] {
     char buffer[100];
-    sprintf(buffer, "invalid character: '%c' ('\\%03o')", yytext[0], yytext[0]);
+    sprintf(buffer, "invalid character: '%c' ('\\%03o')", yytext[0], yytext[0]);//Push to buffer
     yyerror("", buffer);
 }
 
 
 [}{_^] {
     char buffer[100];
-    sprintf(buffer, "invalid character: '%c' ('\\%04o')", yytext[0], yytext[0]);
+    sprintf(buffer, "invalid character: '%c' ('\\%04o')", yytext[0], yytext[0]); //Push to buffer
     yyerror("", buffer);
 }
 
