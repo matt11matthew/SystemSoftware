@@ -117,7 +117,11 @@ extern void setProgAST(block_t t);
 
 %%
 
+program : block "." { setProgAST($1); } ;
 
+block : "begin" constDecls varDecls procDecls stmts "end"
+        { $$ = ast_block($1,$2,$3,$4,$5); }
+        ;
 
 %%
 
