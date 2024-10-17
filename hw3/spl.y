@@ -123,6 +123,21 @@ block : "begin" constDecls varDecls procDecls stmts "end"
         { $$ = ast_block($1,$2,$3,$4,$5); }
         ;
 
+constDecls : empty { $$ = ast_const_decls_empty($1); } ;
+
+varDecls : empty { $$ = ast_var_decls_empty($1); } ;
+
+procDecls : empty { $$ = ast_proc_decls_empty($1); } ;
+
+stmts : empty { $$ = ast_stmts_empty($1); } ;
+
+empty : %empty
+        { file_location *file_loc
+	     = file_location_make(lexer_filename(), lexer_line());
+          $$ = ast_empty(file_loc);
+	}
+        ;
+
 %%
 
 // Set the program's ast to be ast
