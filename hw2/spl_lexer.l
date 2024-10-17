@@ -123,7 +123,6 @@ static void number2ast(unsigned int val)
 ")"                              /*Saves token and returns token*/ { tok2ast(rparensym); return rparensym; }
 "."                              /*Saves token and returns token*/ { tok2ast(periodsym); return periodsym; }
 
-
 [A-Za-z][A-Za-z0-9]* {
 
     ident2ast(yytext); //saves word
