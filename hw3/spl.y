@@ -117,10 +117,10 @@ extern void setProgAST(block_t t);
 
 %%
 
-program : block "." {
+program : block periodsym {
 setProgAST($1); } ;
 
-block : "begin" constDecls varDecls procDecls stmts "end" {
+block : beginsym constDecls varDecls procDecls stmts endsym {
 
 $$ = ast_block($1,$2,$3,$4,$5); }
         ;
@@ -132,7 +132,7 @@ constDecls : constDecls ';' constDecl
               }
             | constDecl
               {
-              printf("2");
+
 
                 empty_t empty = ast_empty($1.file_loc);
                 const_decls_t empty_const_decls = ast_const_decls_empty(empty);
@@ -140,22 +140,19 @@ constDecls : constDecls ';' constDecl
               }
             | empty
               {
-                       printf("3");
+
                 $$ = ast_const_decls_empty($1);
               }
             ;
 
 
 
-constDecl : "const" constDefList ";" {
-    printf("%s", $1);
-    printf("%s", $1);
-    printf("%s", $1);
-    printf("%s", $1);
-    printf("%s", $1);
+constDecl : constsym constDefList semisym {
+    printf("test");
+
 }
 ;
-constDefList: {}
+constDefList : constDef  | constDefList commasym constDef
 
 constDef : identsym eqsym numbersym {}
 
