@@ -117,70 +117,131 @@ extern void setProgAST(block_t t);
 
 %%
 
-program : block periodsym {
-setProgAST($1); } ;
+program : block periodsym {setProgAST($1); };
 
-block : beginsym constDecls varDecls procDecls stmts endsym {
+block : beginsym constDecls varDecls procDecls stmts endsym {$$ = ast_block($1,$2,$3,$4,$5); };
 
-$$ = ast_block($1,$2,$3,$4,$5); }
-        ;
-constDecls : constDecls ';' constDecl
+constDecls : constDecls semisym constDecl
               {
-                printf("1");
-
                 $$ = ast_const_decls($1, $3);
               }
             | constDecl
               {
-
-
                 empty_t empty = ast_empty($1.file_loc);
                 const_decls_t empty_const_decls = ast_const_decls_empty(empty);
                 $$ = ast_const_decls(empty_const_decls, $1);
               }
             | empty
               {
-
                 $$ = ast_const_decls_empty($1);
-              }
-            ;
-
-
+              };
 
 constDecl : constsym constDefList semisym {
-    printf("test");
+    const_def_list_t list = $2;
 
-}
-;
-constDefList : constDef  | constDefList commasym constDef
+    $$ = ast_const_decl(list);
+};
 
-constDef : identsym eqsym numbersym {}
+constDefList
+    : constDef
+      {
+        $$ = ast_const_def_list_singleton($1);
+      }
+    | constDefList commasym constDef
+      {
+        $$ = ast_const_def_list($1, $3);
+      };
 
-varDecls : empty { }
+constDef
+    : identsym eqsym numbersym
+      {
+        $$ = ast_const_def($1, $3);
+      }
 ;
-/*
-varDecl :"var"  empty {} ";"
-;
-identList : identsym |
-*/
-blocksym: {}
+
+constDef : identsym eqsym numbersym {
+    $$ = ast_const_def($1, $3);
+};
+
+varDecls: empty { $$ = ast_var_decls_empty($1); } ;
+
+varDecl : varsym identList { $$ ast_var_decl($2); };
+
+identList : identsym | identList commasym identsym;
+ 
 procDecls : empty { $$ = ast_proc_decls_empty($1); } ;
 
-procDecl : "proc" identsym blocksym
-;
+procDecl : procsym identsym block;
 
-stmts : empty { $$ = ast_stmts_empty($1); } ;
+stmts : empty { $$ = ast_stmts_empty($1); } | stmtList {
+  //Statement list case
+  $$ = ast_stmts($1);
+};
 
 empty : %empty
         { file_location *file_loc
 	     = file_location_make(lexer_filename(), lexer_line());
           $$ = ast_empty(file_loc);
-	}
-        ;
+};
 
+stmtList :  stmt {
+            $$ =  ast_stmt_list_singleton($1);
+            } |
+            stmtList semisym stmt {
+            $$ = ast_stmt_list($1, $3);
+            };
 
+stmt :
+ assignStmt { $$ = ast_stmt_assign($1); }
+ | callStmt  { $$ = ast_stmt_call($1); }
+ | ifStmt  { $$ = ast_stmt_if($1); }
+ | whileStmt { $$ = ast_stmt_while($1); }
+ | readStmt  { $$ = ast_stmt_read($1); }
+ | printStmt {
+    $$ = ast_stmt_print($1);
+ }
+ | blockStmt { $$ = ast_stmt_block($1); };
+
+assignStmt: identsym becomessym expr{ $$ = ast_assign_stmt($1, $3); };
+
+callStmt: callsym identsym{$$ = ast_call_stmt($2); };
+
+ifStmt: ifsym condition thensym stmts elsesym stmts endsym
+    { $$ = ast_if_then_else_stmt($2, $4, $6); }
+    | ifsym condition thensym stmts endsym
+    { $$ = ast_if_then_stmt($2, $4); };
+
+whileStmt: whilesym condition dosym stmts endsym{ $$ = ast_while_stmt($2, $4); };
+
+readStmt: readsym identsym{ $$ = ast_read_stmt($2); };
+
+printStmt: printsym expr {
+ //$$ = ast_print_stmt($2);
+ };
+
+blockStmt: block { $$ =  ast_block_stmt($1); };
+
+condition : dbCondition | relOpCondition
+dbCondition : divisiblesym expr bysym expr
+relOpCondition : expr relOp expr
+relOp : eqeqsym | neqsym | ltsym | leqsym | gtsym | geqsym
+
+expr : term {
+
+}
+| expr plussym term {
+
+}
+| expr minussym term {
+
+};
+
+term : factor | term multsym factor | term divsym factor;
+factor : identsym | numbersym | sign factor | lparensym expr rparensym;
+sign : minussym | plussym;
 
 %%
+
 
 // Set the program's ast to be ast
 void setProgAST(block_t ast) { progast = ast; }

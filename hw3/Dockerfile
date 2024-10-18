@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     flex \
     bison \
+    valgrind \
     vim \
     && apt-get clean
 
