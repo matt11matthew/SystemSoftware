@@ -136,14 +136,17 @@ enum yysymbol_kind_t
   YYSYMBOL_leqsym = 34,                    /* "<="  */
   YYSYMBOL_gtsym = 35,                     /* ">"  */
   YYSYMBOL_geqsym = 36,                    /* ">="  */
-  YYSYMBOL_YYACCEPT = 37,                  /* $accept  */
-  YYSYMBOL_program = 38,                   /* program  */
-  YYSYMBOL_block = 39,                     /* block  */
-  YYSYMBOL_constDecls = 40,                /* constDecls  */
-  YYSYMBOL_varDecls = 41,                  /* varDecls  */
-  YYSYMBOL_procDecls = 42,                 /* procDecls  */
-  YYSYMBOL_stmts = 43,                     /* stmts  */
-  YYSYMBOL_empty = 44                      /* empty  */
+  YYSYMBOL_37_ = 37,                       /* ';'  */
+  YYSYMBOL_YYACCEPT = 38,                  /* $accept  */
+  YYSYMBOL_program = 39,                   /* program  */
+  YYSYMBOL_block = 40,                     /* block  */
+  YYSYMBOL_constDecls = 41,                /* constDecls  */
+  YYSYMBOL_constDecl = 42,                 /* constDecl  */
+  YYSYMBOL_constDefList = 43,              /* constDefList  */
+  YYSYMBOL_varDecls = 44,                  /* varDecls  */
+  YYSYMBOL_procDecls = 45,                 /* procDecls  */
+  YYSYMBOL_stmts = 46,                     /* stmts  */
+  YYSYMBOL_empty = 47                      /* empty  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -162,7 +165,7 @@ block_t progast;
  /* Set the program's ast to be t */
 extern void setProgAST(block_t t);
 
-#line 166 "spl.tab.c"
+#line 169 "spl.tab.c"
 
 #ifdef short
 # undef short
@@ -463,18 +466,18 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  6
+#define YYFINAL  8
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   6
+#define YYLAST   11
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  37
+#define YYNTOKENS  38
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  8
+#define YYNNTS  10
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  8
+#define YYNRULES  12
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  15
+#define YYNSTATES  21
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   291
@@ -496,7 +499,7 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,    37,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -527,7 +530,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   120,   120,   122,   126,   128,   130,   132,   134
+       0,   120,   120,   123,   127,   131,   137,   145,   149,   153,
+     161,   166,   168
 };
 #endif
 
@@ -548,14 +552,14 @@ yysymbol_name (yysymbol_kind_t yysymbol)
   "-", "*", "/", ".", ";", "=", ",", ":=", "(", ")", "const", "var",
   "proc", "call", "begin", "end", "if", "then", "else", "while", "do",
   "read", "print", "divisible", "by", "==", "!=", "<", "<=", ">", ">=",
-  "$accept", "program", "block", "constDecls", "varDecls", "procDecls",
-  "stmts", "empty", YY_NULLPTR
+  "';'", "$accept", "program", "block", "constDecls", "constDecl",
+  "constDefList", "varDecls", "procDecls", "stmts", "empty", YY_NULLPTR
   };
   return yy_sname[yysymbol];
 }
 #endif
 
-#define YYPACT_NINF (-20)
+#define YYPACT_NINF (-34)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -569,8 +573,9 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-     -19,   -20,     2,    -6,   -20,   -20,   -20,   -20,   -20,   -20,
-     -20,   -20,   -16,   -20,   -20
+     -19,   -14,     3,    -4,   -34,   -33,   -34,   -34,   -34,   -34,
+      -2,   -14,   -34,   -34,   -34,   -34,   -34,   -34,   -15,   -34,
+     -34
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -578,20 +583,21 @@ static const yytype_int8 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     8,     0,     0,     8,     4,     1,     2,     8,     5,
-       8,     6,     0,     7,     3
+       0,    12,     0,     0,     8,    12,     5,     6,     1,     2,
+       0,     0,    12,     9,     7,     4,    12,    10,     0,    11,
+       3
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -20,   -20,   -20,   -20,   -20,   -20,   -20,    -4
+     -34,   -34,   -34,   -34,    -1,   -34,   -34,   -34,   -34,    -5
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     2,     3,     4,     8,    10,    12,     5
+       0,     2,     3,     5,     6,    10,    12,    16,    18,     7
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -599,32 +605,37 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-       9,     1,     6,     7,    11,    14,    13
+      13,     1,     4,     8,    11,     9,    20,    17,    14,     0,
+      15,    19
 };
 
 static const yytype_int8 yycheck[] =
 {
-       4,    20,     0,     9,     8,    21,    10
+       5,    20,    16,     0,    37,     9,    21,    12,    10,    -1,
+      11,    16
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,    20,    38,    39,    40,    44,     0,     9,    41,    44,
-      42,    44,    43,    44,    21
+       0,    20,    39,    40,    16,    41,    42,    47,     0,     9,
+      43,    37,    44,    47,    10,    42,    45,    47,    46,    47,
+      21
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    37,    38,    39,    40,    41,    42,    43,    44
+       0,    38,    39,    40,    41,    41,    41,    42,    43,    44,
+      45,    46,    47
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     2,     6,     1,     1,     1,     1,     0
+       0,     2,     2,     6,     3,     1,     1,     3,     0,     1,
+       1,     1,     0
 };
 
 
@@ -1686,51 +1697,88 @@ yyreduce:
       {
   case 2: /* program: block "."  */
 #line 120 "spl.y"
-                    { setProgAST((yyvsp[-1].block)); }
-#line 1691 "spl.tab.c"
+                    {
+setProgAST((yyvsp[-1].block)); }
+#line 1703 "spl.tab.c"
     break;
 
   case 3: /* block: "begin" constDecls varDecls procDecls stmts "end"  */
 #line 123 "spl.y"
-        { (yyval.block) = ast_block((yyvsp[-5].token),(yyvsp[-4].const_decls),(yyvsp[-3].var_decls),(yyvsp[-2].proc_decls),(yyvsp[-1].stmts)); printf("%s", (yyval.block)); }
-#line 1697 "spl.tab.c"
+                                                          {
+
+(yyval.block) = ast_block((yyvsp[-5].token),(yyvsp[-4].const_decls),(yyvsp[-3].var_decls),(yyvsp[-2].proc_decls),(yyvsp[-1].stmts)); }
+#line 1711 "spl.tab.c"
     break;
 
-  case 4: /* constDecls: empty  */
-#line 126 "spl.y"
-                   { (yyval.const_decls) = ast_const_decls_empty((yyvsp[0].empty)); }
-#line 1703 "spl.tab.c"
-    break;
-
-  case 5: /* varDecls: empty  */
+  case 4: /* constDecls: constDecls ';' constDecl  */
 #line 128 "spl.y"
-                 { (yyval.var_decls) = ast_var_decls_empty((yyvsp[0].empty)); }
-#line 1709 "spl.tab.c"
+              {
+                (yyval.const_decls) = ast_const_decls((yyvsp[-2].const_decls), (yyvsp[0].const_decl));
+              }
+#line 1719 "spl.tab.c"
     break;
 
-  case 6: /* procDecls: empty  */
-#line 130 "spl.y"
-                  { (yyval.proc_decls) = ast_proc_decls_empty((yyvsp[0].empty)); }
-#line 1715 "spl.tab.c"
-    break;
-
-  case 7: /* stmts: empty  */
+  case 5: /* constDecls: constDecl  */
 #line 132 "spl.y"
-              { (yyval.stmts) = ast_stmts_empty((yyvsp[0].empty)); }
-#line 1721 "spl.tab.c"
+              {
+                empty_t empty = ast_empty((yyvsp[0].const_decl).file_loc);
+                const_decls_t empty_const_decls = ast_const_decls_empty(empty);
+                (yyval.const_decls) = ast_const_decls(empty_const_decls, (yyvsp[0].const_decl));
+              }
+#line 1729 "spl.tab.c"
     break;
 
-  case 8: /* empty: %empty  */
-#line 135 "spl.y"
+  case 6: /* constDecls: empty  */
+#line 138 "spl.y"
+              {
+                (yyval.const_decls) = ast_const_decls_empty((yyvsp[0].empty));
+              }
+#line 1737 "spl.tab.c"
+    break;
+
+  case 7: /* constDecl: "const" constDefList ";"  */
+#line 145 "spl.y"
+                                     {
+    printf("%s", (yyvsp[-2].token));
+}
+#line 1745 "spl.tab.c"
+    break;
+
+  case 8: /* constDefList: %empty  */
+#line 149 "spl.y"
+              {}
+#line 1751 "spl.tab.c"
+    break;
+
+  case 9: /* varDecls: empty  */
+#line 153 "spl.y"
+                 { }
+#line 1757 "spl.tab.c"
+    break;
+
+  case 10: /* procDecls: empty  */
+#line 161 "spl.y"
+                  { (yyval.proc_decls) = ast_proc_decls_empty((yyvsp[0].empty)); }
+#line 1763 "spl.tab.c"
+    break;
+
+  case 11: /* stmts: empty  */
+#line 166 "spl.y"
+              { (yyval.stmts) = ast_stmts_empty((yyvsp[0].empty)); }
+#line 1769 "spl.tab.c"
+    break;
+
+  case 12: /* empty: %empty  */
+#line 169 "spl.y"
         { file_location *file_loc
 	     = file_location_make(lexer_filename(), lexer_line());
           (yyval.empty) = ast_empty(file_loc);
 	}
-#line 1730 "spl.tab.c"
+#line 1778 "spl.tab.c"
     break;
 
 
-#line 1734 "spl.tab.c"
+#line 1782 "spl.tab.c"
 
         default: break;
       }
@@ -1970,7 +2018,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 141 "spl.y"
+#line 177 "spl.y"
 
 
 // Set the program's ast to be ast

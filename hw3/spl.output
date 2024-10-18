@@ -1,11 +1,7 @@
 Nonterminals useless in grammar
 
-    constDecl
-    constDefList
-    constDef
     varDecl
     identList
-    procDecl
     stmtList
     stmt
     assignStmt
@@ -22,6 +18,9 @@ Nonterminals useless in grammar
     expr
     term
     factor
+    constDef
+    blocksym
+    procDecl
 
 
 Terminals unused in grammar
@@ -32,13 +31,11 @@ Terminals unused in grammar
     "-"
     "*"
     "/"
-    ";"
     "="
     ","
     ":="
     "("
     ")"
-    "const"
     "var"
     "proc"
     "call"
@@ -59,6 +56,15 @@ Terminals unused in grammar
     ">="
 
 
+Rules useless in grammar
+
+   12 constDef: identsym "=" numbersym
+
+   13 blocksym: %empty
+
+   14 procDecl: "proc" identsym blocksym
+
+
 Grammar
 
     0 $accept: program $end
@@ -67,20 +73,27 @@ Grammar
 
     2 block: "begin" constDecls varDecls procDecls stmts "end"
 
-    3 constDecls: empty
+    3 constDecls: constDecls ';' constDecl
+    4           | constDecl
+    5           | empty
 
-    4 varDecls: empty
+    6 constDecl: "const" constDefList ";"
 
-    5 procDecls: empty
+    7 constDefList: %empty
 
-    6 stmts: empty
+    8 varDecls: empty
 
-    7 empty: %empty
+    9 procDecls: empty
+
+   10 stmts: empty
+
+   11 empty: %empty
 
 
 Terminals, with rules where they appear
 
     $end (0) 0
+    ';' (59) 3
     error (256)
     identsym <ident> (258)
     numbersym <number> (259)
@@ -89,13 +102,13 @@ Terminals, with rules where they appear
     "*" <token> (262)
     "/" <token> (263)
     "." <token> (264) 1
-    ";" <token> (265)
+    ";" <token> (265) 6
     "=" <token> (266)
     "," <token> (267)
     ":=" <token> (268)
     "(" <token> (269)
     ")" <token> (270)
-    "const" <token> (271)
+    "const" <token> (271) 6
     "var" <token> (272)
     "proc" <token> (273)
     "call" <token> (274)
@@ -120,29 +133,35 @@ Terminals, with rules where they appear
 
 Nonterminals, with rules where they appear
 
-    $accept (37)
+    $accept (38)
         on left: 0
-    program <block> (38)
+    program <block> (39)
         on left: 1
         on right: 0
-    block <block> (39)
+    block <block> (40)
         on left: 2
         on right: 1
-    constDecls <const_decls> (40)
-        on left: 3
-        on right: 2
-    varDecls <var_decls> (41)
-        on left: 4
-        on right: 2
-    procDecls <proc_decls> (42)
-        on left: 5
-        on right: 2
-    stmts <stmts> (43)
+    constDecls <const_decls> (41)
+        on left: 3 4 5
+        on right: 2 3
+    constDecl <const_decl> (42)
         on left: 6
-        on right: 2
-    empty <empty> (44)
+        on right: 3 4
+    constDefList <const_def_list> (43)
         on left: 7
-        on right: 3 4 5 6
+        on right: 6
+    varDecls <var_decls> (44)
+        on left: 8
+        on right: 2
+    procDecls <proc_decls> (45)
+        on left: 9
+        on right: 2
+    stmts <stmts> (46)
+        on left: 10
+        on right: 2
+    empty <empty> (47)
+        on left: 11
+        on right: 5 8 9 10
 
 
 State 0
@@ -159,106 +178,158 @@ State 1
 
     2 block: "begin" . constDecls varDecls procDecls stmts "end"
 
-    $default  reduce using rule 7 (empty)
+    "const"  shift, and go to state 4
 
-    constDecls  go to state 4
-    empty       go to state 5
+    $default  reduce using rule 11 (empty)
+
+    constDecls  go to state 5
+    constDecl   go to state 6
+    empty       go to state 7
 
 
 State 2
 
     0 $accept: program . $end
 
-    $end  shift, and go to state 6
+    $end  shift, and go to state 8
 
 
 State 3
 
     1 program: block . "."
 
-    "."  shift, and go to state 7
+    "."  shift, and go to state 9
 
 
 State 4
 
-    2 block: "begin" constDecls . varDecls procDecls stmts "end"
+    6 constDecl: "const" . constDefList ";"
 
-    $default  reduce using rule 7 (empty)
+    $default  reduce using rule 7 (constDefList)
 
-    varDecls  go to state 8
-    empty     go to state 9
+    constDefList  go to state 10
 
 
 State 5
 
-    3 constDecls: empty .
+    2 block: "begin" constDecls . varDecls procDecls stmts "end"
+    3 constDecls: constDecls . ';' constDecl
 
-    $default  reduce using rule 3 (constDecls)
+    ';'  shift, and go to state 11
+
+    $default  reduce using rule 11 (empty)
+
+    varDecls  go to state 12
+    empty     go to state 13
 
 
 State 6
+
+    4 constDecls: constDecl .
+
+    $default  reduce using rule 4 (constDecls)
+
+
+State 7
+
+    5 constDecls: empty .
+
+    $default  reduce using rule 5 (constDecls)
+
+
+State 8
 
     0 $accept: program $end .
 
     $default  accept
 
 
-State 7
+State 9
 
     1 program: block "." .
 
     $default  reduce using rule 1 (program)
 
 
-State 8
-
-    2 block: "begin" constDecls varDecls . procDecls stmts "end"
-
-    $default  reduce using rule 7 (empty)
-
-    procDecls  go to state 10
-    empty      go to state 11
-
-
-State 9
-
-    4 varDecls: empty .
-
-    $default  reduce using rule 4 (varDecls)
-
-
 State 10
 
-    2 block: "begin" constDecls varDecls procDecls . stmts "end"
+    6 constDecl: "const" constDefList . ";"
 
-    $default  reduce using rule 7 (empty)
-
-    stmts  go to state 12
-    empty  go to state 13
+    ";"  shift, and go to state 14
 
 
 State 11
 
-    5 procDecls: empty .
+    3 constDecls: constDecls ';' . constDecl
 
-    $default  reduce using rule 5 (procDecls)
+    "const"  shift, and go to state 4
+
+    constDecl  go to state 15
 
 
 State 12
 
-    2 block: "begin" constDecls varDecls procDecls stmts . "end"
+    2 block: "begin" constDecls varDecls . procDecls stmts "end"
 
-    "end"  shift, and go to state 14
+    $default  reduce using rule 11 (empty)
+
+    procDecls  go to state 16
+    empty      go to state 17
 
 
 State 13
 
-    6 stmts: empty .
+    8 varDecls: empty .
 
-    $default  reduce using rule 6 (stmts)
+    $default  reduce using rule 8 (varDecls)
 
 
 State 14
+
+    6 constDecl: "const" constDefList ";" .
+
+    $default  reduce using rule 6 (constDecl)
+
+
+State 15
+
+    3 constDecls: constDecls ';' constDecl .
+
+    $default  reduce using rule 3 (constDecls)
+
+
+State 16
+
+    2 block: "begin" constDecls varDecls procDecls . stmts "end"
+
+    $default  reduce using rule 11 (empty)
+
+    stmts  go to state 18
+    empty  go to state 19
+
+
+State 17
+
+    9 procDecls: empty .
+
+    $default  reduce using rule 9 (procDecls)
+
+
+State 18
+
+    2 block: "begin" constDecls varDecls procDecls stmts . "end"
+
+    "end"  shift, and go to state 20
+
+
+State 19
+
+   10 stmts: empty .
+
+    $default  reduce using rule 10 (stmts)
+
+
+State 20
 
     2 block: "begin" constDecls varDecls procDecls stmts "end" .
 

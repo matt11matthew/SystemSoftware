@@ -117,26 +117,51 @@ extern void setProgAST(block_t t);
 
 %%
 
-program : block "." { setProgAST($1); } ;
+program : block "." {
+setProgAST($1); } ;
 
-block : "begin" constDecls varDecls procDecls stmts "end"
-        { $$ = ast_block($1,$2,$3,$4,$5);  }
+block : "begin" constDecls varDecls procDecls stmts "end" {
+
+$$ = ast_block($1,$2,$3,$4,$5); }
         ;
+constDecls : constDecls ';' constDecl
+              {
+                $$ = ast_const_decls($1, $3);
+              }
+            | constDecl
+              {
+                empty_t empty = ast_empty($1.file_loc);
+                const_decls_t empty_const_decls = ast_const_decls_empty(empty);
+                $$ = ast_const_decls(empty_const_decls, $1);
+              }
+            | empty
+              {
+                $$ = ast_const_decls_empty($1);
+              }
+            ;
 
-constDecls : empty { $$ = ast_const_decls_empty($1); }
-|
-constDecl { $$ =  ast_const_decls($1, $2)}
 
+
+constDecl : "const" constDefList ";" {
+    printf("%s", $1);
+}
 ;
+constDefList: {}
 
-constDecl :
+constDef : identsym eqsym numbersym {}
 
-varDecls : empty { $$ = ast_var_decls_empty($1); }
-
-
+varDecls : empty { }
 ;
-
+/*
+varDecl :"var"  empty {} ";"
+;
+identList : identsym |
+*/
+blocksym: {}
 procDecls : empty { $$ = ast_proc_decls_empty($1); } ;
+
+procDecl : "proc" identsym blocksym
+;
 
 stmts : empty { $$ = ast_stmts_empty($1); } ;
 
