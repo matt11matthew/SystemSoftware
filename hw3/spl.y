@@ -120,12 +120,21 @@ extern void setProgAST(block_t t);
 program : block "." { setProgAST($1); } ;
 
 block : "begin" constDecls varDecls procDecls stmts "end"
-        { $$ = ast_block($1,$2,$3,$4,$5); }
+        { $$ = ast_block($1,$2,$3,$4,$5);  }
         ;
 
-constDecls : empty { $$ = ast_const_decls_empty($1); } ;
+constDecls : empty { $$ = ast_const_decls_empty($1); }
+|
+constDecl { $$ =  ast_const_decls($1, $2)}
 
-varDecls : empty { $$ = ast_var_decls_empty($1); } ;
+;
+
+constDecl :
+
+varDecls : empty { $$ = ast_var_decls_empty($1); }
+
+
+;
 
 procDecls : empty { $$ = ast_proc_decls_empty($1); } ;
 
@@ -137,6 +146,8 @@ empty : %empty
           $$ = ast_empty(file_loc);
 	}
         ;
+
+
 
 %%
 
