@@ -26,6 +26,7 @@ static void newlineAndOptionalSemi(FILE *out, bool addSemiToEnd)
 // Unparse the given program AST and then print a period and an newline
 void unparseProgram(FILE *out, block_t prog)
 {
+
     unparseBlock(out, prog, 0, false);
     fprintf(out, ".\n");
 }

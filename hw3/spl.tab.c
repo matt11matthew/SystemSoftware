@@ -530,8 +530,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   120,   120,   123,   127,   131,   137,   145,   149,   153,
-     161,   166,   168
+       0,   120,   120,   123,   127,   133,   141,   150,   158,   162,
+     170,   175,   177
 };
 #endif
 
@@ -1713,72 +1713,81 @@ setProgAST((yyvsp[-1].block)); }
   case 4: /* constDecls: constDecls ';' constDecl  */
 #line 128 "spl.y"
               {
+                printf("1");
+
                 (yyval.const_decls) = ast_const_decls((yyvsp[-2].const_decls), (yyvsp[0].const_decl));
               }
-#line 1719 "spl.tab.c"
+#line 1721 "spl.tab.c"
     break;
 
   case 5: /* constDecls: constDecl  */
-#line 132 "spl.y"
+#line 134 "spl.y"
               {
+              printf("2");
+
                 empty_t empty = ast_empty((yyvsp[0].const_decl).file_loc);
                 const_decls_t empty_const_decls = ast_const_decls_empty(empty);
                 (yyval.const_decls) = ast_const_decls(empty_const_decls, (yyvsp[0].const_decl));
               }
-#line 1729 "spl.tab.c"
+#line 1733 "spl.tab.c"
     break;
 
   case 6: /* constDecls: empty  */
-#line 138 "spl.y"
+#line 142 "spl.y"
               {
+                       printf("3");
                 (yyval.const_decls) = ast_const_decls_empty((yyvsp[0].empty));
               }
-#line 1737 "spl.tab.c"
+#line 1742 "spl.tab.c"
     break;
 
   case 7: /* constDecl: "const" constDefList ";"  */
-#line 145 "spl.y"
+#line 150 "spl.y"
                                      {
     printf("%s", (yyvsp[-2].token));
+    printf("%s", (yyvsp[-2].token));
+    printf("%s", (yyvsp[-2].token));
+    printf("%s", (yyvsp[-2].token));
+    printf("%s", (yyvsp[-2].token));
 }
-#line 1745 "spl.tab.c"
+#line 1754 "spl.tab.c"
     break;
 
   case 8: /* constDefList: %empty  */
-#line 149 "spl.y"
+#line 158 "spl.y"
               {}
-#line 1751 "spl.tab.c"
+#line 1760 "spl.tab.c"
     break;
 
   case 9: /* varDecls: empty  */
-#line 153 "spl.y"
+#line 162 "spl.y"
                  { }
-#line 1757 "spl.tab.c"
+#line 1766 "spl.tab.c"
     break;
 
   case 10: /* procDecls: empty  */
-#line 161 "spl.y"
+#line 170 "spl.y"
                   { (yyval.proc_decls) = ast_proc_decls_empty((yyvsp[0].empty)); }
-#line 1763 "spl.tab.c"
+#line 1772 "spl.tab.c"
     break;
 
   case 11: /* stmts: empty  */
-#line 166 "spl.y"
+#line 175 "spl.y"
               { (yyval.stmts) = ast_stmts_empty((yyvsp[0].empty)); }
-#line 1769 "spl.tab.c"
+#line 1778 "spl.tab.c"
     break;
 
   case 12: /* empty: %empty  */
-#line 169 "spl.y"
+#line 178 "spl.y"
         { file_location *file_loc
 	     = file_location_make(lexer_filename(), lexer_line());
           (yyval.empty) = ast_empty(file_loc);
 	}
-#line 1778 "spl.tab.c"
+#line 1787 "spl.tab.c"
     break;
 
 
-#line 1782 "spl.tab.c"
+#line 1791 "spl.tab.c"
 
         default: break;
       }
@@ -2018,7 +2027,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 177 "spl.y"
+#line 186 "spl.y"
 
 
 // Set the program's ast to be ast

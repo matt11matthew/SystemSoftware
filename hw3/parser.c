@@ -10,11 +10,10 @@ extern int yyparse (char const *file_name);
 
 // Parse a PL/0 program using the tokens from the lexer,
 // returning the program's AST
-extern block_t parseProgram(char const *file_name)
-{
+extern block_t parseProgram(char const *file_name) {
     int rc = yyparse(file_name);
     if (rc != 0) {
-	exit(rc);
+	    exit(rc);
     }
     return progast;
 }

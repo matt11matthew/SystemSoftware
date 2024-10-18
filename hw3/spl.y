@@ -126,16 +126,21 @@ $$ = ast_block($1,$2,$3,$4,$5); }
         ;
 constDecls : constDecls ';' constDecl
               {
+                printf("1");
+
                 $$ = ast_const_decls($1, $3);
               }
             | constDecl
               {
+              printf("2");
+
                 empty_t empty = ast_empty($1.file_loc);
                 const_decls_t empty_const_decls = ast_const_decls_empty(empty);
                 $$ = ast_const_decls(empty_const_decls, $1);
               }
             | empty
               {
+                       printf("3");
                 $$ = ast_const_decls_empty($1);
               }
             ;
@@ -143,6 +148,10 @@ constDecls : constDecls ';' constDecl
 
 
 constDecl : "const" constDefList ";" {
+    printf("%s", $1);
+    printf("%s", $1);
+    printf("%s", $1);
+    printf("%s", $1);
     printf("%s", $1);
 }
 ;
