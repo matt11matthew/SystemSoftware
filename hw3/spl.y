@@ -152,30 +152,34 @@ constDefList
         $$ = ast_const_def_list($1, $3);
       };
 
-constDef
-    : identsym eqsym numbersym
-      {
+
+
+constDef : identsym eqsym numbersym{
         $$ = ast_const_def($1, $3);
-      }
-;
-
+      };
+//extern var_decls_t ast_var_decls(var_decls_t var_decls, var_decl_t var_decl);
+//varDecls { $$ = ast_var_decls($1, $3); }
 varDecls: varDecls semisym varDecl
-{ $$ = ast_var_decls($1, $3);}
-| varDecl {
-empty_t empty = ast_empty(file_location_make(lexer_filename(), lexer_line()));
-var_decls_t empty_var_decls = ast_var_decls_empty(empty);
-$$ = ast_var_decls(empty_var_decls, $1);
+          { $$ = ast_var_decls($1, $3); }
+|    varDecl{
+        empty_t empty = ast_empty(file_location_make(lexer_filename(), lexer_line()));
+        var_decls_t empty_var_decls = ast_var_decls_empty(empty);
+        $$ = ast_var_decls(empty_var_decls, $1);
+    }
+    | empty {
+        $$ = ast_var_decls_empty($1);
+    };
 
- }
-| empty { $$ = ast_var_decls_empty($1); } ;
+varDecl : varsym identList semisym {
+           $$ = ast_var_decl($2);
+        };
 
-varDecl : varsym identList { $$  = ast_var_decl($2); };
 
-identList : identsym | identList commasym identsym;
- 
+identList : identsym { $$ = ast_ident_list_singleton($1); }
+| identsym commasym identList { $$ = ast_ident_list($3, $1); };
+
+
 procDecls : empty { $$ = ast_proc_decls_empty($1); } ;
-
-procDecl : procsym identsym block { $$ = ast_proc_decl($2, $3); };
 
 stmts : empty { $$ = ast_stmts_empty($1); } | stmtList {
   //Statement list case
@@ -201,9 +205,7 @@ stmt :
  | ifStmt  { $$ = ast_stmt_if($1); }
  | whileStmt { $$ = ast_stmt_while($1); }
  | readStmt  { $$ = ast_stmt_read($1); }
- | printStmt {
-    $$ = ast_stmt_print($1);
- }
+ | printStmt { $$ = ast_stmt_print($1);}
  | blockStmt { $$ = ast_stmt_block($1); };
 
 assignStmt: identsym becomessym expr{ $$ = ast_assign_stmt($1, $3); };
@@ -237,23 +239,26 @@ relOpCondition : expr relOp expr { $$ = ast_rel_op_condition($1, $2, $3); };
 
 relOp : eqeqsym | neqsym | ltsym | leqsym | gtsym | geqsym
 
-expr : term
-    {
-    expr_t val = $1;
-    $$ = val;
-
+expr : term {
+        expr_t val = $1;
+        $$ = val;
     }
+    | expr plussym term {
+        $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
+    }
+    | expr minussym term {
+        $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
+    };
 
-| expr plussym term {
-    $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
-}
-| expr minussym term {
-    $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
-};
-
-term : factor { $$ = $1; }
-| term multsym factor { $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3)); }
-| term divsym factor { $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3)); };
+term : factor {
+        $$ = $1;
+     }
+     | term multsym factor {
+        $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
+     }
+     | term divsym factor {
+        $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
+     };
 
 factor :
 identsym { $$ = ast_expr_ident($1); }
