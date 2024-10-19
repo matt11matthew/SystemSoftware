@@ -127,11 +127,11 @@ constDecls : constDecls semisym constDecl
               }
             | constDecl
               {
-                /*empty_t empty = ast_empty($1.file_loc);
+                empty_t empty = ast_empty($1.file_loc);
                 const_decls_t empty_const_decls = ast_const_decls_empty(empty);
-                $$ = ast_const_decls(empty_const_decls, $1);*/
+                $$ = ast_const_decls(empty_const_decls, $1);
 
-                $ ast_const_decls_empty($1); $$ = ast_const_decls($$, $1);
+               // $$ = ast_const_decls_empty($1); $$ = ast_const_decls($$, $1);
               }
             | empty
               {
@@ -159,20 +159,23 @@ constDef
       }
 ;
 
-
-
 varDecls: varDecls semisym varDecl
 { $$ = ast_var_decls($1, $3);}
-| varDecl { $$ = ast_var_decls_empty($1); $$ = ast_var_decls($$, $1); }
+| varDecl {
+empty_t empty = ast_empty(file_location_make(lexer_filename(), lexer_line()));
+var_decls_t empty_var_decls = ast_var_decls_empty(empty);
+$$ = ast_var_decls(empty_var_decls, $1);
+
+ }
 | empty { $$ = ast_var_decls_empty($1); } ;
 
-varDecl : varsym identList { $$ ast_var_decl($2); };
+varDecl : varsym identList { $$  = ast_var_decl($2); };
 
 identList : identsym | identList commasym identsym;
  
 procDecls : empty { $$ = ast_proc_decls_empty($1); } ;
 
-procDecl : procsym identsym block;
+procDecl : procsym identsym block { $$ = ast_proc_decl($2, $3); };
 
 stmts : empty { $$ = ast_stmts_empty($1); } | stmtList {
   //Statement list case
@@ -217,7 +220,10 @@ whileStmt: whilesym condition dosym stmts endsym{ $$ = ast_while_stmt($2, $4); }
 readStmt: readsym identsym{ $$ = ast_read_stmt($2); };
 
 printStmt: printsym expr {
- //$$ = ast_print_stmt($2);
+    expr_t val = $2;
+
+ $$ = ast_print_stmt(val);
+ //printf("%s\n", $2.data.number.text);  // Print the correct number
  };
 
 blockStmt: block { $$ =  ast_block_stmt($1); };
@@ -234,12 +240,7 @@ relOp : eqeqsym | neqsym | ltsym | leqsym | gtsym | geqsym
 expr : term
     {
     expr_t val = $1;
-    expr_kind_e test = $1.expr_kind;
-    //expr_bin, expr_negated, expr_ident, expr_number
-
-
-    printf("expr_kind_e");
-       $$=val;
+    $$ = val;
 
     }
 
@@ -254,8 +255,11 @@ term : factor { $$ = $1; }
 | term multsym factor { $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3)); }
 | term divsym factor { $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3)); };
 
-factor : identsym { $$ = ast_expr_ident($1); }
-| numbersym { $$ = ast_expr_number($1); }
+factor :
+identsym { $$ = ast_expr_ident($1); }
+| numbersym {
+$$ = ast_expr_number($1);
+ }
 | minussym factor { $$ = ast_expr_signed_expr($1, $2); }
 | plussym factor { $$ = ast_expr_signed_expr($1, $2); }
 | lparensym expr rparensym { $$ = $2; };

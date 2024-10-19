@@ -1089,36 +1089,28 @@ case 36:
 YY_RULE_SETUP
 #line 128 "spl_lexer.l"
 {
-
-    ident2ast(yytext); //saves word
-    tok2ast(identsym);  //Casts token
-
-    return identsym; //Return code
+    ident2ast(yytext); // Sets yylval to ident_t
+    return identsym; // Return the token code
 }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 140 "spl_lexer.l"
+#line 134 "spl_lexer.l"
 {
-
-    long long number = atoll(yytext); //Extract
+    long long number = atoll(yytext);
 
     if (number > INT_MAX) {
-      char buffer[200]; //Create buffer
-      sprintf(buffer, "Number (%s) is too large!", yytext); //Flush string to buffer
-      yyerror("", buffer); //Pushes into buffer
-
+        char buffer[200];
+        sprintf(buffer, "Number (%s) is too large!", yytext);
+        yyerror("", buffer);
     }
-    number2ast(number); //Store number
-    tok2ast(numbersym); //Craete token
-    return numbersym; //Return symcode
-
-
+    number2ast(number); // Sets yylval to number_t
+    return numbersym; // Return the token code
 }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 157 "spl_lexer.l"
+#line 146 "spl_lexer.l"
 {
     char buffer[100];
     sprintf(buffer, "invalid character: '%c' ('\\%03o')", yytext[0], yytext[0]);//Push to buffer
@@ -1127,7 +1119,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 164 "spl_lexer.l"
+#line 153 "spl_lexer.l"
 {
     char buffer[100];
     sprintf(buffer, "invalid character: '%c' ('\\%04o')", yytext[0], yytext[0]); //Push to buffer
@@ -1136,10 +1128,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 170 "spl_lexer.l"
+#line 159 "spl_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1143 "spl_lexer.c"
+#line 1135 "spl_lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2156,7 +2148,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 170 "spl_lexer.l"
+#line 159 "spl_lexer.l"
 
 
  /* This code goes in the user code section of the spl_lexer.l file,
