@@ -127,9 +127,11 @@ constDecls : constDecls semisym constDecl
               }
             | constDecl
               {
-                empty_t empty = ast_empty($1.file_loc);
+                /*empty_t empty = ast_empty($1.file_loc);
                 const_decls_t empty_const_decls = ast_const_decls_empty(empty);
-                $$ = ast_const_decls(empty_const_decls, $1);
+                $$ = ast_const_decls(empty_const_decls, $1);*/
+
+                $ ast_const_decls_empty($1); $$ = ast_const_decls($$, $1);
               }
             | empty
               {
@@ -137,9 +139,7 @@ constDecls : constDecls semisym constDecl
               };
 
 constDecl : constsym constDefList semisym {
-    const_def_list_t list = $2;
-
-    $$ = ast_const_decl(list);
+    $$ = ast_const_decl($2);
 };
 
 constDefList
@@ -159,11 +159,12 @@ constDef
       }
 ;
 
-constDef : identsym eqsym numbersym {
-    $$ = ast_const_def($1, $3);
-};
 
-varDecls: empty { $$ = ast_var_decls_empty($1); } ;
+
+varDecls: varDecls semisym varDecl
+{ $$ = ast_var_decls($1, $3);}
+| varDecl { $$ = ast_var_decls_empty($1); $$ = ast_var_decls($$, $1); }
+| empty { $$ = ast_var_decls_empty($1); } ;
 
 varDecl : varsym identList { $$ ast_var_decl($2); };
 
@@ -221,23 +222,44 @@ printStmt: printsym expr {
 
 blockStmt: block { $$ =  ast_block_stmt($1); };
 
-condition : dbCondition | relOpCondition
-dbCondition : divisiblesym expr bysym expr
-relOpCondition : expr relOp expr
+condition : dbCondition { $$ = ast_condition_db($1); }
+| relOpCondition { $$ = ast_condition_rel_op($1); };
+
+dbCondition : divisiblesym expr bysym expr { $$ = ast_db_condition($2, $4); };
+
+relOpCondition : expr relOp expr { $$ = ast_rel_op_condition($1, $2, $3); };
+
 relOp : eqeqsym | neqsym | ltsym | leqsym | gtsym | geqsym
 
-expr : term {
+expr : term
+    {
+    expr_t val = $1;
+    expr_kind_e test = $1.expr_kind;
+    //expr_bin, expr_negated, expr_ident, expr_number
 
-}
+
+    printf("expr_kind_e");
+       $$=val;
+
+    }
+
 | expr plussym term {
-
+    $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
 }
 | expr minussym term {
-
+    $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
 };
 
-term : factor | term multsym factor | term divsym factor;
-factor : identsym | numbersym | sign factor | lparensym expr rparensym;
+term : factor { $$ = $1; }
+| term multsym factor { $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3)); }
+| term divsym factor { $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3)); };
+
+factor : identsym { $$ = ast_expr_ident($1); }
+| numbersym { $$ = ast_expr_number($1); }
+| minussym factor { $$ = ast_expr_signed_expr($1, $2); }
+| plussym factor { $$ = ast_expr_signed_expr($1, $2); }
+| lparensym expr rparensym { $$ = $2; };
+
 sign : minussym | plussym;
 
 %%
