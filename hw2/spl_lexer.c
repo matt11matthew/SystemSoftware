@@ -1106,7 +1106,7 @@ YY_RULE_SETUP
     if (number > INT_MAX) {
       char buffer[200]; //Create buffer
       sprintf(buffer, "Number (%s) is too large!", yytext); //Flush string to buffer
-      yyerror("", buffer); //Pushes into buffer
+      yyerror(input_filename, buffer); //Pushes into buffer
 
     }
     number2ast(number); //Store number
@@ -1122,7 +1122,7 @@ YY_RULE_SETUP
 {
     char buffer[100];
     sprintf(buffer, "invalid character: '%c' ('\\%03o')", yytext[0], yytext[0]);//Push to buffer
-    yyerror("", buffer);
+    yyerror(input_filename, buffer);
 }
 	YY_BREAK
 case 39:
@@ -1131,7 +1131,7 @@ YY_RULE_SETUP
 {
     char buffer[100];
     sprintf(buffer, "invalid character: '%c' ('\\%04o')", yytext[0], yytext[0]); //Push to buffer
-    yyerror("", buffer);
+    yyerror(input_filename, buffer);
 }
 	YY_BREAK
 case 40:
