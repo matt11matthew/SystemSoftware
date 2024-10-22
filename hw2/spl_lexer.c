@@ -1087,7 +1087,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 128 "spl_lexer.l"
+#line 127 "spl_lexer.l"
 {
 
     ident2ast(yytext); //saves word
@@ -1098,7 +1098,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 140 "spl_lexer.l"
+#line 139 "spl_lexer.l"
 {
 
     long long number = atoll(yytext); //Extract
@@ -1118,7 +1118,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 157 "spl_lexer.l"
+#line 156 "spl_lexer.l"
 {
     char buffer[100];
     sprintf(buffer, "invalid character: '%c' ('\\%03o')", yytext[0], yytext[0]);//Push to buffer
@@ -1127,7 +1127,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 164 "spl_lexer.l"
+#line 163 "spl_lexer.l"
 {
     char buffer[100];
     sprintf(buffer, "invalid character: '%c' ('\\%04o')", yytext[0], yytext[0]); //Push to buffer
@@ -1136,7 +1136,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 170 "spl_lexer.l"
+#line 169 "spl_lexer.l"
 ECHO;
 	YY_BREAK
 #line 1143 "spl_lexer.c"
@@ -2156,7 +2156,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 170 "spl_lexer.l"
+#line 169 "spl_lexer.l"
 
 
  /* This code goes in the user code section of the spl_lexer.l file,
