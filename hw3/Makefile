@@ -15,7 +15,7 @@ LEX = flex
 LEXFLAGS =
 # on Linux, the following can be used with gcc:
 # CFLAGS = -fsanitize=address -static-libasan -g -std=c17 -Wall
-CFLAGS = -g -std=c17 -Wall -fPIE
+CFLAGS = -g -std=c17 -Wall
 ZIP = zip -9
 YACC = bison -Wcounterexamples
 YACCFLAGS = -Wall --locations -d -v
@@ -82,7 +82,7 @@ STUDENTTESTOUTPUTS = $(ALLTESTS:.spl=.myo)
 
 .DEFAULT: $(COMPILER)
 $(COMPILER): $(COMPILER_OBJECTS)
-	$(CC) $(CFLAGS) -pie -o $(COMPILER) $(COMPILER_OBJECTS)
+	$(CC) $(CFLAGS) -o $(COMPILER) $(COMPILER_OBJECTS)
 
 $(COMPILER)_main.o: $(COMPILER)_main.c
 	$(CC) $(CFLAGS) -c $<

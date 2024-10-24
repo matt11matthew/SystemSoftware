@@ -1,4 +1,4 @@
-/* $Id: unparser.h,v 1.11 2024/10/07 13:23:32 leavens Exp $ */
+/* $Id: unparser.h,v 1.12 2024/10/23 13:51:00 leavens Exp leavens $ */
 #ifndef _UNPARSER_H
 #define _UNPARSER_H
 #include <stdio.h>
@@ -105,11 +105,6 @@ extern void unparseReadStmt(FILE *out, read_stmt_t stmt, int level,
 // indented for the given level,
 // adding a semicolon to the end if addSemiToEnd is true.
 extern void unparsePrintStmt(FILE *out, print_stmt_t stmt, int level, bool addSemiToEnd);
-
-// Unparse the a skip statement to out,
-// indented for the given level,
-// adding a semicolon to the end if addSemiToEnd is true.
-extern void unparseSkipStmt(FILE *out, int level, bool addSemiToEnd);
 
 // Unparse the condition given by cond to out
 extern void unparseCondition(FILE *out, condition_t cond);

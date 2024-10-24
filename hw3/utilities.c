@@ -1,4 +1,4 @@
-/* $Id: utilities.c,v 1.12 2024/09/27 13:35:03 leavens Exp $ */
+/* $Id: utilities.c,v 1.13 2024/10/22 11:17:10 leavens Exp leavens $ */
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,8 +93,6 @@ void bail_with_prog_error(file_location floc, const char *fmt, ...)
 extern void formatted_yyerror(const char *filename, const char *fmt, ...)
 {
     fflush(stdout); // flush so output comes after what has happened already
-    // print file, line information
-    fprintf(stderr, "%s: ", filename);
 
     char buf[BUF_SIZE];
     va_list(args);
