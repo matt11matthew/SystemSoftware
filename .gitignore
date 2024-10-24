@@ -2,6 +2,7 @@
 cmake-build-debug/
 CMakeLists.txt
 *.exe
+hw3\compiler
 *.o
 *.myo
 *.zip
