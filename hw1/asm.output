@@ -21,7 +21,7 @@ Grammar
    10 labelOpt: label ":"
    11         | empty
 
-   12 empty: %empty
+   12 empty: ε
 
    13 instr: noArgInstr
    14      | twoRegCompInstr
@@ -429,7 +429,7 @@ Nonterminals, with rules where they appear
 
 State 0
 
-    0 $accept: . program $end
+    0 $accept: • program $end
 
     ".text"  shift, and go to state 1
 
@@ -439,7 +439,7 @@ State 0
 
 State 1
 
-    2 textSection: ".text" . entryPoint asmInstrs
+    2 textSection: ".text" • entryPoint asmInstrs
 
     identsym        shift, and go to state 4
     unsignednumsym  shift, and go to state 5
@@ -451,14 +451,14 @@ State 1
 
 State 2
 
-    0 $accept: program . $end
+    0 $accept: program • $end
 
     $end  shift, and go to state 9
 
 
 State 3
 
-    1 program: textSection . dataSection stackSection ".end"
+    1 program: textSection • dataSection stackSection ".end"
 
     ".data"  shift, and go to state 10
 
@@ -467,21 +467,21 @@ State 3
 
 State 4
 
-    6 label: identsym .
+    6 label: identsym •
 
     $default  reduce using rule 6 (label)
 
 
 State 5
 
-    5 addr: unsignednumsym .
+    5 addr: unsignednumsym •
 
     $default  reduce using rule 5 (addr)
 
 
 State 6
 
-    2 textSection: ".text" entryPoint . asmInstrs
+    2 textSection: ".text" entryPoint • asmInstrs
 
     identsym  shift, and go to state 4
 
@@ -496,28 +496,28 @@ State 6
 
 State 7
 
-    3 entryPoint: addr .
+    3 entryPoint: addr •
 
     $default  reduce using rule 3 (entryPoint)
 
 
 State 8
 
-    4 addr: label .
+    4 addr: label •
 
     $default  reduce using rule 4 (addr)
 
 
 State 9
 
-    0 $accept: program $end .
+    0 $accept: program $end •
 
     $default  accept
 
 
 State 10
 
-  101 dataSection: ".data" . staticStartAddr staticDecls
+  101 dataSection: ".data" • staticStartAddr staticDecls
 
     unsignednumsym  shift, and go to state 17
 
@@ -526,7 +526,7 @@ State 10
 
 State 11
 
-    1 program: textSection dataSection . stackSection ".end"
+    1 program: textSection dataSection • stackSection ".end"
 
     ".stack"  shift, and go to state 19
 
@@ -535,15 +535,15 @@ State 11
 
 State 12
 
-   10 labelOpt: label . ":"
+   10 labelOpt: label • ":"
 
     ":"  shift, and go to state 21
 
 
 State 13
 
-    2 textSection: ".text" entryPoint asmInstrs .
-    8 asmInstrs: asmInstrs . asmInstr
+    2 textSection: ".text" entryPoint asmInstrs •
+    8 asmInstrs: asmInstrs • asmInstr
 
     identsym  shift, and go to state 4
 
@@ -558,14 +558,14 @@ State 13
 
 State 14
 
-    7 asmInstrs: asmInstr .
+    7 asmInstrs: asmInstr •
 
     $default  reduce using rule 7 (asmInstrs)
 
 
 State 15
 
-    9 asmInstr: labelOpt . instr eolsym
+    9 asmInstr: labelOpt • instr eolsym
 
     "NOP"   shift, and go to state 23
     "ADD"   shift, and go to state 24
@@ -652,21 +652,21 @@ State 15
 
 State 16
 
-   11 labelOpt: empty .
+   11 labelOpt: empty •
 
     $default  reduce using rule 11 (labelOpt)
 
 
 State 17
 
-  102 staticStartAddr: unsignednumsym .
+  102 staticStartAddr: unsignednumsym •
 
     $default  reduce using rule 102 (staticStartAddr)
 
 
 State 18
 
-  101 dataSection: ".data" staticStartAddr . staticDecls
+  101 dataSection: ".data" staticStartAddr • staticDecls
 
     $default  reduce using rule 12 (empty)
 
@@ -676,7 +676,7 @@ State 18
 
 State 19
 
-  113 stackSection: ".stack" . stackBottomAddr
+  113 stackSection: ".stack" • stackBottomAddr
 
     unsignednumsym  shift, and go to state 105
 
@@ -685,476 +685,476 @@ State 19
 
 State 20
 
-    1 program: textSection dataSection stackSection . ".end"
+    1 program: textSection dataSection stackSection • ".end"
 
     ".end"  shift, and go to state 107
 
 
 State 21
 
-   10 labelOpt: label ":" .
+   10 labelOpt: label ":" •
 
     $default  reduce using rule 10 (labelOpt)
 
 
 State 22
 
-    8 asmInstrs: asmInstrs asmInstr .
+    8 asmInstrs: asmInstrs asmInstr •
 
     $default  reduce using rule 8 (asmInstrs)
 
 
 State 23
 
-   28 noArgOp: "NOP" .
+   28 noArgOp: "NOP" •
 
     $default  reduce using rule 28 (noArgOp)
 
 
 State 24
 
-   31 twoRegCompOp: "ADD" .
+   31 twoRegCompOp: "ADD" •
 
     $default  reduce using rule 31 (twoRegCompOp)
 
 
 State 25
 
-   32 twoRegCompOp: "SUB" .
+   32 twoRegCompOp: "SUB" •
 
     $default  reduce using rule 32 (twoRegCompOp)
 
 
 State 26
 
-   33 twoRegCompOp: "CPW" .
+   33 twoRegCompOp: "CPW" •
 
     $default  reduce using rule 33 (twoRegCompOp)
 
 
 State 27
 
-   34 twoRegCompOp: "AND" .
+   34 twoRegCompOp: "AND" •
 
     $default  reduce using rule 34 (twoRegCompOp)
 
 
 State 28
 
-   35 twoRegCompOp: "BOR" .
+   35 twoRegCompOp: "BOR" •
 
     $default  reduce using rule 35 (twoRegCompOp)
 
 
 State 29
 
-   36 twoRegCompOp: "NOR" .
+   36 twoRegCompOp: "NOR" •
 
     $default  reduce using rule 36 (twoRegCompOp)
 
 
 State 30
 
-   37 twoRegCompOp: "XOR" .
+   37 twoRegCompOp: "XOR" •
 
     $default  reduce using rule 37 (twoRegCompOp)
 
 
 State 31
 
-   47 noTargetOffsetOp: "LWR" .
+   47 noTargetOffsetOp: "LWR" •
 
     $default  reduce using rule 47 (noTargetOffsetOp)
 
 
 State 32
 
-   49 noSourceOffsetOp: "SWR" .
+   49 noSourceOffsetOp: "SWR" •
 
     $default  reduce using rule 49 (noSourceOffsetOp)
 
 
 State 33
 
-   38 twoRegCompOp: "SCA" .
+   38 twoRegCompOp: "SCA" •
 
     $default  reduce using rule 38 (twoRegCompOp)
 
 
 State 34
 
-   39 twoRegCompOp: "LWI" .
+   39 twoRegCompOp: "LWI" •
 
     $default  reduce using rule 39 (twoRegCompOp)
 
 
 State 35
 
-   40 twoRegCompOp: "NEG" .
+   40 twoRegCompOp: "NEG" •
 
     $default  reduce using rule 40 (twoRegCompOp)
 
 
 State 36
 
-   51 oneRegOffsetArgOp: "LIT" .
+   51 oneRegOffsetArgOp: "LIT" •
 
     $default  reduce using rule 51 (oneRegOffsetArgOp)
 
 
 State 37
 
-   54 oneRegArgOp: "ARI" .
+   54 oneRegArgOp: "ARI" •
 
     $default  reduce using rule 54 (oneRegArgOp)
 
 
 State 38
 
-   55 oneRegArgOp: "SRI" .
+   55 oneRegArgOp: "SRI" •
 
     $default  reduce using rule 55 (oneRegArgOp)
 
 
 State 39
 
-   57 oneRegOffsetOp: "MUL" .
+   57 oneRegOffsetOp: "MUL" •
 
     $default  reduce using rule 57 (oneRegOffsetOp)
 
 
 State 40
 
-   58 oneRegOffsetOp: "DIV" .
+   58 oneRegOffsetOp: "DIV" •
 
     $default  reduce using rule 58 (oneRegOffsetOp)
 
 
 State 41
 
-   59 oneRegOffsetOp: "CFHI" .
+   59 oneRegOffsetOp: "CFHI" •
 
     $default  reduce using rule 59 (oneRegOffsetOp)
 
 
 State 42
 
-   60 oneRegOffsetOp: "CFLO" .
+   60 oneRegOffsetOp: "CFLO" •
 
     $default  reduce using rule 60 (oneRegOffsetOp)
 
 
 State 43
 
-   64 shiftOp: "SLL" .
+   64 shiftOp: "SLL" •
 
     $default  reduce using rule 64 (shiftOp)
 
 
 State 44
 
-   65 shiftOp: "SRL" .
+   65 shiftOp: "SRL" •
 
     $default  reduce using rule 65 (shiftOp)
 
 
 State 45
 
-   61 oneRegOffsetOp: "JMP" .
+   61 oneRegOffsetOp: "JMP" •
 
     $default  reduce using rule 61 (oneRegOffsetOp)
 
 
 State 46
 
-   68 argOnlyOp: "JREL" .
+   68 argOnlyOp: "JREL" •
 
     $default  reduce using rule 68 (argOnlyOp)
 
 
 State 47
 
-   70 immedArithOp: "ADDI" .
+   70 immedArithOp: "ADDI" •
 
     $default  reduce using rule 70 (immedArithOp)
 
 
 State 48
 
-   73 immedBoolOp: "ANDI" .
+   73 immedBoolOp: "ANDI" •
 
     $default  reduce using rule 73 (immedBoolOp)
 
 
 State 49
 
-   74 immedBoolOp: "BORI" .
+   74 immedBoolOp: "BORI" •
 
     $default  reduce using rule 74 (immedBoolOp)
 
 
 State 50
 
-   76 immedBoolOp: "NORI" .
+   76 immedBoolOp: "NORI" •
 
     $default  reduce using rule 76 (immedBoolOp)
 
 
 State 51
 
-   75 immedBoolOp: "XORI" .
+   75 immedBoolOp: "XORI" •
 
     $default  reduce using rule 75 (immedBoolOp)
 
 
 State 52
 
-   79 branchTestOp: "BEQ" .
+   79 branchTestOp: "BEQ" •
 
     $default  reduce using rule 79 (branchTestOp)
 
 
 State 53
 
-   80 branchTestOp: "BGEZ" .
+   80 branchTestOp: "BGEZ" •
 
     $default  reduce using rule 80 (branchTestOp)
 
 
 State 54
 
-   82 branchTestOp: "BLEZ" .
+   82 branchTestOp: "BLEZ" •
 
     $default  reduce using rule 82 (branchTestOp)
 
 
 State 55
 
-   81 branchTestOp: "BGTZ" .
+   81 branchTestOp: "BGTZ" •
 
     $default  reduce using rule 81 (branchTestOp)
 
 
 State 56
 
-   83 branchTestOp: "BLTZ" .
+   83 branchTestOp: "BLTZ" •
 
     $default  reduce using rule 83 (branchTestOp)
 
 
 State 57
 
-   84 branchTestOp: "BNE" .
+   84 branchTestOp: "BNE" •
 
     $default  reduce using rule 84 (branchTestOp)
 
 
 State 58
 
-   62 oneRegOffsetOp: "CSI" .
+   62 oneRegOffsetOp: "CSI" •
 
     $default  reduce using rule 62 (oneRegOffsetOp)
 
 
 State 59
 
-   86 jumpOp: "JMPA" .
+   86 jumpOp: "JMPA" •
 
     $default  reduce using rule 86 (jumpOp)
 
 
 State 60
 
-   87 jumpOp: "CALL" .
+   87 jumpOp: "CALL" •
 
     $default  reduce using rule 87 (jumpOp)
 
 
 State 61
 
-   29 noArgOp: "RTN" .
+   29 noArgOp: "RTN" •
 
     $default  reduce using rule 29 (noArgOp)
 
 
 State 62
 
-   92 offsetOnlySyscallOp: "EXIT" .
+   92 offsetOnlySyscallOp: "EXIT" •
 
     $default  reduce using rule 92 (offsetOnlySyscallOp)
 
 
 State 63
 
-   94 regOffsetSyscallOp: "PSTR" .
+   94 regOffsetSyscallOp: "PSTR" •
 
     $default  reduce using rule 94 (regOffsetSyscallOp)
 
 
 State 64
 
-   95 regOffsetSyscallOp: "PINT" .
+   95 regOffsetSyscallOp: "PINT" •
 
     $default  reduce using rule 95 (regOffsetSyscallOp)
 
 
 State 65
 
-   96 regOffsetSyscallOp: "PCH" .
+   96 regOffsetSyscallOp: "PCH" •
 
     $default  reduce using rule 96 (regOffsetSyscallOp)
 
 
 State 66
 
-   97 regOffsetSyscallOp: "RCH" .
+   97 regOffsetSyscallOp: "RCH" •
 
     $default  reduce using rule 97 (regOffsetSyscallOp)
 
 
 State 67
 
-   99 noArgSyscallOp: "STRA" .
+   99 noArgSyscallOp: "STRA" •
 
     $default  reduce using rule 99 (noArgSyscallOp)
 
 
 State 68
 
-  100 noArgSyscallOp: "NOTR" .
+  100 noArgSyscallOp: "NOTR" •
 
     $default  reduce using rule 100 (noArgSyscallOp)
 
 
 State 69
 
-    9 asmInstr: labelOpt instr . eolsym
+    9 asmInstr: labelOpt instr • eolsym
 
     eolsym  shift, and go to state 108
 
 
 State 70
 
-   13 instr: noArgInstr .
+   13 instr: noArgInstr •
 
     $default  reduce using rule 13 (instr)
 
 
 State 71
 
-   27 noArgInstr: noArgOp .
+   27 noArgInstr: noArgOp •
 
     $default  reduce using rule 27 (noArgInstr)
 
 
 State 72
 
-   14 instr: twoRegCompInstr .
+   14 instr: twoRegCompInstr •
 
     $default  reduce using rule 14 (instr)
 
 
 State 73
 
-   30 twoRegCompInstr: twoRegCompOp . regsym "," offset "," regsym "," offset
+   30 twoRegCompInstr: twoRegCompOp • regsym "," offset "," regsym "," offset
 
     regsym  shift, and go to state 109
 
 
 State 74
 
-   15 instr: noTargetOffsetInstr .
+   15 instr: noTargetOffsetInstr •
 
     $default  reduce using rule 15 (instr)
 
 
 State 75
 
-   46 noTargetOffsetInstr: noTargetOffsetOp . regsym "," regsym "," offset
+   46 noTargetOffsetInstr: noTargetOffsetOp • regsym "," regsym "," offset
 
     regsym  shift, and go to state 110
 
 
 State 76
 
-   16 instr: noSourceOffsetInstr .
+   16 instr: noSourceOffsetInstr •
 
     $default  reduce using rule 16 (instr)
 
 
 State 77
 
-   48 noSourceOffsetInstr: noSourceOffsetOp . regsym "," offset "," regsym
+   48 noSourceOffsetInstr: noSourceOffsetOp • regsym "," offset "," regsym
 
     regsym  shift, and go to state 111
 
 
 State 78
 
-   17 instr: oneRegOffsetArgInstr .
+   17 instr: oneRegOffsetArgInstr •
 
     $default  reduce using rule 17 (instr)
 
 
 State 79
 
-   50 oneRegOffsetArgInstr: oneRegOffsetArgOp . regsym "," offset "," arg
+   50 oneRegOffsetArgInstr: oneRegOffsetArgOp • regsym "," offset "," arg
 
     regsym  shift, and go to state 112
 
 
 State 80
 
-   18 instr: oneRegArgInstr .
+   18 instr: oneRegArgInstr •
 
     $default  reduce using rule 18 (instr)
 
 
 State 81
 
-   53 oneRegArgInstr: oneRegArgOp . regsym "," arg
+   53 oneRegArgInstr: oneRegArgOp • regsym "," arg
 
     regsym  shift, and go to state 113
 
 
 State 82
 
-   19 instr: oneRegOffsetInstr .
+   19 instr: oneRegOffsetInstr •
 
     $default  reduce using rule 19 (instr)
 
 
 State 83
 
-   56 oneRegOffsetInstr: oneRegOffsetOp . regsym "," offset
+   56 oneRegOffsetInstr: oneRegOffsetOp • regsym "," offset
 
     regsym  shift, and go to state 114
 
 
 State 84
 
-   20 instr: shiftInstr .
+   20 instr: shiftInstr •
 
     $default  reduce using rule 20 (instr)
 
 
 State 85
 
-   63 shiftInstr: shiftOp . regsym "," offset "," shift
+   63 shiftInstr: shiftOp • regsym "," offset "," shift
 
     regsym  shift, and go to state 115
 
 
 State 86
 
-   21 instr: argOnlyInstr .
+   21 instr: argOnlyInstr •
 
     $default  reduce using rule 21 (instr)
 
 
 State 87
 
-   67 argOnlyInstr: argOnlyOp . arg
+   67 argOnlyInstr: argOnlyOp • arg
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1169,56 +1169,56 @@ State 87
 
 State 88
 
-   22 instr: immedArithInstr .
+   22 instr: immedArithInstr •
 
     $default  reduce using rule 22 (instr)
 
 
 State 89
 
-   69 immedArithInstr: immedArithOp . regsym "," offset "," immed
+   69 immedArithInstr: immedArithOp • regsym "," offset "," immed
 
     regsym  shift, and go to state 122
 
 
 State 90
 
-   23 instr: immedBoolInstr .
+   23 instr: immedBoolInstr •
 
     $default  reduce using rule 23 (instr)
 
 
 State 91
 
-   72 immedBoolInstr: immedBoolOp . regsym "," offset "," uimmed
+   72 immedBoolInstr: immedBoolOp • regsym "," offset "," uimmed
 
     regsym  shift, and go to state 123
 
 
 State 92
 
-   24 instr: branchTestInstr .
+   24 instr: branchTestInstr •
 
     $default  reduce using rule 24 (instr)
 
 
 State 93
 
-   78 branchTestInstr: branchTestOp . regsym "," offset "," immed
+   78 branchTestInstr: branchTestOp • regsym "," offset "," immed
 
     regsym  shift, and go to state 124
 
 
 State 94
 
-   25 instr: jumpInstr .
+   25 instr: jumpInstr •
 
     $default  reduce using rule 25 (instr)
 
 
 State 95
 
-   85 jumpInstr: jumpOp . addr
+   85 jumpInstr: jumpOp • addr
 
     identsym        shift, and go to state 4
     unsignednumsym  shift, and go to state 5
@@ -1229,21 +1229,21 @@ State 95
 
 State 96
 
-   26 instr: syscallInstr .
+   26 instr: syscallInstr •
 
     $default  reduce using rule 26 (instr)
 
 
 State 97
 
-   88 syscallInstr: offsetOnlySyscall .
+   88 syscallInstr: offsetOnlySyscall •
 
     $default  reduce using rule 88 (syscallInstr)
 
 
 State 98
 
-   91 offsetOnlySyscall: offsetOnlySyscallOp . offset
+   91 offsetOnlySyscall: offsetOnlySyscallOp • offset
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1258,43 +1258,43 @@ State 98
 
 State 99
 
-   89 syscallInstr: regOffsetSyscall .
+   89 syscallInstr: regOffsetSyscall •
 
     $default  reduce using rule 89 (syscallInstr)
 
 
 State 100
 
-   93 regOffsetSyscall: regOffsetSyscallOp . regsym "," offset
+   93 regOffsetSyscall: regOffsetSyscallOp • regsym "," offset
 
     regsym  shift, and go to state 128
 
 
 State 101
 
-   90 syscallInstr: noArgSyscall .
+   90 syscallInstr: noArgSyscall •
 
     $default  reduce using rule 90 (syscallInstr)
 
 
 State 102
 
-   98 noArgSyscall: noArgSyscallOp .
+   98 noArgSyscall: noArgSyscallOp •
 
     $default  reduce using rule 98 (noArgSyscall)
 
 
 State 103
 
-  103 staticDecls: empty .
+  103 staticDecls: empty •
 
     $default  reduce using rule 103 (staticDecls)
 
 
 State 104
 
-  101 dataSection: ".data" staticStartAddr staticDecls .
-  104 staticDecls: staticDecls . staticDecl
+  101 dataSection: ".data" staticStartAddr staticDecls •
+  104 staticDecls: staticDecls • staticDecl
 
     "WORD"    shift, and go to state 129
     "CHAR"    shift, and go to state 130
@@ -1308,210 +1308,210 @@ State 104
 
 State 105
 
-  114 stackBottomAddr: unsignednumsym .
+  114 stackBottomAddr: unsignednumsym •
 
     $default  reduce using rule 114 (stackBottomAddr)
 
 
 State 106
 
-  113 stackSection: ".stack" stackBottomAddr .
+  113 stackSection: ".stack" stackBottomAddr •
 
     $default  reduce using rule 113 (stackSection)
 
 
 State 107
 
-    1 program: textSection dataSection stackSection ".end" .
+    1 program: textSection dataSection stackSection ".end" •
 
     $default  reduce using rule 1 (program)
 
 
 State 108
 
-    9 asmInstr: labelOpt instr eolsym .
+    9 asmInstr: labelOpt instr eolsym •
 
     $default  reduce using rule 9 (asmInstr)
 
 
 State 109
 
-   30 twoRegCompInstr: twoRegCompOp regsym . "," offset "," regsym "," offset
+   30 twoRegCompInstr: twoRegCompOp regsym • "," offset "," regsym "," offset
 
     ","  shift, and go to state 134
 
 
 State 110
 
-   46 noTargetOffsetInstr: noTargetOffsetOp regsym . "," regsym "," offset
+   46 noTargetOffsetInstr: noTargetOffsetOp regsym • "," regsym "," offset
 
     ","  shift, and go to state 135
 
 
 State 111
 
-   48 noSourceOffsetInstr: noSourceOffsetOp regsym . "," offset "," regsym
+   48 noSourceOffsetInstr: noSourceOffsetOp regsym • "," offset "," regsym
 
     ","  shift, and go to state 136
 
 
 State 112
 
-   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym . "," offset "," arg
+   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym • "," offset "," arg
 
     ","  shift, and go to state 137
 
 
 State 113
 
-   53 oneRegArgInstr: oneRegArgOp regsym . "," arg
+   53 oneRegArgInstr: oneRegArgOp regsym • "," arg
 
     ","  shift, and go to state 138
 
 
 State 114
 
-   56 oneRegOffsetInstr: oneRegOffsetOp regsym . "," offset
+   56 oneRegOffsetInstr: oneRegOffsetOp regsym • "," offset
 
     ","  shift, and go to state 139
 
 
 State 115
 
-   63 shiftInstr: shiftOp regsym . "," offset "," shift
+   63 shiftInstr: shiftOp regsym • "," offset "," shift
 
     ","  shift, and go to state 140
 
 
 State 116
 
-   43 sign: "+" .
+   43 sign: "+" •
 
     $default  reduce using rule 43 (sign)
 
 
 State 117
 
-   44 sign: "-" .
+   44 sign: "-" •
 
     $default  reduce using rule 44 (sign)
 
 
 State 118
 
-   45 sign: empty .
+   45 sign: empty •
 
     $default  reduce using rule 45 (sign)
 
 
 State 119
 
-   52 arg: number .
+   52 arg: number •
 
     $default  reduce using rule 52 (arg)
 
 
 State 120
 
-   42 number: sign . unsignednumsym
+   42 number: sign • unsignednumsym
 
     unsignednumsym  shift, and go to state 141
 
 
 State 121
 
-   67 argOnlyInstr: argOnlyOp arg .
+   67 argOnlyInstr: argOnlyOp arg •
 
     $default  reduce using rule 67 (argOnlyInstr)
 
 
 State 122
 
-   69 immedArithInstr: immedArithOp regsym . "," offset "," immed
+   69 immedArithInstr: immedArithOp regsym • "," offset "," immed
 
     ","  shift, and go to state 142
 
 
 State 123
 
-   72 immedBoolInstr: immedBoolOp regsym . "," offset "," uimmed
+   72 immedBoolInstr: immedBoolOp regsym • "," offset "," uimmed
 
     ","  shift, and go to state 143
 
 
 State 124
 
-   78 branchTestInstr: branchTestOp regsym . "," offset "," immed
+   78 branchTestInstr: branchTestOp regsym • "," offset "," immed
 
     ","  shift, and go to state 144
 
 
 State 125
 
-   85 jumpInstr: jumpOp addr .
+   85 jumpInstr: jumpOp addr •
 
     $default  reduce using rule 85 (jumpInstr)
 
 
 State 126
 
-   91 offsetOnlySyscall: offsetOnlySyscallOp offset .
+   91 offsetOnlySyscall: offsetOnlySyscallOp offset •
 
     $default  reduce using rule 91 (offsetOnlySyscall)
 
 
 State 127
 
-   41 offset: number .
+   41 offset: number •
 
     $default  reduce using rule 41 (offset)
 
 
 State 128
 
-   93 regOffsetSyscall: regOffsetSyscallOp regsym . "," offset
+   93 regOffsetSyscall: regOffsetSyscallOp regsym • "," offset
 
     ","  shift, and go to state 145
 
 
 State 129
 
-  106 dataSize: "WORD" .
+  106 dataSize: "WORD" •
 
     $default  reduce using rule 106 (dataSize)
 
 
 State 130
 
-  107 dataSize: "CHAR" .
+  107 dataSize: "CHAR" •
 
     $default  reduce using rule 107 (dataSize)
 
 
 State 131
 
-  108 dataSize: "STRING" . "[" unsignednumsym "]"
+  108 dataSize: "STRING" • "[" unsignednumsym "]"
 
     "["  shift, and go to state 146
 
 
 State 132
 
-  104 staticDecls: staticDecls staticDecl .
+  104 staticDecls: staticDecls staticDecl •
 
     $default  reduce using rule 104 (staticDecls)
 
 
 State 133
 
-  105 staticDecl: dataSize . identsym initializerOpt eolsym
+  105 staticDecl: dataSize • identsym initializerOpt eolsym
 
     identsym  shift, and go to state 147
 
 
 State 134
 
-   30 twoRegCompInstr: twoRegCompOp regsym "," . offset "," regsym "," offset
+   30 twoRegCompInstr: twoRegCompOp regsym "," • offset "," regsym "," offset
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1526,14 +1526,14 @@ State 134
 
 State 135
 
-   46 noTargetOffsetInstr: noTargetOffsetOp regsym "," . regsym "," offset
+   46 noTargetOffsetInstr: noTargetOffsetOp regsym "," • regsym "," offset
 
     regsym  shift, and go to state 149
 
 
 State 136
 
-   48 noSourceOffsetInstr: noSourceOffsetOp regsym "," . offset "," regsym
+   48 noSourceOffsetInstr: noSourceOffsetOp regsym "," • offset "," regsym
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1548,7 +1548,7 @@ State 136
 
 State 137
 
-   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym "," . offset "," arg
+   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym "," • offset "," arg
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1563,7 +1563,7 @@ State 137
 
 State 138
 
-   53 oneRegArgInstr: oneRegArgOp regsym "," . arg
+   53 oneRegArgInstr: oneRegArgOp regsym "," • arg
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1578,7 +1578,7 @@ State 138
 
 State 139
 
-   56 oneRegOffsetInstr: oneRegOffsetOp regsym "," . offset
+   56 oneRegOffsetInstr: oneRegOffsetOp regsym "," • offset
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1593,7 +1593,7 @@ State 139
 
 State 140
 
-   63 shiftInstr: shiftOp regsym "," . offset "," shift
+   63 shiftInstr: shiftOp regsym "," • offset "," shift
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1608,14 +1608,14 @@ State 140
 
 State 141
 
-   42 number: sign unsignednumsym .
+   42 number: sign unsignednumsym •
 
     $default  reduce using rule 42 (number)
 
 
 State 142
 
-   69 immedArithInstr: immedArithOp regsym "," . offset "," immed
+   69 immedArithInstr: immedArithOp regsym "," • offset "," immed
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1630,7 +1630,7 @@ State 142
 
 State 143
 
-   72 immedBoolInstr: immedBoolOp regsym "," . offset "," uimmed
+   72 immedBoolInstr: immedBoolOp regsym "," • offset "," uimmed
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1645,7 +1645,7 @@ State 143
 
 State 144
 
-   78 branchTestInstr: branchTestOp regsym "," . offset "," immed
+   78 branchTestInstr: branchTestOp regsym "," • offset "," immed
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1660,7 +1660,7 @@ State 144
 
 State 145
 
-   93 regOffsetSyscall: regOffsetSyscallOp regsym "," . offset
+   93 regOffsetSyscall: regOffsetSyscallOp regsym "," • offset
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1675,14 +1675,14 @@ State 145
 
 State 146
 
-  108 dataSize: "STRING" "[" . unsignednumsym "]"
+  108 dataSize: "STRING" "[" • unsignednumsym "]"
 
     unsignednumsym  shift, and go to state 159
 
 
 State 147
 
-  105 staticDecl: dataSize identsym . initializerOpt eolsym
+  105 staticDecl: dataSize identsym • initializerOpt eolsym
 
     "="  shift, and go to state 160
 
@@ -1694,93 +1694,93 @@ State 147
 
 State 148
 
-   30 twoRegCompInstr: twoRegCompOp regsym "," offset . "," regsym "," offset
+   30 twoRegCompInstr: twoRegCompOp regsym "," offset • "," regsym "," offset
 
     ","  shift, and go to state 163
 
 
 State 149
 
-   46 noTargetOffsetInstr: noTargetOffsetOp regsym "," regsym . "," offset
+   46 noTargetOffsetInstr: noTargetOffsetOp regsym "," regsym • "," offset
 
     ","  shift, and go to state 164
 
 
 State 150
 
-   48 noSourceOffsetInstr: noSourceOffsetOp regsym "," offset . "," regsym
+   48 noSourceOffsetInstr: noSourceOffsetOp regsym "," offset • "," regsym
 
     ","  shift, and go to state 165
 
 
 State 151
 
-   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym "," offset . "," arg
+   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym "," offset • "," arg
 
     ","  shift, and go to state 166
 
 
 State 152
 
-   53 oneRegArgInstr: oneRegArgOp regsym "," arg .
+   53 oneRegArgInstr: oneRegArgOp regsym "," arg •
 
     $default  reduce using rule 53 (oneRegArgInstr)
 
 
 State 153
 
-   56 oneRegOffsetInstr: oneRegOffsetOp regsym "," offset .
+   56 oneRegOffsetInstr: oneRegOffsetOp regsym "," offset •
 
     $default  reduce using rule 56 (oneRegOffsetInstr)
 
 
 State 154
 
-   63 shiftInstr: shiftOp regsym "," offset . "," shift
+   63 shiftInstr: shiftOp regsym "," offset • "," shift
 
     ","  shift, and go to state 167
 
 
 State 155
 
-   69 immedArithInstr: immedArithOp regsym "," offset . "," immed
+   69 immedArithInstr: immedArithOp regsym "," offset • "," immed
 
     ","  shift, and go to state 168
 
 
 State 156
 
-   72 immedBoolInstr: immedBoolOp regsym "," offset . "," uimmed
+   72 immedBoolInstr: immedBoolOp regsym "," offset • "," uimmed
 
     ","  shift, and go to state 169
 
 
 State 157
 
-   78 branchTestInstr: branchTestOp regsym "," offset . "," immed
+   78 branchTestInstr: branchTestOp regsym "," offset • "," immed
 
     ","  shift, and go to state 170
 
 
 State 158
 
-   93 regOffsetSyscall: regOffsetSyscallOp regsym "," offset .
+   93 regOffsetSyscall: regOffsetSyscallOp regsym "," offset •
 
     $default  reduce using rule 93 (regOffsetSyscall)
 
 
 State 159
 
-  108 dataSize: "STRING" "[" unsignednumsym . "]"
+  108 dataSize: "STRING" "[" unsignednumsym • "]"
 
     "]"  shift, and go to state 171
 
 
 State 160
 
-  109 initializerOpt: "=" . number
-  110               | "=" . charliteralsym
-  111               | "=" . stringliteralsym
+  109 initializerOpt: "=" • number
+  110               | "=" • charliteralsym
+  111               | "=" • stringliteralsym
 
     "+"               shift, and go to state 116
     "-"               shift, and go to state 117
@@ -1796,28 +1796,28 @@ State 160
 
 State 161
 
-  112 initializerOpt: empty .
+  112 initializerOpt: empty •
 
     $default  reduce using rule 112 (initializerOpt)
 
 
 State 162
 
-  105 staticDecl: dataSize identsym initializerOpt . eolsym
+  105 staticDecl: dataSize identsym initializerOpt • eolsym
 
     eolsym  shift, and go to state 175
 
 
 State 163
 
-   30 twoRegCompInstr: twoRegCompOp regsym "," offset "," . regsym "," offset
+   30 twoRegCompInstr: twoRegCompOp regsym "," offset "," • regsym "," offset
 
     regsym  shift, and go to state 176
 
 
 State 164
 
-   46 noTargetOffsetInstr: noTargetOffsetOp regsym "," regsym "," . offset
+   46 noTargetOffsetInstr: noTargetOffsetOp regsym "," regsym "," • offset
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1832,14 +1832,14 @@ State 164
 
 State 165
 
-   48 noSourceOffsetInstr: noSourceOffsetOp regsym "," offset "," . regsym
+   48 noSourceOffsetInstr: noSourceOffsetOp regsym "," offset "," • regsym
 
     regsym  shift, and go to state 178
 
 
 State 166
 
-   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym "," offset "," . arg
+   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym "," offset "," • arg
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1854,7 +1854,7 @@ State 166
 
 State 167
 
-   63 shiftInstr: shiftOp regsym "," offset "," . shift
+   63 shiftInstr: shiftOp regsym "," offset "," • shift
 
     unsignednumsym  shift, and go to state 180
 
@@ -1863,7 +1863,7 @@ State 167
 
 State 168
 
-   69 immedArithInstr: immedArithOp regsym "," offset "," . immed
+   69 immedArithInstr: immedArithOp regsym "," offset "," • immed
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1878,7 +1878,7 @@ State 168
 
 State 169
 
-   72 immedBoolInstr: immedBoolOp regsym "," offset "," . uimmed
+   72 immedBoolInstr: immedBoolOp regsym "," offset "," • uimmed
 
     unsignednumsym  shift, and go to state 184
 
@@ -1887,7 +1887,7 @@ State 169
 
 State 170
 
-   78 branchTestInstr: branchTestOp regsym "," offset "," . immed
+   78 branchTestInstr: branchTestOp regsym "," offset "," • immed
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -1902,119 +1902,119 @@ State 170
 
 State 171
 
-  108 dataSize: "STRING" "[" unsignednumsym "]" .
+  108 dataSize: "STRING" "[" unsignednumsym "]" •
 
     $default  reduce using rule 108 (dataSize)
 
 
 State 172
 
-  110 initializerOpt: "=" charliteralsym .
+  110 initializerOpt: "=" charliteralsym •
 
     $default  reduce using rule 110 (initializerOpt)
 
 
 State 173
 
-  111 initializerOpt: "=" stringliteralsym .
+  111 initializerOpt: "=" stringliteralsym •
 
     $default  reduce using rule 111 (initializerOpt)
 
 
 State 174
 
-  109 initializerOpt: "=" number .
+  109 initializerOpt: "=" number •
 
     $default  reduce using rule 109 (initializerOpt)
 
 
 State 175
 
-  105 staticDecl: dataSize identsym initializerOpt eolsym .
+  105 staticDecl: dataSize identsym initializerOpt eolsym •
 
     $default  reduce using rule 105 (staticDecl)
 
 
 State 176
 
-   30 twoRegCompInstr: twoRegCompOp regsym "," offset "," regsym . "," offset
+   30 twoRegCompInstr: twoRegCompOp regsym "," offset "," regsym • "," offset
 
     ","  shift, and go to state 187
 
 
 State 177
 
-   46 noTargetOffsetInstr: noTargetOffsetOp regsym "," regsym "," offset .
+   46 noTargetOffsetInstr: noTargetOffsetOp regsym "," regsym "," offset •
 
     $default  reduce using rule 46 (noTargetOffsetInstr)
 
 
 State 178
 
-   48 noSourceOffsetInstr: noSourceOffsetOp regsym "," offset "," regsym .
+   48 noSourceOffsetInstr: noSourceOffsetOp regsym "," offset "," regsym •
 
     $default  reduce using rule 48 (noSourceOffsetInstr)
 
 
 State 179
 
-   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym "," offset "," arg .
+   50 oneRegOffsetArgInstr: oneRegOffsetArgOp regsym "," offset "," arg •
 
     $default  reduce using rule 50 (oneRegOffsetArgInstr)
 
 
 State 180
 
-   66 shift: unsignednumsym .
+   66 shift: unsignednumsym •
 
     $default  reduce using rule 66 (shift)
 
 
 State 181
 
-   63 shiftInstr: shiftOp regsym "," offset "," shift .
+   63 shiftInstr: shiftOp regsym "," offset "," shift •
 
     $default  reduce using rule 63 (shiftInstr)
 
 
 State 182
 
-   71 immed: number .
+   71 immed: number •
 
     $default  reduce using rule 71 (immed)
 
 
 State 183
 
-   69 immedArithInstr: immedArithOp regsym "," offset "," immed .
+   69 immedArithInstr: immedArithOp regsym "," offset "," immed •
 
     $default  reduce using rule 69 (immedArithInstr)
 
 
 State 184
 
-   77 uimmed: unsignednumsym .
+   77 uimmed: unsignednumsym •
 
     $default  reduce using rule 77 (uimmed)
 
 
 State 185
 
-   72 immedBoolInstr: immedBoolOp regsym "," offset "," uimmed .
+   72 immedBoolInstr: immedBoolOp regsym "," offset "," uimmed •
 
     $default  reduce using rule 72 (immedBoolInstr)
 
 
 State 186
 
-   78 branchTestInstr: branchTestOp regsym "," offset "," immed .
+   78 branchTestInstr: branchTestOp regsym "," offset "," immed •
 
     $default  reduce using rule 78 (branchTestInstr)
 
 
 State 187
 
-   30 twoRegCompInstr: twoRegCompOp regsym "," offset "," regsym "," . offset
+   30 twoRegCompInstr: twoRegCompOp regsym "," offset "," regsym "," • offset
 
     "+"  shift, and go to state 116
     "-"  shift, and go to state 117
@@ -2029,6 +2029,6 @@ State 187
 
 State 188
 
-   30 twoRegCompInstr: twoRegCompOp regsym "," offset "," regsym "," offset .
+   30 twoRegCompInstr: twoRegCompOp regsym "," offset "," regsym "," offset •
 
     $default  reduce using rule 30 (twoRegCompInstr)
