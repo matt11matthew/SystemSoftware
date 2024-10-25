@@ -1,4 +1,4 @@
- /* $Id: bison_spl_y_top.y,v 1.2 2024/10/09 18:18:55 leavens Exp $ */
+   /* $Id: bison_spl_y_top.y,v 1.2 2024/10/09 18:18:55 leavens Exp $ */
 
 %code top {
 #include <stdio.h>
@@ -28,7 +28,7 @@ extern void yyerror(const char *filename, const char *msg);
 %token <ident> identsym
 %token <number> numbersym
 %token <token> plussym    "+"
-%token <token> minussym   "-"
+%token <token> minussym   "-"    
 %token <token> multsym    "*"
 %token <token> divsym     "/"
 
@@ -174,7 +174,7 @@ varDecl : varsym identList semisym {
            $$ = ast_var_decl($2);
         };
 
-
+  
 identList : identsym { $$ = ast_ident_list_singleton($1); }
 | identsym commasym identList { $$ = ast_ident_list($3, $1); };
 
@@ -260,7 +260,7 @@ term : factor {
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
      };
 
-factor :
+factor a
 identsym { $$ = ast_expr_ident($1); }
 | numbersym {
 $$ = ast_expr_number($1);
