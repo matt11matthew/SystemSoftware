@@ -119,7 +119,12 @@ extern void setProgAST(block_t t);
 
 program : block periodsym {setProgAST($1); };
 
-block : beginsym constDecls varDecls procDecls stmts endsym {$$ = ast_block($1,$2,$3,$4,$5); };
+block : beginsym constDecls varDecls procDecls stmts endsym {
+
+ $$ = ast_block($1,$2,$3,$4,$5);
+
+
+ };
 
 constDecls : constDecls semisym constDecl
               {
@@ -157,28 +162,30 @@ constDefList
 constDef : identsym eqsym numbersym{
         $$ = ast_const_def($1, $3);
       };
-//extern var_decls_t ast_var_decls(var_decls_t var_decls, var_decl_t var_decl);
-//varDecls { $$ = ast_var_decls($1, $3); }
-varDecls: varDecls semisym varDecl
-          { $$ = ast_var_decls($1, $3); }
-|    varDecl{
-        empty_t empty = ast_empty(file_location_make(lexer_filename(), lexer_line()));
-        var_decls_t empty_var_decls = ast_var_decls_empty(empty);
-        $$ = ast_var_decls(empty_var_decls, $1);
-    }
-    | empty {
-        $$ = ast_var_decls_empty($1);
-    };
+
+varDecls: varDecls semisym varDecl {
+    $$ = ast_var_decls($1, $3);  // Append $3 to the existing list in $1
+}
+| varDecl {
+    empty_t empty = ast_empty(file_location_make(lexer_filename(), lexer_line()));
+    var_decls_t empty_var_decls = ast_var_decls_empty(empty);
+    $$ = ast_var_decls(empty_var_decls, $1);  // Start with a new varDecl
+}
+| empty {
+    $$ = ast_var_decls_empty($1);  // Handle the empty case
+};
+
 
 varDecl : varsym identList semisym {
            $$ = ast_var_decl($2);
         };
 
-  
-identList : identsym { $$ = ast_ident_list_singleton($1); }
-| identsym commasym identList { $$ = ast_ident_list($3, $1); };
-
-
+identList:  identsym {
+    $$ = ast_ident_list_singleton($1);
+}
+| identList commasym  identsym {
+    $$ = ast_ident_list($1, $3);
+}
 procDecls : empty { $$ = ast_proc_decls_empty($1); } ;
 
 stmts : empty { $$ = ast_stmts_empty($1); } | stmtList {
@@ -193,6 +200,7 @@ empty : %empty
 };
 
 stmtList :  stmt {
+
             $$ =  ast_stmt_list_singleton($1);
             } |
             stmtList semisym stmt {
@@ -200,7 +208,10 @@ stmtList :  stmt {
             };
 
 stmt :
- assignStmt { $$ = ast_stmt_assign($1); }
+ assignStmt {
+
+ $$ = ast_stmt_assign($1);
+  }
  | callStmt  { $$ = ast_stmt_call($1); }
  | ifStmt  { $$ = ast_stmt_if($1); }
  | whileStmt { $$ = ast_stmt_while($1); }
@@ -223,8 +234,7 @@ readStmt: readsym identsym{ $$ = ast_read_stmt($2); };
 
 printStmt: printsym expr {
     expr_t val = $2;
-
- $$ = ast_print_stmt(val);
+     $$ = ast_print_stmt(val);
  //printf("%s\n", $2.data.number.text);  // Print the correct number
  };
 
@@ -260,16 +270,18 @@ term : factor {
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
      };
 
-factor a
+factor :
 identsym { $$ = ast_expr_ident($1); }
 | numbersym {
 $$ = ast_expr_number($1);
  }
-| minussym factor { $$ = ast_expr_signed_expr($1, $2); }
-| plussym factor { $$ = ast_expr_signed_expr($1, $2); }
+| sign factor {
+ //  $$ = ast_expr_signed_expr($1,$$ )
+}
 | lparensym expr rparensym { $$ = $2; };
 
-sign : minussym | plussym;
+sign : minussym {}
+|      plussym {};
 
 %%
 
