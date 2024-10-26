@@ -126,9 +126,9 @@ block : beginsym constDecls varDecls procDecls stmts endsym {
 
  };
 
-constDecls : constDecls semisym constDecl
+constDecls : constDecls constDecl
               {
-                $$ = ast_const_decls($1, $3);
+                $$ = ast_const_decls($1, $2);
               }
             | constDecl
               {
@@ -147,8 +147,7 @@ constDecl : constsym constDefList semisym {
     $$ = ast_const_decl($2);
 };
 
-constDefList
-    : constDef
+constDefList : constDef
       {
         $$ = ast_const_def_list_singleton($1);
       }
@@ -163,8 +162,9 @@ constDef : identsym eqsym numbersym{
         $$ = ast_const_def($1, $3);
       };
 
-varDecls: varDecls semisym varDecl {
-    $$ = ast_var_decls($1, $3);  // Append $3 to the existing list in $1
+//Working
+varDecls: varDecls varDecl {
+    $$ = ast_var_decls($1, $2);  // Append $2 to the existing list in $1
 }
 | varDecl {
     empty_t empty = ast_empty(file_location_make(lexer_filename(), lexer_line()));
@@ -183,10 +183,25 @@ varDecl : varsym identList semisym {
 identList:  identsym {
     $$ = ast_ident_list_singleton($1);
 }
-| identList commasym  identsym {
+| identList commasym identsym {
     $$ = ast_ident_list($1, $3);
 }
-procDecls : empty { $$ = ast_proc_decls_empty($1); } ;
+
+procDecls : procDecls semisym procDecl {
+    $$ = ast_proc_decls($1, $3);
+}
+| procDecl {
+    empty_t empty = ast_empty($1.file_loc);
+    proc_decls_t empty_proc_decls = ast_proc_decls_empty(empty);
+    $$ = ast_proc_decls(empty_proc_decls, $1);
+}
+| empty {
+    $$ = ast_proc_decls_empty($1);
+};
+
+procDecl : procsym identsym block {
+    $$ = ast_proc_decl($2, $3);
+};
 
 stmts : empty { $$ = ast_stmts_empty($1); } | stmtList {
   //Statement list case
@@ -206,6 +221,7 @@ stmtList :  stmt {
             stmtList semisym stmt {
             $$ = ast_stmt_list($1, $3);
             };
+            
 
 stmt :
  assignStmt {
