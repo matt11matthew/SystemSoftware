@@ -199,7 +199,7 @@ procDecls : procDecls semisym procDecl {
     $$ = ast_proc_decls_empty($1);
 };
 
-procDecl : procsym identsym block {
+procDecl : procsym identsym block semisym {
     $$ = ast_proc_decl($2, $3);
 };
 

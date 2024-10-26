@@ -1,0 +1,17 @@
+                                                                 begin
+  var x;
+  x := 10;
+  while x != 0
+  do
+    begin
+      read x;
+      if x <= 0
+      then
+        print (x + y)
+      else
+        print (y - x)
+      end
+    end
+  end
+end
+.
