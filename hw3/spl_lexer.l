@@ -130,17 +130,18 @@ static void number2ast(unsigned int val)
 }
 
 
-[0-9]+  {
+-?[0-9]+  {
     long long number = atoll(yytext);
 
-    if (number > INT_MAX) {
+    if (number > INT_MAX || number < INT_MIN) { // Check both bounds for int limits
         char buffer[200];
-        sprintf(buffer, "Number (%s) is too large!", yytext);
+        sprintf(buffer, "Number (%s) is out of range!", yytext);
         yyerror("", buffer);
     }
     number2ast(number); // Sets yylval to number_t
     return numbersym; // Return the token code
 }
+
 
 [#|!?'"&] {
     char buffer[100];

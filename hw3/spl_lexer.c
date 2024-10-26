@@ -448,15 +448,15 @@ static const YY_CHAR yy_meta[42] =
 
 static const flex_int16_t yy_base[93] =
     {   0,
-        0,    0,   99,  100,   96,  100,   78,  100,    0,  100,
-      100,  100,  100,  100,  100,  100,  100,   81,   76,  100,
-       75,   74,   73,    0,  100,   15,   20,   13,   13,   63,
-       54,   62,   58,   64,   56,   83,  100,    0,   69,  100,
-      100,  100,  100,    0,   54,    0,   50,   48,   41,    0,
+        0,    0,  100,  101,   97,  101,   79,  101,    0,  101,
+      101,  101,  101,  101,   82,  101,  101,   81,   76,  101,
+       75,   74,   73,    0,  101,   15,   20,   13,   13,   63,
+       54,   62,   58,   64,   56,   83,  101,    0,   69,  101,
+      101,  101,  101,    0,   54,    0,   50,   48,   41,    0,
        42,   52,    0,   17,   54,   49,   39,   43,   42,   40,
        34,   39,   42,    0,   35,   42,   40,   32,    0,   32,
        30,    0,   24,   24,    0,   22,    0,    0,    0,   31,
-        0,    0,   24,    0,    0,   29,   20,   23,    0,  100,
+        0,    0,   24,    0,    0,   29,   20,   23,    0,  101,
        56,   46
 
     } ;
@@ -476,7 +476,7 @@ static const flex_int16_t yy_def[93] =
 
     } ;
 
-static const flex_int16_t yy_nxt[142] =
+static const flex_int16_t yy_nxt[143] =
     {   0,
         4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
        14,   15,   16,   17,   18,   19,   20,   21,   22,   23,
@@ -487,16 +487,16 @@ static const flex_int16_t yy_nxt[142] =
        83,   82,   81,   80,   79,   78,   77,   76,   75,   74,
        73,   72,   71,   70,   69,   68,   67,   64,   63,   62,
        61,   60,   59,   39,   36,   58,   57,   56,   55,   54,
-       53,   43,   42,   41,   40,   39,   37,   36,   90,    3,
+       53,   43,   42,   41,   40,   39,   39,   37,   36,   90,
 
+        3,   90,   90,   90,   90,   90,   90,   90,   90,   90,
        90,   90,   90,   90,   90,   90,   90,   90,   90,   90,
        90,   90,   90,   90,   90,   90,   90,   90,   90,   90,
        90,   90,   90,   90,   90,   90,   90,   90,   90,   90,
-       90,   90,   90,   90,   90,   90,   90,   90,   90,   90,
-       90
+       90,   90
     } ;
 
-static const flex_int16_t yy_chk[142] =
+static const flex_int16_t yy_chk[143] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -507,13 +507,13 @@ static const flex_int16_t yy_chk[142] =
        74,   73,   71,   70,   68,   67,   66,   65,   63,   62,
        61,   60,   59,   58,   57,   56,   55,   52,   51,   49,
        48,   47,   45,   39,   36,   35,   34,   33,   32,   31,
-       30,   23,   22,   21,   19,   18,    7,    5,    3,   90,
+       30,   23,   22,   21,   19,   18,   15,    7,    5,    3,
 
        90,   90,   90,   90,   90,   90,   90,   90,   90,   90,
        90,   90,   90,   90,   90,   90,   90,   90,   90,   90,
        90,   90,   90,   90,   90,   90,   90,   90,   90,   90,
        90,   90,   90,   90,   90,   90,   90,   90,   90,   90,
-       90
+       90,   90
     } ;
 
 /* Table of booleans, true if rule could match eol. */
@@ -875,7 +875,7 @@ yy_match:
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 100 );
+		while ( yy_base[yy_current_state] != 101 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -1099,9 +1099,9 @@ YY_RULE_SETUP
 {
     long long number = atoll(yytext);
 
-    if (number > INT_MAX) {
+    if (number > INT_MAX || number < INT_MIN) { // Check both bounds for int limits
         char buffer[200];
-        sprintf(buffer, "Number (%s) is too large!", yytext);
+        sprintf(buffer, "Number (%s) is out of range!", yytext);
         yyerror("", buffer);
     }
     number2ast(number); // Sets yylval to number_t
@@ -1110,7 +1110,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 146 "spl_lexer.l"
+#line 147 "spl_lexer.l"
 {
     char buffer[100];
     sprintf(buffer, "invalid character: '%c' ('\\%03o')", yytext[0], yytext[0]);//Push to buffer
@@ -1119,7 +1119,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 153 "spl_lexer.l"
+#line 154 "spl_lexer.l"
 {
     char buffer[100];
     sprintf(buffer, "invalid character: '%c' ('\\%04o')", yytext[0], yytext[0]); //Push to buffer
@@ -1128,7 +1128,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 159 "spl_lexer.l"
+#line 160 "spl_lexer.l"
 ECHO;
 	YY_BREAK
 #line 1135 "spl_lexer.c"
@@ -2148,7 +2148,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 159 "spl_lexer.l"
+#line 160 "spl_lexer.l"
 
 
  /* This code goes in the user code section of the spl_lexer.l file,

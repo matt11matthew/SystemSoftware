@@ -277,7 +277,10 @@ expr : term {
     };
 
 term : factor {
-        $$ = $1;
+       expr_s xpr = $1;
+        printf("%s", xpr.data.number);
+       $$ = xpr;
+
      }
      | term multsym factor {
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
@@ -286,18 +289,29 @@ term : factor {
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
      };
 
-factor :
-identsym { $$ = ast_expr_ident($1); }
-| numbersym {
-$$ = ast_expr_number($1);
- }
-| sign factor {
- //  $$ = ast_expr_signed_expr($1,$$ )
-}
-| lparensym expr rparensym { $$ = $2; };
 
-sign : minussym {}
-|      plussym {};
+
+factor : identsym {
+
+            $$ = ast_expr_ident($1);
+        }
+       | numbersym {
+            $$ = ast_expr_number($1);
+        }
+       | minussym factor {
+
+
+            $$ = ast_expr_signed_expr($1, $2);  // Handle unary minus
+        }
+        | plussym factor {
+            $$ = ast_expr_signed_expr($1, $2);  // Handle unary minus
+        }
+
+       | lparensym expr rparensym {
+            $$ = $2;  // Handle parentheses
+        };
+
+
 
 %%
 
