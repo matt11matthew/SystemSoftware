@@ -296,11 +296,11 @@ term : factor {
 
 factor : identsym {
 
-            $$ = ast_expr_ident($1);
-        }
-       | numbersym {
-            $$ = ast_expr_number($1);
-        }
+
+sign : minussym | plussym;
+
+factor : identsym {
+
        | minussym factor {
 
 
@@ -310,6 +310,11 @@ factor : identsym {
             $$ = ast_expr_signed_expr($1, $2);  // Handle unary minus
         }
 
+
+       | sign factor {
+            $$ = ast_expr_signed_expr($1, $2);  // Handle unary minus
+        }
+       
        | lparensym expr rparensym {
             $$ = $2;  // Handle parentheses
         };
