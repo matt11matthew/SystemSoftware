@@ -2129,9 +2129,9 @@ yyreduce:
   case 54: /* term: factor  */
 #line 279 "spl.y"
               {
-       expr_s xpr = (yyvsp[0].expr);
-        printf("%s", xpr.data.number);
-       (yyval.expr) = xpr;
+
+
+       (yyval.expr) = (yyvsp[0].expr);
 
      }
 #line 2138 "spl.tab.c"

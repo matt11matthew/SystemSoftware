@@ -277,9 +277,9 @@ expr : term {
     };
 
 term : factor {
-       expr_s xpr = $1;
-        printf("%s", xpr.data.number);
-       $$ = xpr;
+
+
+       $$ = $1;
 
      }
      | term multsym factor {
