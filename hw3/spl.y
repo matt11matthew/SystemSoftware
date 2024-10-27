@@ -267,12 +267,15 @@ relOp : eqeqsym | neqsym | ltsym | leqsym | gtsym | geqsym
 
 expr : term {
         expr_t val = $1;
+        printf("f1");
         $$ = val;
     }
     | expr plussym term {
+        printf("f2");
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
     }
     | expr minussym term {
+        printf("f3");
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
     };
 

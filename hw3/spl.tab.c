@@ -554,8 +554,8 @@ static const yytype_int16 yyrline[] =
      202,   206,   206,   211,   217,   221,   227,   231,   232,   233,
      234,   235,   236,   238,   240,   242,   244,   247,   249,   251,
      257,   259,   260,   262,   264,   266,   266,   266,   266,   266,
-     266,   268,   272,   275,   279,   285,   288,   294,   298,   301,
-     306,   310
+     266,   268,   273,   277,   282,   288,   291,   297,   301,   304,
+     309,   313
 };
 #endif
 
@@ -2105,99 +2105,102 @@ yyreduce:
 #line 268 "spl.y"
             {
         expr_t val = (yyvsp[0].expr);
+        printf("f1");
         (yyval.expr) = val;
     }
-#line 2111 "spl.tab.c"
+#line 2112 "spl.tab.c"
     break;
 
   case 52: /* expr: expr "+" term  */
-#line 272 "spl.y"
+#line 273 "spl.y"
                         {
+        printf("f2");
         (yyval.expr) = ast_expr_binary_op(ast_binary_op_expr((yyvsp[-2].expr), (yyvsp[-1].token), (yyvsp[0].expr)));
     }
-#line 2119 "spl.tab.c"
+#line 2121 "spl.tab.c"
     break;
 
   case 53: /* expr: expr "-" term  */
-#line 275 "spl.y"
+#line 277 "spl.y"
                          {
+        printf("f3");
         (yyval.expr) = ast_expr_binary_op(ast_binary_op_expr((yyvsp[-2].expr), (yyvsp[-1].token), (yyvsp[0].expr)));
     }
-#line 2127 "spl.tab.c"
+#line 2130 "spl.tab.c"
     break;
 
   case 54: /* term: factor  */
-#line 279 "spl.y"
+#line 282 "spl.y"
               {
 
 
        (yyval.expr) = (yyvsp[0].expr);
 
      }
-#line 2138 "spl.tab.c"
+#line 2141 "spl.tab.c"
     break;
 
   case 55: /* term: term "*" factor  */
-#line 285 "spl.y"
+#line 288 "spl.y"
                            {
         (yyval.expr) = ast_expr_binary_op(ast_binary_op_expr((yyvsp[-2].expr), (yyvsp[-1].token), (yyvsp[0].expr)));
      }
-#line 2146 "spl.tab.c"
+#line 2149 "spl.tab.c"
     break;
 
   case 56: /* term: term "/" factor  */
-#line 288 "spl.y"
+#line 291 "spl.y"
                           {
         (yyval.expr) = ast_expr_binary_op(ast_binary_op_expr((yyvsp[-2].expr), (yyvsp[-1].token), (yyvsp[0].expr)));
      }
-#line 2154 "spl.tab.c"
+#line 2157 "spl.tab.c"
     break;
 
   case 57: /* factor: identsym  */
-#line 294 "spl.y"
+#line 297 "spl.y"
                   {
 
             (yyval.expr) = ast_expr_ident((yyvsp[0].ident));
         }
-#line 2163 "spl.tab.c"
+#line 2166 "spl.tab.c"
     break;
 
   case 58: /* factor: numbersym  */
-#line 298 "spl.y"
+#line 301 "spl.y"
                    {
             (yyval.expr) = ast_expr_number((yyvsp[0].number));
         }
-#line 2171 "spl.tab.c"
+#line 2174 "spl.tab.c"
     break;
 
   case 59: /* factor: "-" factor  */
-#line 301 "spl.y"
+#line 304 "spl.y"
                          {
 
 
             (yyval.expr) = ast_expr_signed_expr((yyvsp[-1].token), (yyvsp[0].expr));  // Handle unary minus
         }
-#line 2181 "spl.tab.c"
+#line 2184 "spl.tab.c"
     break;
 
   case 60: /* factor: "+" factor  */
-#line 306 "spl.y"
+#line 309 "spl.y"
                          {
             (yyval.expr) = ast_expr_signed_expr((yyvsp[-1].token), (yyvsp[0].expr));  // Handle unary minus
         }
-#line 2189 "spl.tab.c"
+#line 2192 "spl.tab.c"
     break;
 
   case 61: /* factor: "(" expr ")"  */
-#line 310 "spl.y"
+#line 313 "spl.y"
                                   {
             (yyval.expr) = (yyvsp[-1].expr);  // Handle parentheses
         }
-#line 2197 "spl.tab.c"
+#line 2200 "spl.tab.c"
     break;
 
 
-#line 2201 "spl.tab.c"
+#line 2204 "spl.tab.c"
 
         default: break;
       }
@@ -2437,7 +2440,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 316 "spl.y"
+#line 319 "spl.y"
 
 
 
