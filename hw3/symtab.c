@@ -5,5 +5,5 @@
 #include "symtab.h"
 
 void symtab_initialize(){
-
+    
 }

@@ -102,9 +102,9 @@ Grammar
 
    56 factor: identsym
    57       | numbersym
-   58       | "-" "(" factor ")"
-   59       | "+" "(" factor ")"
-   60       | "(" expr ")"
+   58       | "-" factor
+   59       | "+" factor
+   60       | "(" factor ")"
 
 
 Terminals, with rules where they appear
@@ -122,8 +122,8 @@ Terminals, with rules where they appear
     "=" <token> (266) 9
     "," <token> (267) 8 15
     ":=" <token> (268) 32
-    "(" <token> (269) 58 59 60
-    ")" <token> (270) 58 59 60
+    "(" <token> (269) 60
+    ")" <token> (270) 60
     "const" <token> (271) 6
     "var" <token> (272) 13
     "proc" <token> (273) 19
@@ -231,13 +231,13 @@ Nonterminals, with rules where they appear
         on right: 43
     expr <expr> (64)
         on left: 50 51 52
-        on right: 32 38 42 43 51 52 60
+        on right: 32 38 42 43 51 52
     term <expr> (65)
         on left: 53 54 55
         on right: 50 51 52 53 54
     factor <expr> (66)
         on left: 56 57 58 59 60
-        on right: 53 54 55 58 59
+        on right: 53 54 55 58 59 60
 
 
 State 0
@@ -796,21 +796,7 @@ State 58
 
 State 59
 
-   59 factor: "+" • "(" factor ")"
-
-    "("  shift, and go to state 76
-
-
-State 60
-
-   58 factor: "-" • "(" factor ")"
-
-    "("  shift, and go to state 77
-
-
-State 61
-
-   60 factor: "(" • expr ")"
+   59 factor: "+" • factor
 
     identsym   shift, and go to state 57
     numbersym  shift, and go to state 58
@@ -818,9 +804,33 @@ State 61
     "-"        shift, and go to state 60
     "("        shift, and go to state 61
 
-    expr    go to state 78
-    term    go to state 67
-    factor  go to state 68
+    factor  go to state 76
+
+
+State 60
+
+   58 factor: "-" • factor
+
+    identsym   shift, and go to state 57
+    numbersym  shift, and go to state 58
+    "+"        shift, and go to state 59
+    "-"        shift, and go to state 60
+    "("        shift, and go to state 61
+
+    factor  go to state 77
+
+
+State 61
+
+   60 factor: "(" • factor ")"
+
+    identsym   shift, and go to state 57
+    numbersym  shift, and go to state 58
+    "+"        shift, and go to state 59
+    "-"        shift, and go to state 60
+    "("        shift, and go to state 61
+
+    factor  go to state 78
 
 
 State 62
@@ -974,39 +984,23 @@ State 75
 
 State 76
 
-   59 factor: "+" "(" • factor ")"
+   59 factor: "+" factor •
 
-    identsym   shift, and go to state 57
-    numbersym  shift, and go to state 58
-    "+"        shift, and go to state 59
-    "-"        shift, and go to state 60
-    "("        shift, and go to state 61
-
-    factor  go to state 94
+    $default  reduce using rule 59 (factor)
 
 
 State 77
 
-   58 factor: "-" "(" • factor ")"
+   58 factor: "-" factor •
 
-    identsym   shift, and go to state 57
-    numbersym  shift, and go to state 58
-    "+"        shift, and go to state 59
-    "-"        shift, and go to state 60
-    "("        shift, and go to state 61
-
-    factor  go to state 95
+    $default  reduce using rule 58 (factor)
 
 
 State 78
 
-   51 expr: expr • "+" term
-   52     | expr • "-" term
-   60 factor: "(" expr • ")"
+   60 factor: "(" factor • ")"
 
-    "+"  shift, and go to state 81
-    "-"  shift, and go to state 82
-    ")"  shift, and go to state 96
+    ")"  shift, and go to state 94
 
 
 State 79
@@ -1017,7 +1011,7 @@ State 79
 
     "+"   shift, and go to state 81
     "-"   shift, and go to state 82
-    "by"  shift, and go to state 97
+    "by"  shift, and go to state 95
 
 
 State 80
@@ -1036,7 +1030,7 @@ State 80
     $default  reduce using rule 22 (empty)
 
     block       go to state 40
-    stmts       go to state 98
+    stmts       go to state 96
     empty       go to state 42
     stmtList    go to state 43
     stmt        go to state 44
@@ -1059,7 +1053,7 @@ State 81
     "-"        shift, and go to state 60
     "("        shift, and go to state 61
 
-    term    go to state 99
+    term    go to state 97
     factor  go to state 68
 
 
@@ -1073,7 +1067,7 @@ State 82
     "-"        shift, and go to state 60
     "("        shift, and go to state 61
 
-    term    go to state 100
+    term    go to state 98
     factor  go to state 68
 
 
@@ -1129,7 +1123,7 @@ State 89
     "-"        shift, and go to state 60
     "("        shift, and go to state 61
 
-    expr    go to state 101
+    expr    go to state 99
     term    go to state 67
     factor  go to state 68
 
@@ -1144,7 +1138,7 @@ State 90
     "-"        shift, and go to state 60
     "("        shift, and go to state 61
 
-    factor  go to state 102
+    factor  go to state 100
 
 
 State 91
@@ -1157,7 +1151,7 @@ State 91
     "-"        shift, and go to state 60
     "("        shift, and go to state 61
 
-    factor  go to state 103
+    factor  go to state 101
 
 
 State 92
@@ -1175,7 +1169,7 @@ State 92
     $default  reduce using rule 22 (empty)
 
     block       go to state 40
-    stmts       go to state 104
+    stmts       go to state 102
     empty       go to state 42
     stmtList    go to state 43
     stmt        go to state 44
@@ -1197,26 +1191,12 @@ State 93
 
 State 94
 
-   59 factor: "+" "(" factor • ")"
-
-    ")"  shift, and go to state 105
-
-
-State 95
-
-   58 factor: "-" "(" factor • ")"
-
-    ")"  shift, and go to state 106
-
-
-State 96
-
-   60 factor: "(" expr ")" •
+   60 factor: "(" factor ")" •
 
     $default  reduce using rule 60 (factor)
 
 
-State 97
+State 95
 
    42 dbCondition: "divisible" expr "by" • expr
 
@@ -1226,21 +1206,21 @@ State 97
     "-"        shift, and go to state 60
     "("        shift, and go to state 61
 
-    expr    go to state 107
+    expr    go to state 103
     term    go to state 67
     factor  go to state 68
 
 
-State 98
+State 96
 
    34 ifStmt: "if" condition "then" stmts • "else" stmts "end"
    35       | "if" condition "then" stmts • "end"
 
-    "end"   shift, and go to state 108
-    "else"  shift, and go to state 109
+    "end"   shift, and go to state 104
+    "else"  shift, and go to state 105
 
 
-State 99
+State 97
 
    51 expr: expr "+" term •
    53 term: term • "*" factor
@@ -1252,7 +1232,7 @@ State 99
     $default  reduce using rule 51 (expr)
 
 
-State 100
+State 98
 
    52 expr: expr "-" term •
    53 term: term • "*" factor
@@ -1264,7 +1244,7 @@ State 100
     $default  reduce using rule 52 (expr)
 
 
-State 101
+State 99
 
    43 relOpCondition: expr relOp expr •
    51 expr: expr • "+" term
@@ -1276,42 +1256,28 @@ State 101
     $default  reduce using rule 43 (relOpCondition)
 
 
-State 102
+State 100
 
    53 term: term "*" factor •
 
     $default  reduce using rule 53 (term)
 
 
-State 103
+State 101
 
    54 term: term "/" factor •
 
     $default  reduce using rule 54 (term)
 
 
-State 104
+State 102
 
    36 whileStmt: "while" condition "do" stmts • "end"
 
-    "end"  shift, and go to state 110
+    "end"  shift, and go to state 106
 
 
-State 105
-
-   59 factor: "+" "(" factor ")" •
-
-    $default  reduce using rule 59 (factor)
-
-
-State 106
-
-   58 factor: "-" "(" factor ")" •
-
-    $default  reduce using rule 58 (factor)
-
-
-State 107
+State 103
 
    42 dbCondition: "divisible" expr "by" expr •
    51 expr: expr • "+" term
@@ -1323,14 +1289,14 @@ State 107
     $default  reduce using rule 42 (dbCondition)
 
 
-State 108
+State 104
 
    35 ifStmt: "if" condition "then" stmts "end" •
 
     $default  reduce using rule 35 (ifStmt)
 
 
-State 109
+State 105
 
    34 ifStmt: "if" condition "then" stmts "else" • stmts "end"
 
@@ -1345,7 +1311,7 @@ State 109
     $default  reduce using rule 22 (empty)
 
     block       go to state 40
-    stmts       go to state 111
+    stmts       go to state 107
     empty       go to state 42
     stmtList    go to state 43
     stmt        go to state 44
@@ -1358,21 +1324,21 @@ State 109
     blockStmt   go to state 51
 
 
-State 110
+State 106
 
    36 whileStmt: "while" condition "do" stmts "end" •
 
     $default  reduce using rule 36 (whileStmt)
 
 
-State 111
+State 107
 
    34 ifStmt: "if" condition "then" stmts "else" stmts • "end"
 
-    "end"  shift, and go to state 112
+    "end"  shift, and go to state 108
 
 
-State 112
+State 108
 
    34 ifStmt: "if" condition "then" stmts "else" stmts "end" •
 

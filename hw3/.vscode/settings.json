@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "ast.h": "c",
+        "scope_check.h": "c"
+    }
+}

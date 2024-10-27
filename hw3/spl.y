@@ -296,15 +296,15 @@ identsym { $$ = ast_expr_ident($1); }
 $$ = ast_expr_number($1);
  }
 
-| minussym lparensym factor rparensym {
+| minussym factor {
    //printf("m: %s", $1);
-   $$ = ast_expr_signed_expr($1,$3 );
+   $$ = ast_expr_signed_expr($1,$2 );
 }
-| plussym lparensym factor rparensym{
+| plussym factor{
    //printf("p: %s", $1);
-   $$ = ast_expr_signed_expr($1,$3 );
+   $$ = ast_expr_signed_expr($1,$2 );
 }
-| lparensym expr rparensym { $$ = $2; };
+| lparensym factor rparensym { $$ = $2; };
 
 sign : minussym
 |      plussym;
