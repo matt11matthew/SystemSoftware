@@ -1,5 +1,5 @@
 % $Id: hw3-test9.spl,v 1.4 2024/10/07 22:38:52 leavens Exp $
 begin
   var y;
-  y := 5 - 2 - -7;
+  y := 5 - 2 - -7
 end.

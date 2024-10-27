@@ -268,7 +268,15 @@ relOp : eqeqsym | neqsym | ltsym | leqsym | gtsym | geqsym
 expr : term {
       
         $$ =  $1;
-    };
+    }
+|
+expr plussym term {
+     $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
+}
+|
+expr minussym term {
+     $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
+};
   
 
 term : term multsym factor {
@@ -284,26 +292,17 @@ term : term multsym factor {
 factor :
 identsym { $$ = ast_expr_ident($1); }
 | numbersym {
-     printf("m2: %d", $1.value);
+    // printf("m2: %d", $1.value);
 $$ = ast_expr_number($1);
  }
 
-| factor minussym  {
-   printf("_m: %s", $1);
-   $$ = ast_expr_signed_expr($2,$1 );
+| minussym lparensym factor rparensym {
+   //printf("m: %s", $1);
+   $$ = ast_expr_signed_expr($1,$3 );
 }
-| factor plussym{
-   printf("_p: %s", $1);
-   $$ = ast_expr_signed_expr($3,$2 );
-}
-
-| minussym factor {
-   printf("m: %s", $1);
-   $$ = ast_expr_signed_expr($1,$2 );
-}
-| plussym factor {
-   printf("p: %s", $1);
-   $$ = ast_expr_signed_expr($1,$2 );
+| plussym lparensym factor rparensym{
+   //printf("p: %s", $1);
+   $$ = ast_expr_signed_expr($1,$3 );
 }
 | lparensym expr rparensym { $$ = $2; };
 

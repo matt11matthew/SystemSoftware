@@ -130,7 +130,7 @@ static void number2ast(unsigned int val)
 }
 
 
--?[0-9]+  {
+[0-9]+  {
     long long number = atoll(yytext);
 
     if (number > INT_MAX || number < INT_MIN) { // Check both bounds for int limits
