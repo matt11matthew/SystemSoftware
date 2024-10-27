@@ -251,7 +251,7 @@ readStmt: readsym identsym{ $$ = ast_read_stmt($2); };
 printStmt: printsym expr {
     expr_t val = $2;
      $$ = ast_print_stmt(val);
- //printf("%s\n", $2.data.number.text);  // Print the correct number
+
  };
 
 blockStmt: block { $$ =  ast_block_stmt($1); };
@@ -266,38 +266,49 @@ relOpCondition : expr relOp expr { $$ = ast_rel_op_condition($1, $2, $3); };
 relOp : eqeqsym | neqsym | ltsym | leqsym | gtsym | geqsym
 
 expr : term {
-        expr_t val = $1;
-        $$ = val;
-    }
-    | expr plussym term {
-        $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
-    }
-    | expr minussym term {
-        $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
+      
+        $$ =  $1;
     };
+  
 
-term : factor {
-        $$ = $1;
-     }
-     | term multsym factor {
+term : term multsym factor {
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
      }
      | term divsym factor {
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
+     }
+     | factor {
+        $$ = $1;
      };
 
 factor :
 identsym { $$ = ast_expr_ident($1); }
 | numbersym {
+     printf("m2: %d", $1.value);
 $$ = ast_expr_number($1);
  }
-| sign factor {
- //  $$ = ast_expr_signed_expr($1,$$ )
+
+| factor minussym  {
+   printf("_m: %s", $1);
+   $$ = ast_expr_signed_expr($2,$1 );
+}
+| factor plussym{
+   printf("_p: %s", $1);
+   $$ = ast_expr_signed_expr($3,$2 );
+}
+
+| minussym factor {
+   printf("m: %s", $1);
+   $$ = ast_expr_signed_expr($1,$2 );
+}
+| plussym factor {
+   printf("p: %s", $1);
+   $$ = ast_expr_signed_expr($1,$2 );
 }
 | lparensym expr rparensym { $$ = $2; };
 
-sign : minussym {}
-|      plussym {};
+sign : minussym
+|      plussym;
 
 %%
 
