@@ -267,23 +267,17 @@ relOp : eqeqsym | neqsym | ltsym | leqsym | gtsym | geqsym
 
 expr : term {
         expr_t val = $1;
-        printf("f1");
         $$ = val;
     }
     | expr plussym term {
-        printf("f2");
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
     }
     | expr minussym term {
-        printf("f3");
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
     };
 
 term : factor {
-
-
-       $$ = $1;
-
+        $$ = $1;
      }
      | term multsym factor {
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
@@ -292,34 +286,18 @@ term : factor {
         $$ = ast_expr_binary_op(ast_binary_op_expr($1, $2, $3));
      };
 
+factor :
+identsym { $$ = ast_expr_ident($1); }
+| numbersym {
+$$ = ast_expr_number($1);
+ }
+| sign factor {
+ //  $$ = ast_expr_signed_expr($1,$$ )
+}
+| lparensym expr rparensym { $$ = $2; };
 
-
-factor : identsym {
-
-
-sign : minussym | plussym;
-
-factor : identsym {
-
-       | minussym factor {
-
-
-            $$ = ast_expr_signed_expr($1, $2);  // Handle unary minus
-        }
-        | plussym factor {
-            $$ = ast_expr_signed_expr($1, $2);  // Handle unary minus
-        }
-
-
-       | sign factor {
-            $$ = ast_expr_signed_expr($1, $2);  // Handle unary minus
-        }
-
-       | lparensym expr rparensym {
-            $$ = $2;  // Handle parentheses
-        };
-
-
+sign : minussym {}
+|      plussym {};
 
 %%
 
