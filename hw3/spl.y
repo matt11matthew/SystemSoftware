@@ -314,7 +314,7 @@ factor : identsym {
        | sign factor {
             $$ = ast_expr_signed_expr($1, $2);  // Handle unary minus
         }
-       
+
        | lparensym expr rparensym {
             $$ = $2;  // Handle parentheses
         };
