@@ -1,4 +1,4 @@
-/* $Id: utilities.c,v 1.13 2024/10/22 11:17:10 leavens Exp leavens $ */
+/* $Id: utilities.c,v 1.13 2024/10/22 11:17:10 leavens Exp $ */
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.55 2024/10/09 18:39:54 leavens Exp $
+# $Id: Makefile,v 1.56 2024/10/31 11:55:44 leavens Exp leavens $
 # Makefile for parser and static analysis in COP 3402
 
 # Add .exe to the end of target to get that suffix in the rules
@@ -68,7 +68,7 @@ DECLERRTESTS = hw3-declerrtest0.spl hw3-declerrtest1.spl hw3-declerrtest2.spl \
 	hw3-declerrtest3.spl hw3-declerrtest4.spl hw3-declerrtest5.spl \
 	hw3-declerrtest6.spl hw3-declerrtest7.spl hw3-declerrtest8.spl \
 	hw3-declerrtest9.spl hw3-declerrtestA.spl hw3-declerrtestB.spl \
-	hw3-declerrtestC.spl
+	hw3-declerrtestC.spl hw3-declerrtestD.spl
 DECLTESTS = $(SCOPETESTS) $(DECLERRTESTS)
 GOODTESTS = $(ASTTESTS) $(REGULARTESTS) $(SCOPETESTS)
 BADTESTS = $(ERRTESTS) $(PARSEERRTESTS) $(DECLERRTESTS)
