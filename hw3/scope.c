@@ -70,7 +70,7 @@ void scope_insert(scope_t *s, const char *name, id_attrs *attrs)
 {
     // assert(!scope_declared(name));
     // assert(attrs != NULL);
-     debug_print("Running scope_insert for name \"%s\"\n", name);
+//     debug_print("Running scope_insert for name \"%s\"\n", name);
     scope_assoc_t *new_assoc = malloc(sizeof(scope_assoc_t));
     if (new_assoc == NULL) {
         bail_with_error("No space for association!");
@@ -98,15 +98,15 @@ id_attrs *scope_lookup(scope_t *s, const char *name)
     int i;
     // assert(name != NULL);
     // assert(s != NULL);
-     debug_print("Entering scope_lookup for \"%s\"\n", name);
+//     debug_print("Entering scope_lookup for \"%s\"\n", name);
     for (i = 0; i < s->size; i++) {
-         assert(s != NULL);
-         assert(s->entries != NULL);
-         assert(0 <= i && i < s->size);
-         assert(s->entries[i] != NULL);
-         assert(s->entries[i]->id != NULL);
-         debug_print("Past asserts in scope_lookup loop\n");
-         debug_print("Length of name is %d\n", strlen(name));
+//         assert(s != NULL);
+//         assert(s->entries != NULL);
+//         assert(0 <= i && i < s->size);
+//         assert(s->entries[i] != NULL);
+//         assert(s->entries[i]->id != NULL);
+//         debug_print("Past asserts in scope_lookup loop\n");
+//         debug_print("Length of name is %d\n", strlen(name));
         if (strcmp(s->entries[i]->id, name) == 0) {
              debug_print("scope_lookup(\"%s\") returning attributes\n",
             		name);
@@ -114,6 +114,6 @@ id_attrs *scope_lookup(scope_t *s, const char *name)
         }
     }
     // assert(i == s->size);
-     debug_print("The scope_lookup call on \"%s\" returns NULL\n", name);
+//     debug_print("The scope_lookup call on \"%s\" returns NULL\n", name);
     return NULL;
 }
