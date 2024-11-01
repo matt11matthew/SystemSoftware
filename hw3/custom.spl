@@ -1,24 +1,5 @@
-% $Id: hw3-test6.spl,v 1.2 2024/09/17 20:58:21 leavens Exp $
+% $Id: hw3-declerrtest1.spl,v 1.3 2024/10/07 21:38:11 leavens Exp $
 begin
-  const a = 1, b = 3;
-  const c = 4, d = 6;
-  var aVar, anotherVar;
-  var x;
-  begin
-    aVar := -1;
-    anotherVar := aVar - 2 - 3/1 - 6*aVar;
-    if anotherVar >= aVar
-    then
-      print 32;
-      print 10;
-      anotherVar := anotherVar / 12 + 2;
-      while (anotherVar*2) < 3
-      do
-  	anotherVar := 0
-      end
-    else
-      if 3 < 2 then if 7 > 5 then x := 3 end
-  	       else x := 2 * 3 - 5/4 end
-    end
-  end
+  var x, y, x;  % error, duplicate declaration of x!
+  x := 7
 end.
