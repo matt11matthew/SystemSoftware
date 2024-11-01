@@ -79,7 +79,7 @@ extern void yyerror(const char *filename, const char *msg);
 %type <proc_decls> procDecls
 %type <proc_decl> procDecl
 
-
+%type <token> sign
 %type <stmts> stmts
 %type <empty> empty
 %type <stmt_list> stmtList
@@ -304,7 +304,7 @@ $$ = ast_expr_number($1);
    //printf("p: %s", $1);
    $$ = ast_expr_signed_expr($1,$2 );
 }
-| lparensym factor rparensym { $$ = $2; };
+| lparensym expr rparensym { $$ = $2; };
 
 sign : minussym
 |      plussym;

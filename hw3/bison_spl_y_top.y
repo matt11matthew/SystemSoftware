@@ -79,7 +79,7 @@ extern void yyerror(const char *filename, const char *msg);
 %type <proc_decls> procDecls
 %type <proc_decl> procDecl
 
-
+%type <token> sign
 %type <stmts> stmts
 %type <empty> empty
 %type <stmt_list> stmtList
