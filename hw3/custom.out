@@ -1,5 +1,9 @@
 begin
-  var x, y, x;
-  x := 7
+  var x;
+  x := 0
 end
 .
+1NULL const_decl
+Statements found:
+- Assign statement
+x = Unset
