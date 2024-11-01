@@ -134,6 +134,7 @@ id_use *symtab_lookup(const char *name)
     for (int level = symtab_top_idx; 0 <= level; level--) {
         id_attrs *attrs = scope_lookup(symtab[level], name);
         if (attrs != NULL) {
+
             return id_use_create(attrs, levelsOut);
         }
         levelsOut++;

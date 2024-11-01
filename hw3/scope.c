@@ -108,8 +108,8 @@ id_attrs *scope_lookup(scope_t *s, const char *name)
 //         debug_print("Past asserts in scope_lookup loop\n");
 //         debug_print("Length of name is %d\n", strlen(name));
         if (strcmp(s->entries[i]->id, name) == 0) {
-             debug_print("scope_lookup(\"%s\") returning attributes\n",
-            		name);
+//             debug_print("scope_lookup(\"%s\") returning attributes\n",
+//            		name);
             return s->entries[i]->attrs;
         }
     }
