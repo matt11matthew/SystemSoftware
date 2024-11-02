@@ -106,10 +106,10 @@ void check_ident_express(struct expr_s xp) {
             break;
     }
 }
-
+//
 void scope_check_assign_stmt(assign_stmt_t assignStmt) {
    const char *assignName = assignStmt.name;
-   if ( check_ident(assignName,*assignStmt.file_loc)) {
+    if ( check_ident(assignName,*assignStmt.file_loc)) {
        struct expr_s xp = *assignStmt.expr;
        check_ident_express(xp);
    }
