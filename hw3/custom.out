@@ -1,6 +1,0 @@
-begin
-  var x, y, x;
-  x := 7
-end
-.
-FOUND: x (lvl: 0) constant

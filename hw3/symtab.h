@@ -11,6 +11,7 @@
 // initialize the symbol table
 extern void symtab_initialize();
 
+int getLevel();
 // Return the number of scopes currently in the symbol table.
 extern unsigned int symtab_size();
 

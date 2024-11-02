@@ -10,6 +10,14 @@
 #include <stddef.h>
 
 bool DEBUG = false;
+void scope_check_program_s(struct block_s block) {
+    symtab_enter_scope();
+    scope_check_const_decls(block.const_decls);
+    scope_check_varDecls(block.var_decls);
+    scope_check_proc_decls(block.proc_decls);
+    scope_check_stmts(block.stmts);
+    symtab_leave_scope();
+}
 
 void scope_check_program(block_t block) {
     symtab_enter_scope();
@@ -20,21 +28,15 @@ void scope_check_program(block_t block) {
     symtab_leave_scope();
 }
 
-void handleAlreadyExist(char *name, file_location loc) {
+void handleAlreadyExist(char *name, file_location loc, id_kind kind) {
     id_use* id = symtab_lookup(name);
-    printf("FOUND: %s (lvl: %d) %s", name, id->levelsOutward, kind2str(id->attrs->kind));
+//    printf("FOUND: %s (lvl: %d) %s", name, id->levelsOutward, kind2str(id->attrs->kind));
 
-    if (id->attrs->kind==constant_idk) {
+    bail_with_prog_error(loc,
+                         "%s \"%s\" is already declared as a %s",
+                         kind2str(kind),
+                         name,kind2str(id->attrs->kind));
 
-        bail_with_prog_error(loc,
-                             "constant \"%s\" is already declared as a constant",
-                             name);
-    } else   if (id->attrs->kind==variable_idk) {
-
-        bail_with_prog_error(loc,
-                             "variable \"%s\" is already declared as a variable",
-                             name);
-    }
 }
 
 void scope_push_constDefList(const_def_list_t identityList) {
@@ -45,15 +47,15 @@ void scope_push_constDefList(const_def_list_t identityList) {
         char* name = st->ident.name;
         if (symtab_declared_in_current_scope(name)){
 
-            handleAlreadyExist(name,*st->file_loc);
+            handleAlreadyExist(name,*st->file_loc,constant_idk);
             st = st->next;
             continue;
         }
 
 
-        symtab_insert(name,  id_use_create(create_id_attrs(*identityList.file_loc,constant_idk,
-                                                               0)
-                ,0));
+        id_attrs *attrs = create_id_attrs(*identityList.file_loc, constant_idk, 0);
+
+        symtab_insert(st->ident.name, attrs);
         st = st->next;
     }
 
@@ -98,7 +100,32 @@ void scope_check_assign_stmt(assign_stmt_t assignStmt) {
     }
 }
 
+void scope_check_if_stmt(if_stmt_t ifStmt) {
 
+
+    condition_t cond = ifStmt.condition;
+    if (cond.cond_kind==ck_db){
+        printf("ck_db\n");
+    }
+    if (cond.cond_kind==ck_rel){
+        rel_op_condition_t rel = cond.data.rel_op_cond;
+        if (rel.expr1.expr_kind ==expr_ident) {
+            char* name = rel.expr1.data.ident.name;
+            if (!symtab_declared(name)){
+//identifier "d" is not declared!
+                bail_with_prog_error(*rel.expr1.file_loc,
+                                     "identifier \"%s\" is not declared!",
+                                     name);
+            }
+        }
+
+    }
+
+
+    scope_check_stmts(    *ifStmt.then_stmts);
+    scope_check_stmts(  *ifStmt.else_stmts);
+
+}
 /*
  * typedef enum { assign_stmt, call_stmt, if_stmt, while_stmt,
 	       read_stmt, print_stmt, block_stmt } stmt_kind_e;
@@ -107,6 +134,13 @@ void scope_check_stmt(stmt_t *stmt) {
     if (stmt == NULL) return;
 
     switch (stmt->stmt_kind) {
+        case block_stmt:
+            struct block_s *block = stmt->data.block_stmt.block;
+            scope_check_program_s(*block);
+            break;
+        case if_stmt:
+            scope_check_if_stmt(stmt->data.if_stmt);
+            break;
         case assign_stmt:
             scope_check_assign_stmt(stmt->data.assign_stmt);
             break;
@@ -126,19 +160,16 @@ void scope_check_stmts(stmts_t stmts) {
     }
 }
 
-
 void scope_check_proc_decls(proc_decls_t procDecls){
+
     proc_decl_t *current = procDecls.proc_decls;
     while (current != NULL) {
-        //declare identifier
 
-        symtab_enter_scope();
+
         scope_check_program(*(current->block));
-        symtab_leave_scope();
 
         current = current->next;
     }
-
 }
 
 void scope_push_identList(  ident_list_t identityList){
@@ -147,19 +178,21 @@ void scope_push_identList(  ident_list_t identityList){
 
     while (st != NULL) {
         if (symtab_declared_in_current_scope(st->name)){
-            handleAlreadyExist(st->name,*st->file_loc);
+            handleAlreadyExist(st->name,*st->file_loc, variable_idk);
             st = st->next;
             continue;
         }
-        
-        symtab_insert(st->name, (id_attrs *) id_use_create(create_id_attrs(*identityList.file_loc, variable_idk,
-                                                                           0), 0));
+
+//        id_use curID = id_use_create();
+
+        id_attrs *attrs = create_id_attrs(*identityList.file_loc, variable_idk, 0);
+
+        symtab_insert(st->name, attrs);
         st = st->next;
     }
 }
 
 void scope_check_identList(  ident_list_t identityList, id_kind  type){
-    ident_list_t curIdentList = identityList;
 
 }
 

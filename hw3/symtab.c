@@ -108,6 +108,9 @@ void symtab_insert(const char *name, id_attrs *attrs)
     add_ident(symtab[symtab_top_idx], name, attrs);
 }
 
+int getLevel() {
+    return symtab_top_idx;
+}
 // Requires: !symtab_full()
 // Start a new scope (for a procedure)
 void symtab_enter_scope()
