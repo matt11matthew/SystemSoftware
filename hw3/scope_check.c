@@ -19,7 +19,6 @@ void scope_check_program_s(struct block_s block) {
     scope_check_varDecls(block.var_decls);
     scope_check_proc_decls(block.proc_decls);
 
-
     scope_check_stmts(block.stmts);
 
 
@@ -33,9 +32,8 @@ void scope_check_program(block_t block) {
     scope_check_proc_decls(block.proc_decls);
 
 
-    if (block.stmts.stmts_kind!=empty_stmts_e) {
-        scope_check_stmts(block.stmts);
-    }
+    scope_check_stmts(block.stmts);
+
 
     symtab_leave_scope();
 }
@@ -55,7 +53,7 @@ void scope_push_constDefList(const_def_list_t identityList) {
 
     while (st != NULL) {
        const char *name = st->ident.name;
-        if (symtab_declared(name)) {
+        if (symtab_declared_in_current_scope(name)) {
             handleAlreadyExist(name, *st->file_loc, constant_idk);
             st = st->next;
             continue;
@@ -70,7 +68,7 @@ void scope_push_constDefList(const_def_list_t identityList) {
 
 void scope_check_const_decls(const_decls_t const_decl) {
     if (const_decl.start == NULL) {
-        printf("dec null");
+        // printf("dec null");
         return;
     }
     //TODO
@@ -214,11 +212,14 @@ void scope_check_stmt(stmt_t *stmt) {
 
 
 void scope_check_stmts(stmts_t stmts) {
-    // if (&stmts==NULL)return;
-    // if (&stmts.stmt_list==NULL)return;
+
+    if (stmts.stmts_kind==empty_stmts_e) {
+        return; //Epsilon case
+    }
     if (stmts.stmt_list.start == NULL) {
         return;
     }
+
 
     stmt_t *current = stmts.stmt_list.start;
 
@@ -229,6 +230,7 @@ void scope_check_stmts(stmts_t stmts) {
 }
 
 void scope_check_proc_decls(proc_decls_t procDecls) {
+
     proc_decl_t *current = procDecls.proc_decls;
     while (current != NULL) {
         if (current->block!=NULL) {
@@ -244,7 +246,7 @@ void scope_push_identList(ident_list_t identityList) {
     ident_t *st = identityList.start;
 
     while (st != NULL) {
-        if (symtab_declared(st->name)) {
+        if (symtab_declared_in_current_scope(st->name)) {
             handleAlreadyExist(st->name, *st->file_loc, variable_idk);
             st = st->next;
             continue;
