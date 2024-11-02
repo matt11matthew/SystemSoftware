@@ -9,6 +9,7 @@
 
 // Functions
 
+//Runs scope check for as block
 void scope_check_program_s(struct block_s block) {
     symtab_enter_scope();
     scope_check_const_decls(block.const_decls);
@@ -18,6 +19,7 @@ void scope_check_program_s(struct block_s block) {
     symtab_leave_scope();
 }
 
+//Runs scope check for entire program
 void scope_check_program(block_t block) {
     symtab_enter_scope();
     scope_check_const_decls(block.const_decls);
@@ -27,6 +29,7 @@ void scope_check_program(block_t block) {
     symtab_leave_scope();
 }
 
+//Check if already exists
 void handleAlreadyExist(const char *name, file_location loc, id_kind kind) {
     id_use *id = symtab_lookup(name);
     bail_with_prog_error(loc,
@@ -35,11 +38,12 @@ void handleAlreadyExist(const char *name, file_location loc, id_kind kind) {
                          name, kind2str(id->attrs->kind));
 }
 
+// Push any constant definition into list
 void scope_push_constDefList(const_def_list_t identityList) {
     const_def_t *st = identityList.start;
 
     while (st != NULL) {
-       const char *name = st->ident.name;
+        const char *name = st->ident.name;
         if (symtab_declared_in_current_scope(name)) {
             handleAlreadyExist(name, *st->file_loc, constant_idk);
             st = st->next;
@@ -53,6 +57,8 @@ void scope_push_constDefList(const_def_list_t identityList) {
     }
 }
 
+// Read through the constant declarations and push them to
+// the constant definition list
 void scope_check_const_decls(const_decls_t const_decl) {
     if (const_decl.start == NULL) {
         return;
@@ -65,7 +71,8 @@ void scope_check_const_decls(const_decls_t const_decl) {
     }
 }
 
-bool check_ident(const char* name, file_location loc) {
+
+bool check_ident(const char *name, file_location loc) {
     bool idUsed = symtab_declared(name);
 
     if (!idUsed) {
@@ -77,16 +84,15 @@ bool check_ident(const char* name, file_location loc) {
     return true;
 }
 
-void  check_binary_expr(binary_op_expr_t bin) {
-    struct expr_s* xp1 = bin.expr1;
-    if (xp1!=NULL) {
+void check_binary_expr(binary_op_expr_t bin) {
+    struct expr_s *xp1 = bin.expr1;
+    if (xp1 != NULL) {
         check_ident_express(*xp1);
     }
-    struct expr_s* xp2 = bin.expr2;
-    if (xp2!=NULL) {
+    struct expr_s *xp2 = bin.expr2;
+    if (xp2 != NULL) {
         check_ident_express(*xp2);
     }
-
 }
 
 void check_ident_express(struct expr_s xp) {
@@ -96,7 +102,7 @@ void check_ident_express(struct expr_s xp) {
             break;
         case expr_ident:
             ident_t ident = xp.data.ident;
-            check_ident(ident.name,*ident.file_loc);
+            check_ident(ident.name, *ident.file_loc);
             break;
         case expr_number:
             break;
@@ -106,13 +112,13 @@ void check_ident_express(struct expr_s xp) {
             break;
     }
 }
-//
+
 void scope_check_assign_stmt(assign_stmt_t assignStmt) {
-   const char *assignName = assignStmt.name;
-    if ( check_ident(assignName,*assignStmt.file_loc)) {
-       struct expr_s xp = *assignStmt.expr;
-       check_ident_express(xp);
-   }
+    const char *assignName = assignStmt.name;
+    if (check_ident(assignName, *assignStmt.file_loc)) {
+        struct expr_s xp = *assignStmt.expr;
+        check_ident_express(xp);
+    }
 }
 
 void scope_check_if_stmt(if_stmt_t ifStmt) {
@@ -139,20 +145,20 @@ void scope_check_if_stmt(if_stmt_t ifStmt) {
 }
 
 void scope_check_while_stmt(while_stmt_t while_stmt) {
-    if (while_stmt.body!=NULL) {
+    if (while_stmt.body != NULL) {
         scope_check_stmts(*while_stmt.body);
     }
 }
 
 void scope_check_stmt(stmt_t *stmt) {
-    if (stmt==NULL)return; // NULL Check
+    if (stmt == NULL)return; // NULL Check
 
     switch (stmt->stmt_kind) {
         case print_stmt:
             check_ident_express(stmt->data.print_stmt.expr);
             break;
         case read_stmt:
-            check_ident(stmt->data.read_stmt.name,*stmt->data.read_stmt.file_loc);
+            check_ident(stmt->data.read_stmt.name, *stmt->data.read_stmt.file_loc);
             break;
         case block_stmt:
             struct block_s *block = stmt->data.block_stmt.block;
@@ -174,7 +180,7 @@ void scope_check_stmt(stmt_t *stmt) {
 
 
 void scope_check_stmts(stmts_t stmts) {
-    if (stmts.stmts_kind==empty_stmts_e) {
+    if (stmts.stmts_kind == empty_stmts_e) {
         return; //Epsilon case
     }
 
@@ -191,11 +197,10 @@ void scope_check_stmts(stmts_t stmts) {
 }
 
 void scope_check_proc_decls(proc_decls_t procDecls) {
-
     proc_decl_t *current = procDecls.proc_decls;
 
     while (current != NULL) {
-        if (current->block!=NULL) {
+        if (current->block != NULL) {
             scope_check_program_s(*current->block);
         }
         current = current->next;
@@ -218,7 +223,6 @@ void scope_push_identList(ident_list_t identityList) {
         st = st->next;
     }
 }
-
 
 void scope_check_varDecls(var_decls_t varDecls) {
     if (varDecls.var_decls == NULL) {
