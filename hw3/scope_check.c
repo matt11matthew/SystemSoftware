@@ -88,8 +88,8 @@ void scope_check_const_decls(const_decls_t const_decl) {
 void scope_check_assign_stmt(assign_stmt_t assignStmt) {
     char *assignName = assignStmt.name;
     if (DEBUG) {
-        printf("%s =", assignName);
     }
+    printf("(%s:%d) %s\n", assignStmt.file_loc->filename, assignStmt.file_loc->line, assignName);
     bool idUsed = symtab_declared(assignName);
     if (!idUsed) {
         bail_with_prog_error(*assignStmt.file_loc,
@@ -117,9 +117,18 @@ void scope_check_if_stmt(if_stmt_t ifStmt) {
     }
 
 
-    scope_check_stmts(*ifStmt.then_stmts);
     if (ifStmt.else_stmts != NULL) {
         scope_check_stmts(*ifStmt.else_stmts);
+    }
+
+    if (ifStmt.then_stmts != NULL) {
+        scope_check_stmts(*ifStmt.then_stmts);
+    }
+}
+
+void scope_check_while_stmt(while_stmt_t while_stmt) {
+    if (while_stmt.body!=NULL) {
+        scope_check_stmts(*while_stmt.body);
     }
 }
 
@@ -138,11 +147,14 @@ void scope_check_stmt(stmt_t *stmt) {
         case if_stmt:
             scope_check_if_stmt(stmt->data.if_stmt);
             break;
+        case while_stmt:
+            scope_check_while_stmt(stmt->data.while_stmt);
         case assign_stmt:
             scope_check_assign_stmt(stmt->data.assign_stmt);
             break;
     }
 }
+
 
 void scope_check_stmts(stmts_t stmts) {
     if (stmts.stmt_list.start == NULL) {
@@ -170,7 +182,7 @@ void scope_push_identList(ident_list_t identityList) {
     ident_t *st = identityList.start;
 
     while (st != NULL) {
-        if (symtab_declared_in_current_scope(st->name)) {
+        if (symtab_declared(st->name)) {
             handleAlreadyExist(st->name, *st->file_loc, variable_idk);
             st = st->next;
             continue;
