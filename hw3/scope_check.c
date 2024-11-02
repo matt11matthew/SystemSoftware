@@ -13,11 +13,16 @@ bool DEBUG = false;
 void check_ident_express(struct expr_s xp);
 
 void scope_check_program_s(struct block_s block) {
+
     symtab_enter_scope();
     scope_check_const_decls(block.const_decls);
     scope_check_varDecls(block.var_decls);
     scope_check_proc_decls(block.proc_decls);
+
+
     scope_check_stmts(block.stmts);
+
+
     symtab_leave_scope();
 }
 
@@ -26,11 +31,16 @@ void scope_check_program(block_t block) {
     scope_check_const_decls(block.const_decls);
     scope_check_varDecls(block.var_decls);
     scope_check_proc_decls(block.proc_decls);
-    scope_check_stmts(block.stmts);
+
+
+    if (block.stmts.stmts_kind!=empty_stmts_e) {
+        scope_check_stmts(block.stmts);
+    }
+
     symtab_leave_scope();
 }
 
-void handleAlreadyExist(char *name, file_location loc, id_kind kind) {
+void handleAlreadyExist(const char *name, file_location loc, id_kind kind) {
     id_use *id = symtab_lookup(name);
     //    printf("FOUND: %s (lvl: %d) %s", name, id->levelsOutward, kind2str(id->attrs->kind));
 
@@ -44,7 +54,7 @@ void scope_push_constDefList(const_def_list_t identityList) {
     const_def_t *st = identityList.start;
 
     while (st != NULL) {
-        char *name = st->ident.name;
+       const char *name = st->ident.name;
         if (symtab_declared(name)) {
             handleAlreadyExist(name, *st->file_loc, constant_idk);
             st = st->next;
@@ -60,7 +70,7 @@ void scope_push_constDefList(const_def_list_t identityList) {
 
 void scope_check_const_decls(const_decls_t const_decl) {
     if (const_decl.start == NULL) {
-
+        printf("dec null");
         return;
     }
     //TODO
@@ -72,7 +82,7 @@ void scope_check_const_decls(const_decls_t const_decl) {
     }
 }
 
-bool check_ident(char* name, file_location loc) {
+bool check_ident(const char* name, file_location loc) {
   //printf("(%s:%d) %s\n", loc.filename, loc.line, name);
     bool idUsed = symtab_declared(name);
 
@@ -98,9 +108,7 @@ void  check_binary_expr(binary_op_expr_t bin) {
 }
 
 void check_ident_express(struct expr_s xp) {
-    if (&xp == NULL) {
-        return; // Handle as needed
-    }
+
     switch (xp.expr_kind) {
         case expr_bin:
              //  printf("%s:",     "expr_bin");
@@ -117,12 +125,13 @@ void check_ident_express(struct expr_s xp) {
         case expr_negated:
           //  printf("%s:",     "expr_negated");
             break;
+        default:
+            break;
     }
 }
 
 void scope_check_assign_stmt(assign_stmt_t assignStmt) {
-    if (&assignStmt==NULL)return;
-   char *assignName = assignStmt.name;
+   const char *assignName = assignStmt.name;
    if ( check_ident(assignName,*assignStmt.file_loc)) {
        struct expr_s xp = *assignStmt.expr;
        check_ident_express(xp);
@@ -172,7 +181,9 @@ void scope_check_while_stmt(while_stmt_t while_stmt) {
 	       read_stmt, print_stmt, block_stmt } stmt_kind_e;
  */
 void scope_check_stmt(stmt_t *stmt) {
-    if (stmt == NULL) return;
+    // if (stmt == NULL) return;
+
+    if (stmt==NULL)return;
 
     switch (stmt->stmt_kind) {
         case print_stmt:
@@ -196,11 +207,15 @@ void scope_check_stmt(stmt_t *stmt) {
         case assign_stmt:
             scope_check_assign_stmt(stmt->data.assign_stmt);
             break;
+        default:
+            break;
     }
 }
 
 
 void scope_check_stmts(stmts_t stmts) {
+    // if (&stmts==NULL)return;
+    // if (&stmts.stmt_list==NULL)return;
     if (stmts.stmt_list.start == NULL) {
         return;
     }
@@ -216,7 +231,10 @@ void scope_check_stmts(stmts_t stmts) {
 void scope_check_proc_decls(proc_decls_t procDecls) {
     proc_decl_t *current = procDecls.proc_decls;
     while (current != NULL) {
-        scope_check_program(*(current->block));
+        if (current->block!=NULL) {
+            scope_check_program_s(*current->block);
+        }
+
 
         current = current->next;
     }
@@ -244,7 +262,6 @@ void scope_check_identList(ident_list_t identityList, id_kind type) {
 
 void scope_check_varDecls(var_decls_t varDecls) {
     if (varDecls.var_decls == NULL) {
-
         return;
     }
 
