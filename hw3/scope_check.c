@@ -98,7 +98,9 @@ void  check_binary_expr(binary_op_expr_t bin) {
 }
 
 void check_ident_express(struct expr_s xp) {
-
+    if (&xp == NULL) {
+        return; // Handle as needed
+    }
     switch (xp.expr_kind) {
         case expr_bin:
              //  printf("%s:",     "expr_bin");
@@ -119,6 +121,7 @@ void check_ident_express(struct expr_s xp) {
 }
 
 void scope_check_assign_stmt(assign_stmt_t assignStmt) {
+    if (&assignStmt==NULL)return;
    char *assignName = assignStmt.name;
    if ( check_ident(assignName,*assignStmt.file_loc)) {
        struct expr_s xp = *assignStmt.expr;
