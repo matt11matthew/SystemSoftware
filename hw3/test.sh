@@ -1,14 +1,12 @@
 #!/usr/bin/bash
 echo calling make clean
-make clean
+sudo make clean
 echo calling make compiler
-make compiler
+sudo make compiler
 clear
 echo calling custom.spl
-./compiler custom.spl > custom.out
+sudo ./compiler custom.spl > custom.out 2>&1
 
 sleep 1
 echo "Output of custom.out:"
 echo "$(<custom.out)"
-history -c
-history -s "./test.sh", "make compiler"
