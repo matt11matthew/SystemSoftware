@@ -1,6 +1,6 @@
-#line 1 "spl_lexer.c"
+#line 2 "spl_lexer.c"
 
-#line 3 "spl_lexer.c"
+#line 4 "spl_lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -605,10 +605,10 @@ static void number2ast(unsigned int val)
     yylval = t;
 }
 
-#line 608 "spl_lexer.c"
+#line 609 "spl_lexer.c"
 #line 80 "spl_lexer.l"
  /* you can add actual definitions below, before the %% */
-#line 611 "spl_lexer.c"
+#line 612 "spl_lexer.c"
 
 #define INITIAL 0
 
@@ -840,7 +840,7 @@ YY_DECL
 
  /* fill in the rules for your lexer here! */
 
-#line 843 "spl_lexer.c"
+#line 844 "spl_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1125,7 +1125,7 @@ YY_RULE_SETUP
 #line 164 "spl_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1128 "spl_lexer.c"
+#line 1129 "spl_lexer.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
