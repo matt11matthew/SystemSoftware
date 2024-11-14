@@ -13,6 +13,10 @@ if [[ "$1" == "-v" ]]; then
   sudo valgrind ./compiler custom.spl > custom.out 2>&1
 elif [[ "$1" == "-g" ]]; then
   sudo gdb ./compiler custom.spl
+elif [[ "$1" == "-u" ]]; then
+  sudo ./compiler custom.spl -u -> custom.out 2>&1
+elif [[ "$1" == "-l" ]]; then
+  sudo ./compiler custom.spl -l -> custom.out 2>&1
 else
   sudo ./compiler custom.spl > custom.out 2>&1
 fi
