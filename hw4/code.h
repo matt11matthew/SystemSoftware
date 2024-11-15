@@ -165,6 +165,7 @@ extern code *code_bgtz(reg_num_type r, offset_type o, immediate_type i);
 // Create and return a fresh instruction
 // with the named mnemonic and parameters
 extern code *code_blez(reg_num_type r, offset_type o, immediate_type i);
+extern code *code_blez(reg_num_type r, offset_type o, immediate_type i);
 
 // Create and return a fresh instruction
 // with the named mnemonic and parameters

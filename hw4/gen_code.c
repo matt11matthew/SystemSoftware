@@ -4,6 +4,7 @@
 #include "code_seq.h"
 #include "code_utils.h"
 #include "literal_table.h"
+#include "spl.tab.h"
 
 #define STACK_SPACE 4096
 
@@ -97,15 +98,38 @@ code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
     code_seq_add_to_end(&base, code_pint(1, 0)); // Assumes result in $r1
 
     return base;
-}code_seq gen_code_i_stmt(print_stmt_t s, code_seq base) {
-    // Step 1: Generate code to evaluate the expression
-    code_seq expr_code = gen_code_expr(s.expr);
+}
 
-    // Step 2: Add print system call
-    code_seq_concat(&base, expr_code);
 
-    // Use code_pint for integer values
-    code_seq_add_to_end(&base, code_pint(1, 0)); // Assumes result in $r1
+
+code_seq gen_code_if_stmt(if_stmt_t s, code_seq base) {
+    condition_t con = s.condition;
+
+    if (con.cond_kind == ck_rel) {
+        //LESS THEN
+        rel_op_condition_t rel_cond =  con.data.rel_op_cond;
+
+
+
+
+
+        code_seq_concat(&base, gen_code_expr(rel_cond.expr1));
+        code_seq_concat(&base, gen_code_expr(rel_cond.expr2));
+
+        // Use code_pint for integer values
+//        code_seq_add_to_end(&base, code_pint(1, 0)); // Assumes result in $r1
+
+
+
+
+//        printf("T%sT\n", rel_cond.rel_op.text);
+    }
+    if (con.cond_kind == ck_db) {
+        printf("ck_db");
+    }
+
+
+
 
     return base;
 }
@@ -116,7 +140,7 @@ code_seq gen_code_stmt(stmt_t *s, code_seq base) {
             base = gen_code_print_stmt(s->data.print_stmt, base);
             break;
         case if_stmt:
-            base = gen_code_print_stmt(s->data.print_stmt, base);
+            base = gen_code_if_stmt(s->data.if_stmt, base);
             break;
         default:
             break;
@@ -181,5 +205,5 @@ void gen_code_program(BOFFILE bf, block_t b) {
     gen_code_output_program(bf, main_cs);
 
 
-//    code_seq_debug_print(stdout, main_cs);
+    code_seq_debug_print(stdout, main_cs);
 }
