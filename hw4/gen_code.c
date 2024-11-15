@@ -5,7 +5,10 @@
 #include "code_utils.h"
 #include "literal_table.h"
 #include "spl.tab.h"
-
+#include <stdio.h>
+#include <stdlib.h>
+#include "regname.h"
+#include <string.h>
 #define STACK_SPACE 4096
 
 void gen_code_initialize() {
@@ -100,8 +103,53 @@ code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
     return base;
 }
 
+code_seq gen_code_rel_op_condition(rel_op_condition_t cond) {
+    code_seq result = code_seq_empty();
+
+    // Step 1: Evaluate expr2 and push its value to the stack
+    code_seq expr2_code = gen_code_expr(cond.expr2);
+    code_seq_concat(&result, expr2_code);
+
+    // Step 2: Evaluate expr1 and push its value to the stack
+    code_seq expr1_code = gen_code_expr(cond.expr1);
+    code_seq_concat(&result, expr1_code);
+
+    // Step 3: Generate the comparison and conditional branching code
+    if (strcmp(cond.rel_op.text, "!=") == 0) {
+        // Not equal (!=)
+        code_seq_add_to_end(&result, code_bne(SP, 1, 3));  // Branch if not equal
+        code_seq_add_to_end(&result, code_lit(SP, 1, 0));  // Push 0 (false) if equal
+        code_seq_add_to_end(&result, code_jrel(2));        // Jump over true case
+        code_seq_add_to_end(&result, code_lit(SP, 1, 1));  // Push 1 (true) if not equal
+    } else if (strcmp(cond.rel_op.text, ">=") == 0) {
+        // Greater than or equal (>=)
+        code_seq_add_to_end(&result, code_sub(SP, 0, SP, 1)); // SP = E1 - E2
+        code_seq_add_to_end(&result, code_bgez(SP, 1, 3));    // Branch if SP >= 0
+        code_seq_add_to_end(&result, code_lit(SP, 1, 0));     // Push 0 (false) if less than
+        code_seq_add_to_end(&result, code_jrel(2));           // Jump over true case
+        code_seq_add_to_end(&result, code_lit(SP, 1, 1));     // Push 1 (true) if >=
+    }
+    // Additional cases for other operators like "<", "<=", ">", "==", etc.
+    // can be added here following a similar structure
+
+    // Step 4: Deallocate one word from stack to adjust SP
+    code_seq_add_to_end(&result, code_ari(SP, 1));
+
+    return result;
+}
 
 
+// Generate code for if statement
+code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
+    if (stmt.condition.cond_kind==re)
+    return base;
+}
+
+
+
+
+
+/*
 code_seq gen_code_if_stmt(if_stmt_t s, code_seq base) {
     condition_t con = s.condition;
 
@@ -115,6 +163,9 @@ code_seq gen_code_if_stmt(if_stmt_t s, code_seq base) {
 
         code_seq_concat(&base, gen_code_expr(rel_cond.expr1));
         code_seq_concat(&base, gen_code_expr(rel_cond.expr2));
+
+
+
 
         // Use code_pint for integer values
 //        code_seq_add_to_end(&base, code_pint(1, 0)); // Assumes result in $r1
@@ -133,6 +184,7 @@ code_seq gen_code_if_stmt(if_stmt_t s, code_seq base) {
 
     return base;
 }
+*/
 
 code_seq gen_code_stmt(stmt_t *s, code_seq base) {
     switch (s->stmt_kind) {
