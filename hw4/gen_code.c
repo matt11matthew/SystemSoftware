@@ -8,7 +8,7 @@
 #define STACK_SPACE 4096
 
 void gen_code_initialize() {
-    // Initialization logic, if necessary
+    literal_table_initialize();
 }
 
 void gen_code_output_literals(BOFFILE bf)
@@ -44,21 +44,18 @@ BOFHeader gen_code_program_header(code_seq main_cs) {
     ret.text_start_address = 0;
 
     int count = gen_code_output_seq_count(main_cs);
-    // printf("Count Sequence: %d\n", count);
-
-    //int textLength = BYTES_PER_WORD * code_seq_size(main_cs);
 
     ret.text_length = count;
 
     int dsa = MAX(ret.text_length, 1024) + BYTES_PER_WORD;
-    // printf("DSA: %d\n", dsa);
     ret.data_start_address = dsa;
+    ret.data_length = literal_table_size() * BYTES_PER_WORD;
+    int sba = dsa
+    + ret.data_start_address
+    + ret.data_length + STACK_SPACE;
+    ret.stack_bottom_addr = sba;
 
-  ret.data_length = dsa;
-  int sba = dsa + ret.data_start_address + STACK_SPACE;
-  // printf("sba: %d\n", sba);
-  ret.stack_bottom_addr = sba;
-  return ret;
+    return ret;
 }
 
 void gen_code_output_seq(BOFFILE bf, code_seq cs) {
@@ -78,17 +75,65 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs) {
     gen_code_output_literals(bf);
     bof_close(bf);
 }
+code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
 
-code_seq gen_code_stmt(stmts_t stmt)
+   // code_pstr(code_utils_())
+    return base;
+}
+code_seq gen_code_stmt(stmt_t *s, code_seq base) {
+    switch (s->stmt_kind) {
+        case print_stmt:
+            base = gen_code_print_stmt(s->data.print_stmt, base);
+            break;
+    }
+    return base;
+}
+
+code_seq gen_code_stmts(stmts_t stmts)
 {
 
-    // The following can never execute, but this quiets gcc's warning
-    return code_seq_empty();
+    code_seq base = code_seq_empty();
+    if (stmts.stmts_kind == empty_stmts_e) {
+        return base; //Deal with epsilon case
+    }
+    //Not empty
+    stmt_t *s = stmts.stmt_list.start;
+
+    while (s != NULL) {
+        base = gen_code_stmt(s, base);
+        s = s->next;
+    }
+
+    return base;
 }
+
+void gen_code_program1(BOFFILE bf, block_t b)
+{
+    code_seq main_cs = code_utils_set_up_program();  // Initialize main_cs to an empty sequence
+
+    // We want to make the main program's AR look like all blocks... so:
+    // allocate space and initialize any variables
+    // main_cs = gen_code_var_decls(prog.var_decls);
+    int vars_len_in_bytes
+    = (code_seq_size(main_cs) / 2) * BYTES_PER_WORD;
+    // there is no static link for the program as a whole,
+    // so nothing to do for saving FP into A0 as would be done for a block
+    code_seq_concat(&main_cs, code_utils_save_registers_for_AR());
+    code_seq_concat(&main_cs, gen_code_stmts(b.stmts));
+    code_seq_concat(&main_cs,
+                  code_utils_restore_registers_from_AR());
+    code_seq_concat(&main_cs,
+                  code_utils_deallocate_stack_space(vars_len_in_bytes));
+    code_seq_add_to_end(&main_cs, code_exit(0));
+    gen_code_output_program(bf, main_cs);
+
+    code_seq_debug_print(stdout, main_cs);
+}
+
 
 void gen_code_program(BOFFILE bf, block_t b) {
     // code_seq main_cs =  code_utils_set_up_program();  // Initialize main_cs to an empty sequence
-    code_seq main_cs = code_seq_empty();  // Initialize main_cs to an empty sequence
+    code_seq main_cs = code_utils_set_up_program();  // Initialize main_cs to an empty sequence
 
     // Generate code for variable declarations (uncomment and implement if necessary)
     // main_cs = gen_code_var_decls(prog.var_decls);
@@ -97,9 +142,9 @@ void gen_code_program(BOFFILE bf, block_t b) {
 
     // Save registers for the AR setup
    // code_seq_concat(&main_cs, code_utils_save_registers_for_AR());
-
+    code_seq_concat(&main_cs, code_utils_save_registers_for_AR());
     // Generate code for main statement block (uncomment and implement if necessary)
-    //code_seq_concat(&main_cs, gen_code_stmt(b.stmts));
+    code_seq_concat(&main_cs, gen_code_stmts(b.stmts));
 
   //  code_seq_concat(&main_cs, code_utils_restore_registers_from_AR());
    // code_seq_concat(&main_cs, code_utils_deallocate_stack_space(vars_len_in_bytes));
