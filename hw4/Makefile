@@ -43,6 +43,7 @@ VMTESTS = hw4-vmtest0.spl hw4-vmtest1.spl hw4-vmtest2.spl hw4-vmtest3.spl \
 	hw4-vmtestC.spl
 # you can add your own tests to alltests
 ALLTESTS = $(GTESTS) $(READTESTS) $(VMTESTS)
+SINGLE_TESTS = hw4-gtest0.spl
 EXPECTEDOUTPUTS = $(ALLTESTS:.spl=.out)
 STUDENTTESTOUTPUTS = $(ALLTESTS:.spl=.myo)
 
@@ -160,7 +161,28 @@ $(DISASM):
 	$(DISASM) $< > $@ 2>&1
 
 # main target for testing
-.PHONY: check-outputs
+.PHONY: check-outputs check
+
+check: $(COMPILER) $(RUNVM)
+	@DIFFS=0; \
+	for f in `echo $(SINGLE_TESTS) | sed -e 's/\\.$(SUF)//g'`; \
+	do \
+		echo running ./$(COMPILER) on "$$f.$(SUF)"; \
+		$(RM) "$$f.bof"; \
+		./$(COMPILER) "$$f.$(SUF)" ; \
+		echo running $(RUNVM) on "$$f.bof"; \
+		$(RM) "$$f.myo"; \
+		cat char-inputs.txt | $(RUNVM) "$$f.bof" > "$$f.myo" 2>&1; \
+		diff -w -B "$$f.out" "$$f.myo" && echo 'passed!' || DIFFS=1; \
+	done; \
+	if test 0 = $$DIFFS; \
+	then \
+		echo 'All output tests passed!'; \
+	else \
+		echo 'Some output test(s) failed!'; \
+	fi
+
+
 check-outputs: $(COMPILER) $(RUNVM)
 	@DIFFS=0; \
 	for f in `echo $(ALLTESTS) | sed -e 's/\\.$(SUF)//g'`; \
@@ -179,6 +201,8 @@ check-outputs: $(COMPILER) $(RUNVM)
 	else \
 		echo 'Some output test(s) failed!'; \
 	fi
+
+
 
 $(SUBMISSIONZIPFILE): *.c *.h $(STUDENTTESTOUTPUTS)
 	$(ZIP) $(SUBMISSIONZIPFILE) $(SPL).y $(SPL)_lexer.l *.c *.h Makefile
