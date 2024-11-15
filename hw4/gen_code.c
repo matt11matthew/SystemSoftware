@@ -10,25 +10,57 @@ void gen_code_initialize() {
     // Initialization logic, if necessary
 }
 
+int gen_code_output_seq_count(code_seq cs) {
+
+    int res = 0;
+
+    while (!code_seq_is_empty(cs)) {
+        bin_instr_t inst = code_seq_first(cs)->instr;
+        res++;
+        cs = code_seq_rest(cs);
+
+
+    }
+    return res;
+}
+
 BOFHeader gen_code_program_header(code_seq main_cs) {
     BOFHeader ret;
     bof_write_magic_to_header(&ret);
 
     ret.text_start_address = 0;
-    ret.text_length = code_seq_size(main_cs) * BYTES_PER_WORD;
+
+    int count = gen_code_output_seq_count(main_cs);
+    printf("Count Sequence: %d\n", count);
+
+    int textLength = BYTES_PER_WORD * code_seq_size(main_cs);
+
+
+    ret.text_length = textLength;
+
     int dsa = MAX(ret.text_length, 1024) + BYTES_PER_WORD;
+    // printf("DSA: %d\n", dsa);
     ret.data_start_address = dsa;
 
+  ret.data_length = dsa;
+
     int sba = dsa + ret.data_start_address + STACK_SPACE;
+    // printf("sba: %d\n", sba);
     ret.stack_bottom_addr = sba;
     return ret;
 }
 
+
+
 void gen_code_output_seq(BOFFILE bf, code_seq cs) {
+
     while (!code_seq_is_empty(cs)) {
         bin_instr_t inst = code_seq_first(cs)->instr;
         instruction_write_bin_instr(bf, inst);
+        printf(" %s\n", instruction_assembly_form(0, inst) );
         cs = code_seq_rest(cs);
+
+
     }
 }
 
