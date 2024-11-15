@@ -76,6 +76,7 @@ static void load_instructions(BOFFILE bf, int count)
 {
     for (int wa = 0; wa < count; wa++) {
 	memory.instrs[wa] = instruction_read(bf);
+        //printf("%d: %s\n", wa, instruction_assembly_form(wa,	memory.instrs[wa]));
     }
 }
 
