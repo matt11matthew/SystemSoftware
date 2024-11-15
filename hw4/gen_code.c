@@ -75,15 +75,50 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs) {
     gen_code_output_literals(bf);
     bof_close(bf);
 }
-code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
 
-   // code_pstr(code_utils_())
+code_seq gen_code_expr(expr_t expr) {
+    code_seq base = code_seq_empty();
+
+    switch (expr.expr_kind) {
+        case expr_number:
+            base = code_seq_singleton(code_lit(1, 0, expr.data.number.value));
+        break;
+    }
     return base;
 }
+code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
+    // Step 1: Generate code to evaluate the expression
+    code_seq expr_code = gen_code_expr(s.expr);
+
+    // Step 2: Add print system call
+    code_seq_concat(&base, expr_code);
+
+    // Use code_pint for integer values
+    code_seq_add_to_end(&base, code_pint(1, 0)); // Assumes result in $r1
+
+    return base;
+}code_seq gen_code_i_stmt(print_stmt_t s, code_seq base) {
+    // Step 1: Generate code to evaluate the expression
+    code_seq expr_code = gen_code_expr(s.expr);
+
+    // Step 2: Add print system call
+    code_seq_concat(&base, expr_code);
+
+    // Use code_pint for integer values
+    code_seq_add_to_end(&base, code_pint(1, 0)); // Assumes result in $r1
+
+    return base;
+}
+
 code_seq gen_code_stmt(stmt_t *s, code_seq base) {
     switch (s->stmt_kind) {
         case print_stmt:
             base = gen_code_print_stmt(s->data.print_stmt, base);
+            break;
+        case if_stmt:
+            base = gen_code_print_stmt(s->data.print_stmt, base);
+            break;
+        default:
             break;
     }
     return base;
@@ -107,6 +142,8 @@ code_seq gen_code_stmts(stmts_t stmts)
     return base;
 }
 
+/*
+//REFERENCE
 void gen_code_program1(BOFFILE bf, block_t b)
 {
     code_seq main_cs = code_utils_set_up_program();  // Initialize main_cs to an empty sequence
@@ -129,30 +166,20 @@ void gen_code_program1(BOFFILE bf, block_t b)
 
     code_seq_debug_print(stdout, main_cs);
 }
-
+*/
 
 void gen_code_program(BOFFILE bf, block_t b) {
-    // code_seq main_cs =  code_utils_set_up_program();  // Initialize main_cs to an empty sequence
     code_seq main_cs = code_utils_set_up_program();  // Initialize main_cs to an empty sequence
 
-    // Generate code for variable declarations (uncomment and implement if necessary)
-    // main_cs = gen_code_var_decls(prog.var_decls);
-
-  //  int vars_len_in_bytes = (code_seq_size(main_cs) / 2) * BYTES_PER_WORD;
-
-    // Save registers for the AR setup
-   // code_seq_concat(&main_cs, code_utils_save_registers_for_AR());
-    code_seq_concat(&main_cs, code_utils_save_registers_for_AR());
-    // Generate code for main statement block (uncomment and implement if necessary)
     code_seq_concat(&main_cs, gen_code_stmts(b.stmts));
 
-  //  code_seq_concat(&main_cs, code_utils_restore_registers_from_AR());
-   // code_seq_concat(&main_cs, code_utils_deallocate_stack_space(vars_len_in_bytes));
+    //TODO DEALLOCATE STACK SPACE FROM REGISTER
+    // code_seq_add_to_end(&main_cs, code_exit(0));  // Ensure this adds an exit instruction
 
-    code_seq_add_to_end(&main_cs, code_exit(0));  // Ensure this adds an exit instruction
+    code_seq_concat(&main_cs,     code_utils_tear_down_program());
 
     gen_code_output_program(bf, main_cs);
 
 
-    code_seq_debug_print(stdout, main_cs);
+//    code_seq_debug_print(stdout, main_cs);
 }

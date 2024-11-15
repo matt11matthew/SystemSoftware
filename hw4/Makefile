@@ -43,7 +43,10 @@ VMTESTS = hw4-vmtest0.spl hw4-vmtest1.spl hw4-vmtest2.spl hw4-vmtest3.spl \
 	hw4-vmtestC.spl
 # you can add your own tests to alltests
 ALLTESTS = $(GTESTS) $(READTESTS) $(VMTESTS)
-SINGLE_TESTS = hw4-gtest1.spl
+#SINGLE_TESTS = hw4-gtest0.spl hw4-gtest1.spl hw4-gtest2.spl hw4-gtest3.spl hw4-gtest5.spl \
+#hw4-gtest6.spl
+SINGLE_TESTS = hw4-gtest2.spl
+
 EXPECTEDOUTPUTS = $(ALLTESTS:.spl=.out)
 STUDENTTESTOUTPUTS = $(ALLTESTS:.spl=.myo)
 
