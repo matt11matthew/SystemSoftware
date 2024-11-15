@@ -283,7 +283,10 @@ void machine_trace_execute_instr(FILE *out, address_type addr,
 void machine_execute_instr(address_type addr, bin_instr_t bi)
 {
     // increment the PC (advance address by 1 word)
+
+    printf("Running: %d %s\n",addr, instruction_assembly_form(addr,bi));
     PC = PC + 1;
+
 
     // execute the actual instruction
     instr_type it = instruction_type(bi);
