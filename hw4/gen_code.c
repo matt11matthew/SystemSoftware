@@ -184,17 +184,19 @@ code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
     printf("Then block size: %d\n", then_size);
     printf("Else block size: %d\n", else_size);
 
-    // **Adjust Conditional Jump Offset**
-    // Skip the "then" block and the next instruction (JREL after "then")
-    code_seq_add_to_end(&base, code_jrel(then_size + 1));
+    // Conditional jump to skip "then" block if condition is false
+    int cond_jump_offset = then_size + (stmt.else_stmts != NULL ? 1 : 0);
+    code_seq_add_to_end(&base, code_jrel(cond_jump_offset)); // Correct conditional jump
 
     // Append "then" block
     code_seq_concat(&base, then_code);
 
-    // **Add Unconditional Jump (if "else" exists)**
+    // Unconditional jump to skip "else" block if it exists
     if (stmt.else_stmts != NULL) {
-        // Jump past the "else" block
-        code_seq_add_to_end(&base, code_jrel(else_size + 1)); // Skip "else" and exit
+        int uncond_jump_offset = else_size + 1; // Jump past the "else" block
+        code_seq_add_to_end(&base, code_jrel(uncond_jump_offset)); // Correct unconditional jump
+
+        // Append "else" block
         code_seq_concat(&base, else_code);
     }
 
