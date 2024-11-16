@@ -51,8 +51,8 @@ BOFHeader gen_code_program_header(code_seq main_cs) {
     ret.data_start_address = dsa;
     ret.data_length = literal_table_size() * BYTES_PER_WORD;
     int sba = dsa
-    + ret.data_start_address
-    + ret.data_length + STACK_SPACE;
+              + ret.data_start_address
+              + ret.data_length + STACK_SPACE;
     ret.stack_bottom_addr = sba;
 
     return ret;
@@ -76,33 +76,31 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs) {
     bof_close(bf);
 }
 
-code_seq gen_code_expr(expr_t expr) {
+code_seq gen_code_expr(expr_t expr, reg_num_type target_reg) {
     code_seq base = code_seq_empty();
 
     switch (expr.expr_kind) {
         case expr_number:
-            base = code_seq_singleton(code_lit(1, 0, expr.data.number.value));
-        break;
-        case expr_bin:
+            base = code_seq_singleton(code_lit(target_reg, 0, expr.data.number.value));
             break;
-        case expr_ident:
-            break;
-        case expr_negated:
-            break;
+            // Handle other expression kinds (identifiers, binary operations, etc.)
+            // ...
+        default:
+            fprintf(stderr, "Error: Unhandled expression kind in gen_code_expr\n");
+            exit(1);
     }
     return base;
 }
 
-code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
-    // Step 1: Generate code to evaluate the expression
-    code_seq expr_code = gen_code_expr(s.expr);
+code_seq gen_code_print_stmt(print_stmt_t s) {
+    code_seq base = code_seq_empty();
 
-    // Step 2: Add the evaluated expression to the stack
+    // Evaluate the expression into R3
+    code_seq expr_code = gen_code_expr(s.expr, 3);
     code_seq_concat(&base, expr_code);
 
-    // Step 3: Add print system call
-    // Ensure the value is at the top of the stack for PINT
-    code_seq_add_to_end(&base, code_pint(SP, 0)); // PINT reads from stack
+    // Add print system call (PINT)
+    code_seq_add_to_end(&base, code_pint(3, 0));
 
     return base;
 }
@@ -110,49 +108,58 @@ code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
 code_seq gen_code_rel_op_condition(rel_op_condition_t cond) {
     code_seq result = code_seq_empty();
 
-    // Evaluate expr1 into R1
-    code_seq expr1_code = gen_code_expr(cond.expr1);
+    // Evaluate expr1 into R3
+    code_seq expr1_code = gen_code_expr(cond.expr1, 3);
     code_seq_concat(&result, expr1_code);
 
-    // Evaluate expr2 into R2
-    code_seq expr2_code = gen_code_expr(cond.expr2);
+    // Evaluate expr2 into R4
+    code_seq expr2_code = gen_code_expr(cond.expr2, 4);
     code_seq_concat(&result, expr2_code);
 
-    // Perform comparison and set R3 to 1 (true) or 0 (false)
+    // Perform comparison and set R5 to 1 (true) or 0 (false)
     if (strcmp(cond.rel_op.text, "!=") == 0) {
-        code_seq_add_to_end(&result, code_bne(1, 2, 2));
+        code_seq_add_to_end(&result, code_bne(3, 4, 2));
     } else if (strcmp(cond.rel_op.text, "==") == 0) {
-        code_seq_add_to_end(&result, code_beq(1, 2, 2));
+        code_seq_add_to_end(&result, code_beq(3, 4, 2));
     } else {
-        code_seq_add_to_end(&result, code_cpr(4, 1));       // R4 = R1
-        code_seq_add_to_end(&result, code_sub(4, 0, 2, 0)); // R4 -= R2
+        // For relational operators, compute R6 = R3 - R4
+        code_seq_add_to_end(&result, code_cpr(6, 3));       // R6 = R3
+        code_seq_add_to_end(&result, code_sub(6, 0, 4, 0)); // R6 -= R4
 
         if (strcmp(cond.rel_op.text, "<") == 0) {
-            code_seq_add_to_end(&result, code_bltz(4, 0, 2));
+            code_seq_add_to_end(&result, code_bltz(6, 0, 2));
         } else if (strcmp(cond.rel_op.text, "<=") == 0) {
-            code_seq_add_to_end(&result, code_blez(4, 0, 2));
+            code_seq_add_to_end(&result, code_blez(6, 0, 2));
         } else if (strcmp(cond.rel_op.text, ">") == 0) {
-            code_seq_add_to_end(&result, code_bgtz(4, 0, 2));
+            code_seq_add_to_end(&result, code_bgtz(6, 0, 2));
         } else if (strcmp(cond.rel_op.text, ">=") == 0) {
-            code_seq_add_to_end(&result, code_bgez(4, 0, 2));
+            code_seq_add_to_end(&result, code_bgez(6, 0, 2));
+        } else {
+            fprintf(stderr, "Error: Unhandled relational operator '%s'\n", cond.rel_op.text);
+            exit(1);
         }
     }
 
-    // Set R3 = 0 (false)
-    code_seq_add_to_end(&result, code_lit(3, 0, 0));
+    // Set R5 = 0 (false)
+    code_seq_add_to_end(&result, code_lit(5, 0, 0));
     code_seq_add_to_end(&result, code_jrel(1)); // Jump over setting true
 
-    // Set R3 = 1 (true)
-    code_seq_add_to_end(&result, code_lit(3, 0, 1));
+    // Set R5 = 1 (true)
+    code_seq_add_to_end(&result, code_lit(5, 0, 1));
 
     return result;
 }
 
-code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
+code_seq gen_code_if_stmt(if_stmt_t stmt) {
+    code_seq base = code_seq_empty();
+
     // Generate condition code
     if (stmt.condition.cond_kind == ck_rel) {
         code_seq condition_code = gen_code_rel_op_condition(stmt.condition.data.rel_op_cond);
         code_seq_concat(&base, condition_code);
+    } else {
+        fprintf(stderr, "Error: Unhandled condition kind in gen_code_if_stmt\n");
+        exit(1);
     }
 
     // Generate "then" and "else" blocks
@@ -161,6 +168,7 @@ code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
 
     code_seq else_code = code_seq_empty();
     int else_size = 0;
+
     if (stmt.else_stmts != NULL && stmt.else_stmts->stmts_kind != empty_stmts_e) {
         else_code = gen_code_stmts(*stmt.else_stmts);
         else_size = code_seq_size(else_code);
@@ -169,8 +177,8 @@ code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
     // Calculate offsets
     int jump_over_then = then_size + (else_size > 0 ? 1 : 0);
 
-    // Conditional branch to skip "then" block if condition is false (R3 == 0)
-    code_seq_add_to_end(&base, code_beq(3, 0, jump_over_then));
+    // Conditional branch to skip "then" block if condition is false (R5 == 0)
+    code_seq_add_to_end(&base, code_beq(5, 0, jump_over_then));
 
     // Add "then" block
     code_seq_concat(&base, then_code);
@@ -186,115 +194,52 @@ code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
     return base;
 }
 
+code_seq gen_code_stmt(stmt_t *s) {
+    code_seq stmt_code = code_seq_empty();
 
-
-/*
-code_seq gen_code_if_stmt(if_stmt_t s, code_seq base) {
-    condition_t con = s.condition;
-
-    if (con.cond_kind == ck_rel) {
-        //LESS THEN
-        rel_op_condition_t rel_cond =  con.data.rel_op_cond;
-
-
-
-
-
-        code_seq_concat(&base, gen_code_expr(rel_cond.expr1));
-        code_seq_concat(&base, gen_code_expr(rel_cond.expr2));
-
-
-
-
-        // Use code_pint for integer values
-//        code_seq_add_to_end(&base, code_pint(1, 0)); // Assumes result in $r1
-
-
-
-
-//        printf("T%sT\n", rel_cond.rel_op.text);
-    }
-    if (con.cond_kind == ck_db) {
-        printf("ck_db");
-    }
-
-
-
-
-    return base;
-}
-*/
-
-code_seq gen_code_stmt(stmt_t *s, code_seq base) {
     switch (s->stmt_kind) {
         case print_stmt:
-            base = gen_code_print_stmt(s->data.print_stmt, base);
+            stmt_code = gen_code_print_stmt(s->data.print_stmt);
             break;
         case if_stmt:
-            base = gen_code_if_stmt(s->data.if_stmt, base);
+            stmt_code = gen_code_if_stmt(s->data.if_stmt);
             break;
         default:
-            break;
+            fprintf(stderr, "Error: Unhandled statement kind in gen_code_stmt\n");
+            exit(1);
     }
-    return base;
+
+    return stmt_code;
 }
 
 code_seq gen_code_stmts(stmts_t stmts)
 {
-
     code_seq base = code_seq_empty();
     if (stmts.stmts_kind == empty_stmts_e) {
-        return base; //Deal with epsilon case
+        return base; // Deal with epsilon case
     }
-    //Not empty
+    // Not empty
     stmt_t *s = stmts.stmt_list.start;
 
     while (s != NULL) {
-        base = gen_code_stmt(s, base);
+        code_seq stmt_code = gen_code_stmt(s);
+        code_seq_concat(&base, stmt_code); // Concatenate the code sequences
         s = s->next;
     }
 
     return base;
 }
 
-/*
-//REFERENCE
-void gen_code_program1(BOFFILE bf, block_t b)
-{
-    code_seq main_cs = code_utils_set_up_program();  // Initialize main_cs to an empty sequence
-
-    // We want to make the main program's AR look like all blocks... so:
-    // allocate space and initialize any variables
-    // main_cs = gen_code_var_decls(prog.var_decls);
-    int vars_len_in_bytes
-    = (code_seq_size(main_cs) / 2) * BYTES_PER_WORD;
-    // there is no static link for the program as a whole,
-    // so nothing to do for saving FP into A0 as would be done for a block
-    code_seq_concat(&main_cs, code_utils_save_registers_for_AR());
-    code_seq_concat(&main_cs, gen_code_stmts(b.stmts));
-    code_seq_concat(&main_cs,
-                  code_utils_restore_registers_from_AR());
-    code_seq_concat(&main_cs,
-                  code_utils_deallocate_stack_space(vars_len_in_bytes));
-    code_seq_add_to_end(&main_cs, code_exit(0));
-    gen_code_output_program(bf, main_cs);
-
-    code_seq_debug_print(stdout, main_cs);
-}
-*/
-
 void gen_code_program(BOFFILE bf, block_t b) {
-    code_seq main_cs = code_utils_set_up_program();  // Initialize main_cs to an empty sequence
+    code_seq main_cs = code_utils_set_up_program();
 
-    code_seq_concat(&main_cs, gen_code_stmts(b.stmts));
+    code_seq body_cs = gen_code_stmts(b.stmts);
+    code_seq_concat(&main_cs, body_cs);
 
-    //TODO DEALLOCATE STACK SPACE FROM REGISTER
-    // code_seq_add_to_end(&main_cs, code_exit(0));  // Ensure this adds an exit instruction
-
-    code_seq_concat(&main_cs,     code_utils_tear_down_program());
+    code_seq tear_down_cs = code_utils_tear_down_program();
+    code_seq_concat(&main_cs, tear_down_cs);
 
     gen_code_output_program(bf, main_cs);
-
 
     code_seq_debug_print(stdout, main_cs);
 }
