@@ -228,5 +228,5 @@ void gen_code_program(BOFFILE bf, block_t b) {
 
     gen_code_output_program(bf, main_cs);
 
-    code_seq_debug_print(stdout, main_cs);
+//    code_seq_debug_print(stdout, main_cs);
 }
