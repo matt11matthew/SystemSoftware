@@ -107,61 +107,47 @@ code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
     return base;
 }
 
-// Generate code for relational operator conditions
 code_seq gen_code_rel_op_condition(rel_op_condition_t cond) {
     code_seq result = code_seq_empty();
 
-
-    // Step 1: Evaluate expr2 and push its value to the stack
-    code_seq expr2_code = gen_code_expr(cond.expr2);
-    code_seq_concat(&result, expr2_code);
-
-    // Step 2: Evaluate expr1 and push its value to the stack
+    // Evaluate expr1 into R1
     code_seq expr1_code = gen_code_expr(cond.expr1);
     code_seq_concat(&result, expr1_code);
 
-    // Step 3: Generate the comparison and conditional branching code
+    // Evaluate expr2 into R2
+    code_seq expr2_code = gen_code_expr(cond.expr2);
+    code_seq_concat(&result, expr2_code);
+
+    // Perform comparison and set R3 to 1 (true) or 0 (false)
     if (strcmp(cond.rel_op.text, "!=") == 0) {
-        code_seq_add_to_end(&result, code_bne(SP, 1, 3));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 0));
-        code_seq_add_to_end(&result, code_jrel(2));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 1));
-    } else if(strcmp(cond.rel_op.text, "==") == 0){
-        code_seq_add_to_end(&result, code_beq(SP, 1, 3));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 0));
-        code_seq_add_to_end(&result, code_jrel(2));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 1));
-    } else if (strcmp(cond.rel_op.text, "<") == 0) {
-        code_seq_add_to_end(&result, code_sub(SP, 0, SP, 1));
-        code_seq_add_to_end(&result, code_blez(SP, 1, 3));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 0));
-        code_seq_add_to_end(&result, code_jrel(2));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 1));
-    } else if (strcmp(cond.rel_op.text, "<=") == 0) {
-        code_seq_add_to_end(&result, code_sub(SP, 0, SP, 1));
-        code_seq_add_to_end(&result, code_bltz(SP, 1, 3));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 0));
-        code_seq_add_to_end(&result, code_jrel(2));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 1));
-    } else if (strcmp(cond.rel_op.text, ">") == 0) {
-        code_seq_add_to_end(&result, code_sub(SP, 0, SP, 1));
-        code_seq_add_to_end(&result, code_bgtz(SP, 1, 3));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 0));
-        code_seq_add_to_end(&result, code_jrel(2));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 1));
-    } else if (strcmp(cond.rel_op.text, ">=") == 0) {
-        code_seq_add_to_end(&result, code_sub(SP, 0, SP, 1));
-        code_seq_add_to_end(&result, code_bgez(SP, 1, 3));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 0));
-        code_seq_add_to_end(&result, code_jrel(2));
-        code_seq_add_to_end(&result, code_lit(SP, 1, 1));
+        code_seq_add_to_end(&result, code_bne(1, 2, 2));
+    } else if (strcmp(cond.rel_op.text, "==") == 0) {
+        code_seq_add_to_end(&result, code_beq(1, 2, 2));
+    } else {
+        code_seq_add_to_end(&result, code_cpr(4, 1));       // R4 = R1
+        code_seq_add_to_end(&result, code_sub(4, 0, 2, 0)); // R4 -= R2
+
+        if (strcmp(cond.rel_op.text, "<") == 0) {
+            code_seq_add_to_end(&result, code_bltz(4, 0, 2));
+        } else if (strcmp(cond.rel_op.text, "<=") == 0) {
+            code_seq_add_to_end(&result, code_blez(4, 0, 2));
+        } else if (strcmp(cond.rel_op.text, ">") == 0) {
+            code_seq_add_to_end(&result, code_bgtz(4, 0, 2));
+        } else if (strcmp(cond.rel_op.text, ">=") == 0) {
+            code_seq_add_to_end(&result, code_bgez(4, 0, 2));
+        }
     }
 
-    // Deallocate one word from stack to adjust SP
-    code_seq_add_to_end(&result, code_ari(SP, 1));
+    // Set R3 = 0 (false)
+    code_seq_add_to_end(&result, code_lit(3, 0, 0));
+    code_seq_add_to_end(&result, code_jrel(1)); // Jump over setting true
+
+    // Set R3 = 1 (true)
+    code_seq_add_to_end(&result, code_lit(3, 0, 1));
 
     return result;
 }
+
 code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
     // Generate condition code
     if (stmt.condition.cond_kind == ck_rel) {
@@ -169,36 +155,33 @@ code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
         code_seq_concat(&base, condition_code);
     }
 
-    // Generate "then" block
+    // Generate "then" and "else" blocks
     code_seq then_code = gen_code_stmts(*stmt.then_stmts);
     int then_size = code_seq_size(then_code);
 
-    // Generate "else" block if it exists
     code_seq else_code = code_seq_empty();
     int else_size = 0;
-    if (stmt.else_stmts != NULL) {
+    if (stmt.else_stmts != NULL && stmt.else_stmts->stmts_kind != empty_stmts_e) {
         else_code = gen_code_stmts(*stmt.else_stmts);
         else_size = code_seq_size(else_code);
     }
 
-    printf("Then block size: %d\n", then_size);
-    printf("Else block size: %d\n", else_size);
+    // Calculate offsets
+    int jump_over_then = then_size + (else_size > 0 ? 1 : 0);
 
-    // Conditional jump to skip "then" block if condition is false
-    int cond_jump_offset = then_size + (stmt.else_stmts != NULL ? 1 : 0);
-    code_seq_add_to_end(&base, code_jrel(cond_jump_offset)); // Correct conditional jump
+    // Conditional branch to skip "then" block if condition is false (R3 == 0)
+    code_seq_add_to_end(&base, code_beq(3, 0, jump_over_then));
 
-    // Append "then" block
+    // Add "then" block
     code_seq_concat(&base, then_code);
 
-    // Unconditional jump to skip "else" block if it exists
-    if (stmt.else_stmts != NULL) {
-        int uncond_jump_offset = else_size + 1; // Jump past the "else" block
-        code_seq_add_to_end(&base, code_jrel(uncond_jump_offset)); // Correct unconditional jump
-
-        // Append "else" block
-        code_seq_concat(&base, else_code);
+    // Unconditional jump over "else" block if it exists
+    if (else_size > 0) {
+        code_seq_add_to_end(&base, code_jrel(else_size));
     }
+
+    // Add "else" block
+    code_seq_concat(&base, else_code);
 
     return base;
 }
