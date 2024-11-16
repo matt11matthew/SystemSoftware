@@ -27,16 +27,12 @@ void gen_code_output_literals(BOFFILE bf)
 }
 
 int gen_code_output_seq_count(code_seq cs) {
-
-
     int res = 0;
 
     while (!code_seq_is_empty(cs)) {
         bin_instr_t inst = code_seq_first(cs)->instr;
         res++;
         cs = code_seq_rest(cs);
-
-
     }
     return res;
 }
@@ -96,6 +92,7 @@ code_seq gen_code_expr(expr_t expr) {
     }
     return base;
 }
+
 code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
     // Step 1: Generate code to evaluate the expression
     code_seq expr_code = gen_code_expr(s.expr);
@@ -166,42 +163,38 @@ code_seq gen_code_rel_op_condition(rel_op_condition_t cond) {
     return result;
 }
 code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
-    // Step 1: Generate the condition code
+    // Generate the condition code
     if (stmt.condition.cond_kind == ck_rel) {
         code_seq condition_code = gen_code_rel_op_condition(stmt.condition.data.rel_op_cond);
         code_seq_concat(&base, condition_code);
     }
 
-    // Step 2: Generate the "then" block code
+    // Generate the "then" block code
     code_seq then_code = gen_code_stmts(*stmt.then_stmts);
+    int then_size = code_seq_size(then_code);
 
-    // Step 3: Check if an "else" block exists
+    // Handle the "else" block if it exists
+    code_seq else_code = code_seq_empty();
+    int else_size = 0;
     if (stmt.else_stmts != NULL) {
-        // Generate the "else" block code
-        code_seq else_code = gen_code_stmts(*stmt.else_stmts);
+        else_code = gen_code_stmts(*stmt.else_stmts);
+        else_size = code_seq_size(else_code);
+    }
 
-        // Add conditional jump to skip the "then" block if condition is false
-        code_seq_add_to_end(&base, code_jrel(code_seq_size(then_code) + 1));
+    // Add conditional jump to skip the "then" block if the condition is false
+    code_seq_add_to_end(&base, code_jrel(then_size + 1));  // +1 accounts for the unconditional jump
 
-        // Append the "then" block
-        code_seq_concat(&base, then_code);
+    // Append the "then" block
+    code_seq_concat(&base, then_code);
 
-        // Add unconditional jump to skip the "else" block
-        code_seq_add_to_end(&base, code_jrel(code_seq_size(else_code)));
-
-        // Append the "else" block
+    // Add unconditional jump to skip the "else" block (if it exists)
+    if (stmt.else_stmts != NULL) {
+        code_seq_add_to_end(&base, code_jrel(else_size));
         code_seq_concat(&base, else_code);
-    } else {
-        // No "else" block; jump directly past the "then" block if condition is false
-        code_seq_add_to_end(&base, code_jrel(code_seq_size(then_code)));
-
-        // Append the "then" block
-        code_seq_concat(&base, then_code);
     }
 
     return base;
 }
-
 
 
 
