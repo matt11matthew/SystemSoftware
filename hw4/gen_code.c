@@ -162,20 +162,12 @@ code_seq gen_code_if_stmt(if_stmt_t stmt) {
         exit(1);
     }
 
-    // Generate "then" and "else" blocks
+    // Generate "then" block
     code_seq then_code = gen_code_stmts(*stmt.then_stmts);
     int then_size = code_seq_size(then_code);
 
-    code_seq else_code = code_seq_empty();
-    int else_size = 0;
-
-    if (stmt.else_stmts != NULL && stmt.else_stmts->stmts_kind != empty_stmts_e) {
-        else_code = gen_code_stmts(*stmt.else_stmts);
-        else_size = code_seq_size(else_code);
-    }
-
-    // Calculate offsets
-    int jump_over_then = then_size + (else_size > 0 ? 1 : 0);
+    // Calculate offset to jump over the "then" block if the condition is false
+    int jump_over_then = then_size;
 
     // Conditional branch to skip "then" block if condition is false (R5 == 0)
     code_seq_add_to_end(&base, code_beq(5, 0, jump_over_then));
@@ -183,13 +175,8 @@ code_seq gen_code_if_stmt(if_stmt_t stmt) {
     // Add "then" block
     code_seq_concat(&base, then_code);
 
-    // Unconditional jump over "else" block if it exists
-    if (else_size > 0) {
-        code_seq_add_to_end(&base, code_jrel(else_size));
-    }
-
-    // Add "else" block
-    code_seq_concat(&base, else_code);
+    // Skip generating "else" block to avoid including code after the "if" statement
+    // This ensures that code after the "if" statement is executed unconditionally
 
     return base;
 }
