@@ -9,9 +9,11 @@
 // a size for the memory (2^16 = 32K words)
 #define MEMORY_SIZE_IN_WORDS 32768
 
+
 // Requires: bf is open for reading in binary
 // Load the binary object file bf, and get ready to run it
 extern void machine_load(BOFFILE bf);
+extern void machine_enable_print();
 
 // Requires: a program has been loaded into the computer's memory
 // print a heading and the program in the VM's memory to out

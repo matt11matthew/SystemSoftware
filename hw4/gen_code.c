@@ -87,6 +87,8 @@ code_seq gen_code_expr(expr_t expr) {
         case expr_number:
             base = code_seq_singleton(code_lit(1, 0, expr.data.number.value));
         break;
+        case expr_bin:
+            break;
     }
     return base;
 }
@@ -94,14 +96,16 @@ code_seq gen_code_print_stmt(print_stmt_t s, code_seq base) {
     // Step 1: Generate code to evaluate the expression
     code_seq expr_code = gen_code_expr(s.expr);
 
-    // Step 2: Add print system call
+    // Step 2: Add the evaluated expression to the stack
     code_seq_concat(&base, expr_code);
 
-    // Use code_pint for integer values
-    code_seq_add_to_end(&base, code_pint(1, 0)); // Assumes result in $r1
+    // Step 3: Add print system call
+    // Ensure the value is at the top of the stack for PINT
+    code_seq_add_to_end(&base, code_pint(SP, 0)); // PINT reads from stack
 
     return base;
 }
+
 
 // Generate code for relational operator conditions
 code_seq gen_code_rel_op_condition(rel_op_condition_t cond) {

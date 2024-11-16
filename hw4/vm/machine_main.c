@@ -50,9 +50,11 @@ int main(int argc, char *argv[])
     // if printing, don't run the program
     if (print_program) {
 	machine_print_loaded_program(stdout);
+        machine_enable_print();
 	return EXIT_SUCCESS;
     }
-    
+
+
     machine_run(trace_execution);
 
     // the following should never execute,

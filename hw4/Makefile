@@ -164,7 +164,7 @@ $(DISASM):
 	$(DISASM) $< > $@ 2>&1
 
 # main target for testing
-.PHONY: check-outputs check check-p
+.PHONY: check-outputs check check-p check-t
 
 check: $(COMPILER) $(RUNVM)
 	@DIFFS=0; \
@@ -203,6 +203,26 @@ check-p: $(COMPILER) $(RUNVM)
 	else \
 		echo 'Some output test(s) failed!'; \
 	fi
+
+check-t: $(COMPILER) $(RUNVM)
+	@DIFFS=0; \
+	for f in `echo $(SINGLE_TESTS) | sed -e 's/\\.$(SUF)//g'`; \
+	do \
+		echo running ./$(COMPILER) on "$$f.$(SUF)"; \
+		$(RM) "$$f.bof"; \
+		./$(COMPILER) "$$f.$(SUF)" ; \
+		echo running $(RUNVM) on "$$f.bof"; \
+		$(RM) "$$f.myo"; \
+		cat char-inputs.txt | $(RUNVM) -t "$$f.bof" > "$$f.myo" 2>&1; \
+		diff -w -B "$$f.out" "$$f.myo" && echo 'passed!' || DIFFS=1; \
+	done; \
+	if test 0 = $$DIFFS; \
+	then \
+		echo 'All output tests passed!'; \
+	else \
+		echo 'Some output test(s) failed!'; \
+	fi
+
 check-outputs: $(COMPILER) $(RUNVM)
 	@DIFFS=0; \
 	for f in `echo $(ALLTESTS) | sed -e 's/\\.$(SUF)//g'`; \

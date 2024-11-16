@@ -235,6 +235,10 @@ void machine_print_loaded_program(FILE *out)
 
     print_global_data(out);
 }
+bool isPrinting = false;
+void machine_enable_print() {
+    isPrinting = true;
+}
 
 // Run the VM on the already loaded program,
 // producing any trace output called for by the program
@@ -284,7 +288,10 @@ void machine_execute_instr(address_type addr, bin_instr_t bi)
 {
     // increment the PC (advance address by 1 word)
 
-    printf("Running: %d %s\n",addr, instruction_assembly_form(addr,bi));
+    if (isPrinting){
+
+        printf("Running: %d %s\n",addr, instruction_assembly_form(addr,bi));
+    }
     PC = PC + 1;
 
 
