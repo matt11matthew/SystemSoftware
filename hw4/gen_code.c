@@ -163,7 +163,7 @@ code_seq gen_code_rel_op_condition(rel_op_condition_t cond) {
     return result;
 }
 code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
-    // Generate the condition code
+    // Generate condition code
     if (stmt.condition.cond_kind == ck_rel) {
         code_seq condition_code = gen_code_rel_op_condition(stmt.condition.data.rel_op_cond);
         code_seq_concat(&base, condition_code);
@@ -173,7 +173,7 @@ code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
     code_seq then_code = gen_code_stmts(*stmt.then_stmts);
     int then_size = code_seq_size(then_code);
 
-    // Generate "else" block (if it exists)
+    // Generate "else" block if it exists
     code_seq else_code = code_seq_empty();
     int else_size = 0;
     if (stmt.else_stmts != NULL) {
@@ -184,21 +184,23 @@ code_seq gen_code_if_stmt(if_stmt_t stmt, code_seq base) {
     printf("Then block size: %d\n", then_size);
     printf("Else block size: %d\n", else_size);
 
-    // Add conditional jump to skip the "then" block if condition is false
-    // BLEZ should skip over "then" block + 1 instruction (unconditional jump)
+    // **Adjust Conditional Jump Offset**
+    // Skip the "then" block and the next instruction (JREL after "then")
     code_seq_add_to_end(&base, code_jrel(then_size + 1));
 
     // Append "then" block
     code_seq_concat(&base, then_code);
 
-    // Add unconditional jump to skip the "else" block (if it exists)
+    // **Add Unconditional Jump (if "else" exists)**
     if (stmt.else_stmts != NULL) {
-        code_seq_add_to_end(&base, code_jrel(else_size));
+        // Jump past the "else" block
+        code_seq_add_to_end(&base, code_jrel(else_size + 1)); // Skip "else" and exit
         code_seq_concat(&base, else_code);
     }
 
     return base;
 }
+
 
 
 /*
