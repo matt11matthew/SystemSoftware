@@ -45,7 +45,7 @@ VMTESTS = hw4-vmtest0.spl hw4-vmtest1.spl hw4-vmtest2.spl hw4-vmtest3.spl \
 ALLTESTS = $(GTESTS) $(READTESTS) $(VMTESTS)
 #SINGLE_TESTS = hw4-gtest0.spl hw4-gtest1.spl hw4-gtest2.spl hw4-gtest3.spl hw4-gtest5.spl \
 #hw4-gtest6.spl
-SINGLE_TESTS = hw4-gtest2.spl
+SINGLE_TESTS = hw4-gtest1.spl
 
 EXPECTEDOUTPUTS = $(ALLTESTS:.spl=.out)
 STUDENTTESTOUTPUTS = $(ALLTESTS:.spl=.myo)
@@ -194,7 +194,7 @@ check-p: $(COMPILER) $(RUNVM)
 		./$(COMPILER) "$$f.$(SUF)" ; \
 		echo running $(RUNVM) on "$$f.bof"; \
 		$(RM) "$$f.myo"; \
-		cat char-inputs.txt | $(RUNVM) -p "$$f.bof" > "$$f.myo" 2>&1; \
+		cat char-inputs.txt | $(RUNVM) -m "$$f.bof" > "$$f.myo" 2>&1; \
 		diff -w -B "$$f.out" "$$f.myo" && echo 'passed!' || DIFFS=1; \
 	done; \
 	if test 0 = $$DIFFS; \

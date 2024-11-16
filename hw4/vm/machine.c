@@ -226,6 +226,7 @@ static void print_global_data(FILE *out)
 // that were previously loaded into the VM's memory to out
 void machine_print_loaded_program(FILE *out)
 {
+
     // heading
     instruction_print_table_heading(out);
     // instructions
@@ -235,9 +236,10 @@ void machine_print_loaded_program(FILE *out)
 
     print_global_data(out);
 }
-bool isPrinting = false;
+int isPrinting =0;
 void machine_enable_print() {
-    isPrinting = true;
+
+    isPrinting = 1;
 }
 
 // Run the VM on the already loaded program,
@@ -288,7 +290,7 @@ void machine_execute_instr(address_type addr, bin_instr_t bi)
 {
     // increment the PC (advance address by 1 word)
 
-    if (isPrinting){
+    if (isPrinting == 1){
 
         printf("Running: %d %s\n",addr, instruction_assembly_form(addr,bi));
     }

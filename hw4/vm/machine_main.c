@@ -15,8 +15,7 @@ static void usage(const char *cmdname)
 }
 
 // Run the VM on the .bof file name given in argv[1]
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     const char *cmdname = argv[0];
     argc--;
     argv++;
@@ -24,23 +23,27 @@ int main(int argc, char *argv[])
     bool print_program = false;
     bool trace_execution = false;
     if (argc == 2 && strcmp(argv[0], "-p") == 0) {
-	print_program = true;
-	argc--;
-	argv++;
+        print_program = true;
+        argc--;
+        argv++;
     } else if (argc == 2 && strcmp(argv[0], "-t") == 0) {
-	trace_execution = true;
-	argc--;
-	argv++;
+        trace_execution = true;
+        argc--;
+        argv++;
+    } else if (argc == 2 && strcmp(argv[0], "-m") == 0) {
+        machine_enable_print();
+        argc--;
+        argv++;
     }
 
     // now there should be exactly 1 file argument
     if (argc != 1 || argv[0][0] == '-') {
-	usage(cmdname);
+        usage(cmdname);
     }
 
     char *suffix = strchr(argv[0], '.');
     if (suffix == NULL || strncmp(suffix, ".bof", 4) != 0) {
-	usage(cmdname);
+        usage(cmdname);
     }
 
     BOFFILE bf = bof_read_open(argv[0]);
@@ -49,9 +52,11 @@ int main(int argc, char *argv[])
 
     // if printing, don't run the program
     if (print_program) {
-	machine_print_loaded_program(stdout);
-        machine_enable_print();
-	return EXIT_SUCCESS;
+
+
+        machine_print_loaded_program(stdout);
+
+        return EXIT_SUCCESS;
     }
 
 
