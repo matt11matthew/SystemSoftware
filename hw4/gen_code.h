@@ -21,5 +21,5 @@
 code_seq gen_code_stmts(stmts_t stmts);
 void gen_code_initialize();
 void gen_code_program(BOFFILE bf, block_t prog);
-
+code_seq gen_code_stmt(stmt_t *s);
 #endif //GEN_CODE_H

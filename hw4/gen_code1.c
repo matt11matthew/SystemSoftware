@@ -53,7 +53,6 @@ BOFHeader gen_code_program_header(code_seq main_cs) {
     int sba = dsa
               + ret.data_start_address
               + ret.data_length + STACK_SPACE;
-    //Remember to add total amount of literals in table
     ret.stack_bottom_addr = sba;
 
     return ret;
@@ -81,19 +80,6 @@ code_seq gen_code_expr(expr_t expr, reg_num_type target_reg) {
     code_seq base = code_seq_empty();
 
     switch (expr.expr_kind) {
-        case expr_bin:
-            printf("bin stmt\n");
-            break;
-        case expr_negated:
-            printf("negated stmt\n");
-            break;
-        case expr_ident:
-
-            base = code_seq_singleton(code_cpr(target_reg, 0, expr.data.number.value));
-
-
-
-            break;
         case expr_number:
             base = code_seq_singleton(code_lit(target_reg, 0, expr.data.number.value));
             break;
@@ -110,62 +96,87 @@ code_seq gen_code_print_stmt(print_stmt_t s) {
     code_seq base = code_seq_empty();
 
     // Evaluate the expression into R3
-    code_seq expr_code = gen_code_expr(s.expr, SP);
+    code_seq expr_code = gen_code_expr(s.expr, 3);
     code_seq_concat(&base, expr_code);
 
     // Add print system call (PINT)
-    code_seq_add_to_end(&base, code_pint(SP, 0));
+    code_seq_add_to_end(&base, code_pint(3, 0));
 
     return base;
 }
 
-code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
-    code_seq base = code_seq_empty();
-    printf("db_condition_t");
-    return base;
-}
+code_seq gen_code_rel_op_condition(rel_op_condition_t cond) {
+    code_seq result = code_seq_empty();
 
-code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
-    code_seq base = code_seq_empty();
+    // Evaluate expr1 into R3
+    code_seq expr1_code = gen_code_expr(cond.expr1, 3);
+    code_seq_concat(&result, expr1_code);
 
-    code_seq_concat(&base, gen_code_expr(stmt.expr1, SP));
-    code_seq_concat(&base, gen_code_expr(stmt.expr2, FP));
+    // Evaluate expr2 into R4
+    code_seq expr2_code = gen_code_expr(cond.expr2, 4);
+    code_seq_concat(&result, expr2_code);
 
-    code_seq_add_to_end(&base,  code_sub(SP, 0, FP, 0)); //PUTS subtracted value into SP
+    // Perform comparison and set R5 to 1 (true) or 0 (false)
+    if (strcmp(cond.rel_op.text, "!=") == 0) {
+        code_seq_add_to_end(&result, code_bne(3, 4, 2));
+    } else if (strcmp(cond.rel_op.text, "==") == 0) {
+        code_seq_add_to_end(&result, code_beq(3, 4, 2));
+    } else {
+        // For relational operators, compute R6 = R3 - R4
+        code_seq_add_to_end(&result, code_cpr(6, 3));       // R6 = R3
+        code_seq_add_to_end(&result, code_sub(6, 0, 4, 0)); // R6 -= R4
 
-    if (strcmp(stmt.rel_op.text, "<")==0) {
-        code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize+2));
+        if (strcmp(cond.rel_op.text, "<") == 0) {
+            code_seq_add_to_end(&result, code_bltz(6, 0, 2));
+        } else if (strcmp(cond.rel_op.text, "<=") == 0) {
+            code_seq_add_to_end(&result, code_blez(6, 0, 2));
+        } else if (strcmp(cond.rel_op.text, ">") == 0) {
+            code_seq_add_to_end(&result, code_bgtz(6, 0, 2));
+        } else if (strcmp(cond.rel_op.text, ">=") == 0) {
+            code_seq_add_to_end(&result, code_bgez(6, 0, 2));
+        } else {
+            fprintf(stderr, "Error: Unhandled relational operator '%s'\n", cond.rel_op.text);
+            exit(1);
+        }
     }
 
+    // Set R5 = 0 (false)
+    code_seq_add_to_end(&result, code_lit(5, 0, 0));
+    code_seq_add_to_end(&result, code_jrel(1)); // Jump over setting true
 
-    return base;
+    // Set R5 = 1 (true)
+    code_seq_add_to_end(&result, code_lit(5, 0, 1));
+
+    return result;
 }
-
 
 code_seq gen_code_if_stmt(if_stmt_t stmt) {
     code_seq base = code_seq_empty();
 
-    condition_t c = stmt.condition;
-
-    code_seq thenSeq = gen_code_stmts(*stmt.then_stmts);
-    code_seq elseSeq = gen_code_stmts(*stmt.else_stmts);
-
-    int thenSeqLength = code_seq_size(thenSeq);
-    int elseSeqLength = code_seq_size(elseSeq);
-
-
-    if (c.cond_kind==ck_db) {
-        code_seq_concat(&base, gen_code_if_ck_db(c.data.db_cond,thenSeqLength));
-    }
-    if (c.cond_kind==ck_rel) {
-        code_seq_concat(&base, gen_code_if_ck_rel(c.data.rel_op_cond,thenSeqLength));
+    // Generate condition code
+    if (stmt.condition.cond_kind == ck_rel) {
+        code_seq condition_code = gen_code_rel_op_condition(stmt.condition.data.rel_op_cond);
+        code_seq_concat(&base, condition_code);
+    } else {
+        fprintf(stderr, "Error: Unhandled condition kind in gen_code_if_stmt\n");
+        exit(1);
     }
 
+    // Generate "then" block
+    code_seq then_code = gen_code_stmts(*stmt.then_stmts);
+    int then_size = code_seq_size(then_code);
 
-    code_seq_concat(&base, thenSeq);
-    code_seq_add_to_end(&base, code_jrel(elseSeqLength + 1));
+    // Calculate offset to jump over the "then" block if the condition is false
+    int jump_over_then = then_size;
 
-    code_seq_concat(&base, elseSeq);
+    // Conditional branch to skip "then" block if condition is false (R5 == 0)
+    code_seq_add_to_end(&base, code_beq(5, 0, jump_over_then));
+
+    // Add "then" block
+    code_seq_concat(&base, then_code);
+
+    // Skip generating "else" block to avoid including code after the "if" statement
+    // This ensures that code after the "if" statement is executed unconditionally
 
     return base;
 }
@@ -174,26 +185,11 @@ code_seq gen_code_stmt(stmt_t *s) {
     code_seq stmt_code = code_seq_empty();
 
     switch (s->stmt_kind) {
-        case assign_stmt:
-            printf("Constant definitions\n");
-            break;
-        case call_stmt:
-            printf("call stmt\n");
-            break;
-        case if_stmt:
-            stmt_code = gen_code_if_stmt(s->data.if_stmt);
-            break;
-        case while_stmt:
-            printf("While stmt");
-            break;
-        case read_stmt:
-            printf("Read definitions\n");
-            break;
         case print_stmt:
             stmt_code = gen_code_print_stmt(s->data.print_stmt);
             break;
-        case block_stmt:
-            printf("block stmt\n");
+        case if_stmt:
+            stmt_code = gen_code_if_stmt(s->data.if_stmt);
             break;
         default:
             fprintf(stderr, "Error: Unhandled statement kind in gen_code_stmt\n");
@@ -203,35 +199,8 @@ code_seq gen_code_stmt(stmt_t *s) {
     return stmt_code;
 }
 
-code_seq gen_code_const(const_def_t  def) {
-    code_seq base = code_seq_empty();
-
-    //Handle single for now
-
-     // printf("%s=%d\n", def.ident.name, def.number.value);
-    code_seq_add_to_end(&base, code_lit(GP,    literal_table_lookup(def.ident.name,  def.number.value),  def.number.value));
-
-    return base;
-}
-
-code_seq gen_code_consts(const_decls_t  decls) {
-
-    code_seq base = code_seq_empty();
-
-    const_decl_t *start = decls.start;
-    while (start != NULL) {
-        const_def_t* d = start->const_def_list.start;
-        while (d != NULL) {
-            code_seq_concat(&base,gen_code_const(*d));
-            d = d->next;
-        }
-        start= start->next;
-    }
-
-    return base;
-}
-
-code_seq gen_code_stmts(stmts_t stmts) {
+code_seq gen_code_stmts(stmts_t stmts)
+{
     code_seq base = code_seq_empty();
     if (stmts.stmts_kind == empty_stmts_e) {
         return base; // Deal with epsilon case
@@ -251,8 +220,6 @@ code_seq gen_code_stmts(stmts_t stmts) {
 void gen_code_program(BOFFILE bf, block_t b) {
     code_seq main_cs = code_utils_set_up_program();
 
-    code_seq_concat(&main_cs, gen_code_consts(b.const_decls));
-
     code_seq body_cs = gen_code_stmts(b.stmts);
     code_seq_concat(&main_cs, body_cs);
 
@@ -261,5 +228,5 @@ void gen_code_program(BOFFILE bf, block_t b) {
 
     gen_code_output_program(bf, main_cs);
 
-    code_seq_debug_print(stdout, main_cs);
+//    code_seq_debug_print(stdout, main_cs);
 }
