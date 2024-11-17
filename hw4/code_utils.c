@@ -1,4 +1,4 @@
-// $Id: code_utils.c,v 1.8 2024/11/11 23:01:08 leavens Exp $
+// $Id: code_utils.c,v 1.11 2024/11/15 19:04:30 leavens Exp leavens $
 #include <assert.h>
 #include "regname.h"
 #include "code.h"
@@ -84,7 +84,7 @@ code_seq code_utils_deallocate_stack_space(immediate_type words)
 // Requires: $r3 holds the static link (from the current AR)
 // Set up the runtime stack for a procedure,
 // where the static link is found in register $r3.
-// Modifies when executed, the SP register, the FP register,
+// Modifies when executed, the SP register, the FP register, $r3,
 // and memory from SP to SP - MINIMAL_STACK_ALLOC_IN_WORDS
 // (inclusive)
 code_seq code_utils_save_registers_for_AR()
@@ -117,9 +117,9 @@ code_seq code_utils_save_registers_for_AR()
 // Restore the callee's registers from the places they are saved on the stack.
 // This restores the SP, FP, and RA registers only.
 // (It is assumed that the stack already holds the static link address)
-// Modifies when executed, the SP register, the FP register, the RA register.
-// restoring their saved contents from memory
-// (as saved by code_utils_save_registers_for_AR)
+// Modifies when executed, the SP register, the FP register, the RA register
+// and the $r3 register, restoring the saved contents of SP, FP, and RA
+// from memory (as saved by code_utils_save_registers_for_AR).
 code_seq code_utils_restore_registers_from_AR()
 {
     code_seq ret = code_seq_empty();
@@ -142,8 +142,6 @@ code_seq code_utils_set_up_program()
     // set up the saved registers
     ret = code_utils_copy_regs(3, FP);  // save FP into $r3
     code_seq_concat(&ret, code_utils_save_registers_for_AR());
-    // use what will be the new FP as the saved static link
-    code_seq_add_to_end(&ret, code_swr(FP, SAVED_STATIC_LINK_OFFSET, FP));
     return ret;
 }
 
