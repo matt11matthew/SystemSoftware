@@ -115,7 +115,7 @@ code_seq gen_code_rel_op_condition(rel_op_condition_t cond) {
     // Evaluate expr2 into R4
     code_seq expr2_code = gen_code_expr(cond.expr2, 4);
     code_seq_concat(&result, expr2_code);
-
+W
     // Perform comparison and set R5 to 1 (true) or 0 (false)
     if (strcmp(cond.rel_op.text, "!=") == 0) {
         code_seq_add_to_end(&result, code_bne(3, 4, 2));

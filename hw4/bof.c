@@ -146,6 +146,7 @@ extern void bof_write_word(BOFFILE bf, word_type w)
 {
     word_pun_t b;
     b.w = w;
+
     bof_write_bytes(bf, BYTES_PER_WORD, b.buf);
 }
 

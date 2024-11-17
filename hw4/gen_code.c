@@ -13,17 +13,20 @@
 
 void gen_code_initialize() {
     literal_table_initialize();
+//    literal_table_test();
 }
 
-void gen_code_output_literals(BOFFILE bf)
-{
+void gen_code_output_literals(BOFFILE bf) {
     literal_table_start_iteration();
+    int count = 0;
     while (literal_table_iteration_has_next()) {
         word_type w = literal_table_iteration_next();
+        //printf("Literal[%d] %s: %u\n", count++, "?",  w);
         // debug_print("Writing literal %f to BOF file\n", w);
         bof_write_word(bf, w);
     }
-    literal_table_end_iteration(); // not necessary
+//    literal_table_end_iteration(); // not necessary
+    //printf("Total literals written: %d\n", count);
 }
 
 int gen_code_output_seq_count(code_seq cs) {
@@ -42,19 +45,30 @@ BOFHeader gen_code_program_header(code_seq main_cs) {
     bof_write_magic_to_header(&ret);
 
     ret.text_start_address = 0;
-
-    int count = gen_code_output_seq_count(main_cs);
-
-    ret.text_length = count;
-
+    // remember, the unit of length in the BOF format is a byte!
+    ret.text_length = code_seq_size(main_cs);
     int dsa = MAX(ret.text_length, 1024) + BYTES_PER_WORD;
     ret.data_start_address = dsa;
-    ret.data_length = literal_table_size() * BYTES_PER_WORD;
+    ret.data_length = literal_table_size() ;
     int sba = dsa
               + ret.data_start_address
               + ret.data_length + STACK_SPACE;
-    //Remember to add total amount of literals in table
     ret.stack_bottom_addr = sba;
+
+//    ret.text_start_address = 0;
+//
+//    int count = gen_code_output_seq_count(main_cs);
+//
+//    ret.text_length = count;
+//
+//    int dsa = MAX(ret.text_length, 1024) + BYTES_PER_WORD;
+//    ret.data_start_address = dsa;
+//    ret.data_length = literal_table_size() * BYTES_PER_WORD;
+//    int sba = dsa
+//              + ret.data_start_address
+//              + ret.data_length + STACK_SPACE;
+//    //Remember to add total amount of literals in table
+//    ret.stack_bottom_addr = dsa + ret.data_length + STACK_SPACE;
 
     return ret;
 }
@@ -77,7 +91,7 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs) {
     bof_close(bf);
 }
 
-code_seq gen_code_expr(expr_t expr, reg_num_type target_reg) {
+code_seq gen_code_expr(char* varName, expr_t expr, reg_num_type target_reg) {
     code_seq base = code_seq_empty();
 
     switch (expr.expr_kind) {
@@ -88,17 +102,16 @@ code_seq gen_code_expr(expr_t expr, reg_num_type target_reg) {
             printf("negated stmt\n");
             break;
         case expr_ident:
-
-            base = code_seq_singleton(code_cpr(target_reg, 0, expr.data.number.value));
-
-
-
+           // base = code_seq_singleton(code_cpr(target_reg, 0, expr.data.number.value));
             break;
         case expr_number:
-            base = code_seq_singleton(code_lit(target_reg, 0, expr.data.number.value));
+            if (varName==NULL){
+                base = code_seq_singleton(code_lit(target_reg, 0, expr.data.number.value));
+            } else {
+                return gen_code_number(varName, expr.data.number);
+                //PROCESS NUMBER
+            }
             break;
-            // Handle other expression kinds (identifiers, binary operations, etc.)
-            // ...
         default:
             fprintf(stderr, "Error: Unhandled expression kind in gen_code_expr\n");
             exit(1);
@@ -106,15 +119,29 @@ code_seq gen_code_expr(expr_t expr, reg_num_type target_reg) {
     return base;
 }
 
+code_seq gen_code_number(char* cName, number_t num)
+{
+    unsigned int global_offset
+            = literal_table_lookup(cName, num.value);
+    printf("OFFSET SET: %d\n", global_offset);
+    return code_seq_singleton(code_cpw(SP, global_offset,GP, global_offset));
+}
+
 code_seq gen_code_print_stmt(print_stmt_t s) {
     code_seq base = code_seq_empty();
 
     // Evaluate the expression into R3
-    code_seq expr_code = gen_code_expr(s.expr, SP);
+    code_seq expr_code = gen_code_expr(NULL, s.expr, SP);
     code_seq_concat(&base, expr_code);
 
     // Add print system call (PINT)
-    code_seq_add_to_end(&base, code_pint(SP, 0));
+    if (s.expr.expr_kind==expr_ident){
+
+        code_seq_add_to_end(&base, code_pint(SP,id_use_get_attrs(s.expr.data.ident.idu)->offset_count ));
+    } else {
+
+        code_seq_add_to_end(&base, code_pint(SP,0 ));
+    }
 
     return base;
 }
@@ -128,8 +155,8 @@ code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
 code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
 
-    code_seq_concat(&base, gen_code_expr(stmt.expr1, SP));
-    code_seq_concat(&base, gen_code_expr(stmt.expr2, FP));
+    code_seq_concat(&base, gen_code_expr(NULL,stmt.expr1, SP));
+    code_seq_concat(&base, gen_code_expr(NULL,stmt.expr2, FP));
 
     code_seq_add_to_end(&base,  code_sub(SP, 0, FP, 0)); //PUTS subtracted value into SP
 
@@ -141,6 +168,53 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     return base;
 }
 
+/*code_seq gen_code_assign_stmt(assign_stmt_t stmt)
+{
+    // can't call gen_code_ident,
+    // since stmt.name is not an ident_t
+    code_seq ret;
+    // put value of expression in $v0
+    ret = gen_code_expr(*(stmt.expr));
+    assert(stmt.idu != NULL);
+    assert(id_use_get_attrs(stmt.idu) != NULL);
+    type_exp_e typ = id_use_get_attrs(stmt.idu)->type;
+    ret = code_seq_concat(ret, code_pop_stack_into_reg(V0, typ));
+    // put frame pointer from the lexical address of the name
+    // (using stmt.idu) into $t9
+    ret = code_seq_concat(ret,
+			  code_compute_fp(T9, stmt.idu->levelsOutward));
+    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
+    assert(offset_count <= USHRT_MAX); // it has to fit!
+    switch (id_use_get_attrs(stmt.idu)->type) {
+    case float_te:
+	ret = code_seq_add_to_end(ret,
+				  code_fsw(T9, V0, offset_count));
+	break;
+    case bool_te:
+	ret = code_seq_add_to_end(ret,
+				  code_sw(T9, V0, offset_count));
+	break;
+    default:
+	bail_with_error("Bad var_type (%d) for ident in assignment stmt!",
+			id_use_get_attrs(stmt.idu)->type);
+	break;
+    }
+    return ret;
+}
+ */
+
+code_seq gen_code_assign_stmt(assign_stmt_t stmt){
+
+    code_seq base = code_seq_empty();
+    printf("VAR: %s\n", stmt.name);
+
+    code_seq_concat(&base,gen_code_expr(stmt.name,*stmt.expr, SP));
+    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
+    printf("THE OFFSET: %u\n",offset_count);
+
+
+    return base;
+}
 
 code_seq gen_code_if_stmt(if_stmt_t stmt) {
     code_seq base = code_seq_empty();
@@ -170,30 +244,43 @@ code_seq gen_code_if_stmt(if_stmt_t stmt) {
     return base;
 }
 
+code_seq gen_code_call_stmt(call_stmt_t stmt){
+    code_seq base = code_seq_empty();
+    return base;
+}
+
+code_seq gen_code_while_stmt(while_stmt_t stmt){
+    code_seq base = code_seq_empty();
+    return base;
+}
+
 code_seq gen_code_stmt(stmt_t *s) {
     code_seq stmt_code = code_seq_empty();
 
     switch (s->stmt_kind) {
         case assign_stmt:
-            printf("Constant definitions\n");
+//            printf("Constant definitions\n");
+            stmt_code = gen_code_assign_stmt(s->data.assign_stmt);
             break;
         case call_stmt:
-            printf("call stmt\n");
+            stmt_code = gen_code_call_stmt(s->data.call_stmt);
             break;
         case if_stmt:
             stmt_code = gen_code_if_stmt(s->data.if_stmt);
             break;
         case while_stmt:
-            printf("While stmt");
+            stmt_code = gen_code_while_stmt(s->data.while_stmt);
             break;
         case read_stmt:
             printf("Read definitions\n");
+            // stmt_code = gen_code_FIX_stmt(s->data.FIX_stmt);
             break;
         case print_stmt:
             stmt_code = gen_code_print_stmt(s->data.print_stmt);
             break;
         case block_stmt:
             printf("block stmt\n");
+            // stmt_code = gen_code_FIX_stmt(s->data.assign_stmt);
             break;
         default:
             fprintf(stderr, "Error: Unhandled statement kind in gen_code_stmt\n");
@@ -203,13 +290,27 @@ code_seq gen_code_stmt(stmt_t *s) {
     return stmt_code;
 }
 
-code_seq gen_code_const(const_def_t  def) {
+code_seq gen_code_const(const_def_t*  def) {
     code_seq base = code_seq_empty();
 
+
+    while (def!=NULL) {
+        //PROCESS;
+        char* cName = def->number.text;
+
+        printf("VALUE: %s\n",cName);
+        code_seq_concat(&base, gen_code_number(cName, def->number));
+
+
+        def = def->next;
+    }
     //Handle single for now
 
+   // literal_table_debug_print();
+//    int v =     literal_table_lookup(def.ident.name,20);
+
      // printf("%s=%d\n", def.ident.name, def.number.value);
-    code_seq_add_to_end(&base, code_lit(GP,    literal_table_lookup(def.ident.name,  def.number.value),  def.number.value));
+//    code_seq_add_to_end(&base, code_lit(GP,    literal_table_lookup(def.ident.name,  def.number.value),  def.number.value));
 
     return base;
 }
@@ -222,7 +323,7 @@ code_seq gen_code_consts(const_decls_t  decls) {
     while (start != NULL) {
         const_def_t* d = start->const_def_list.start;
         while (d != NULL) {
-            code_seq_concat(&base,gen_code_const(*d));
+            code_seq_concat(&base,gen_code_const(d));
             d = d->next;
         }
         start= start->next;
@@ -253,6 +354,15 @@ void gen_code_program(BOFFILE bf, block_t b) {
 
     code_seq_concat(&main_cs, gen_code_consts(b.const_decls));
 
+
+//
+//    printf("Offset: %u\n", literal_table_lookup("A", 1.0));  // Should add and return 0
+//    printf("Offset: %u\n", literal_table_lookup("B", 2.0));  // Should add and return 1
+//    printf("Offset: %u\n", literal_table_lookup("A", 1.0));  // Should return 0 (existing)
+//    printf("Offset: %u\n", literal_table_lookup("A", 3.0));  // Should add and return 2 (new due to different value)
+//
+
+
     code_seq body_cs = gen_code_stmts(b.stmts);
     code_seq_concat(&main_cs, body_cs);
 
@@ -261,5 +371,5 @@ void gen_code_program(BOFFILE bf, block_t b) {
 
     gen_code_output_program(bf, main_cs);
 
-    code_seq_debug_print(stdout, main_cs);
+ //   code_seq_debug_print(stdout, main_cs);
 }
