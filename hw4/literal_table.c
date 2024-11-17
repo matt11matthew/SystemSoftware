@@ -175,7 +175,7 @@ void literal_table_debug_print()
     printf("Debug: Literal Table State:\n");
     literal_table_entry_t *entry = first;
     while (entry != NULL) {
-        printf("Offset: %u, Text: %s, Value: %u\n", entry->offset, entry->text, entry->value);
+        printf("Offset: %u, Text: %s, Value: %d\n", entry->offset, entry->text, entry->value);
         entry = entry->next;
     }
 }
