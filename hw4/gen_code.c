@@ -270,15 +270,14 @@ code_seq gen_code_expr(char* varName, expr_t expr, reg_num_type target_reg) {
 //            }
 //            break;
         case expr_ident:
-
             if (varName==NULL)break;
 
-
             unsigned int global_offset_1
-                    = literal_table_lookup(varName,78);
+            = literal_table_lookup(varName,0);
 
             unsigned int global_offset_2
-                    = literal_table_lookup( expr.data.ident.name, 125);
+            = literal_table_lookup( expr.data.ident.name, 0);
+
             printf("REASSIGN %s(%u)=%s(%u)\n", varName,global_offset_1, expr.data.ident.name, global_offset_2);
 
             return code_seq_singleton(code_cpw(SP, global_offset_1,GP, global_offset_2));
@@ -330,7 +329,8 @@ code_seq gen_code_print_stmt(print_stmt_t s) {
         printf("L: %s %d\n", s.expr.data.ident.name,offset);
 
 //        code_seq_add_to_end(&base, code_pint(SP,offset));
-        code_seq_add_to_end(&base, code_pint(SP,        id_use_get_attrs(s.expr.data.ident.idu)->offset_count));
+//        code_seq_add_to_end(&base, code_pint(SP,        id_use_get_attrs(s.expr.data.ident.idu)->offset_count));
+        code_seq_add_to_end(&base, code_pint(SP,0));
 
     } else {
         code_seq_add_to_end(&base, code_pint(SP,0 ));
