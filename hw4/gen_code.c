@@ -174,12 +174,11 @@ code_seq gen_code_rel_op(token_t rel_op) {
 
 code_seq gen_code_arith_op(token_t rel_op) {
 
-
     code_seq do_op = code_seq_empty();
     switch (rel_op.code) {
         case plussym:
-            code_seq_add_to_end(&do_op, code_add(SP, 0, SP, 1));
-            do_op = code_seq_singleton(code_add(SP, 0, SP, 1));
+            code_seq_add_to_end(&do_op, code_add(GP, 0, GP, 1));
+            //do_op = code_seq_singleton(code_add(SP, 0, SP, 1));
             break;
 //        case minussym:
 //            do_op = code_seq_add_to_end(do_op, code_fsub(V0, AT, V0));
@@ -191,8 +190,7 @@ code_seq gen_code_arith_op(token_t rel_op) {
 //            do_op = code_seq_add_to_end(do_op, code_fdiv(V0, AT, V0));
 //            break;
         default:
-            bail_with_error("Unexpected arithOp (%d) in gen_code_arith_op",
-                            rel_op.code);
+            bail_with_error("Unexpected arithOp (%d) in gen_code_arith_op", rel_op.code);
             break;
     }
     return do_op;
@@ -218,10 +216,10 @@ code_seq gen_code_op(token_t op)
     return code_seq_empty();
 }
 
-code_seq gen_code_expr_bin(char* varName, binary_op_expr_t expr, reg_num_type target_reg) {
-    code_seq ret = gen_code_expr(varName, *expr.expr1, target_reg);
+code_seq gen_code_expr_bin(char* varName, binary_op_expr_t expr, reg_num_type target_reg){
+    code_seq ret = gen_code_expr(varName, *expr.expr1,target_reg);
 
-    code_seq_concat(&ret, gen_code_expr(varName, *(expr.expr2), target_reg));
+    code_seq_concat(&ret, gen_code_expr(varName,*(expr.expr2), target_reg));
     // check the types match
 //    type_exp_e t1 = ast_expr_type(*(exp.expr1));
 //    assert(ast_expr_type(*(expr.expr2)) == t1);
@@ -250,59 +248,63 @@ code_seq gen_code_op(token_t op, type_exp_e typ)
     return code_seq_empty();
 }
 
-
-
 */
 
+code_seq gen_code_expr(char* varName, expr_t expr, reg_num_type target_reg) {
+    code_seq base = code_seq_empty();
 
-
-
-code_seq gen_code_ident(ident_t id)
-{
-
-    assert(id.idu != NULL);
-    code_seq ret = code_compute_fp(T9, id.idu->levelsOutward);
-
-    assert(id_use_get_attrs(id.idu) != NULL);
-    unsigned int offset_count = id_use_get_attrs(id.idu)->offset_count;
-    assert(offset_count <= USHRT_MAX); // it has to fit!
-    type_exp_e typ = id_use_get_attrs(id.idu)->type;
-    if (typ == float_te) {
-        ret = code_seq_add_to_end(ret,
-                                  code_flw(T9, V0, offset_count));
-    } else {
-        ret = code_seq_add_to_end(ret,
-                                  code_lw(T9, V0, offset_count));
-    }
-    return code_seq_concat(ret, code_push_reg_on_stack(V0, typ));
-}
-
-// Generate code for the expression exp
-// putting the result on top of the stack,
-// and using V0 and AT as temporary registers
-// May also modify SP, HI,LO when executed
-code_seq gen_code_expr(expr_t exp)
-{
-    switch (exp.expr_kind) {
+    switch (expr.expr_kind) {
         case expr_bin:
-//            return gen_code_binary_op_expr(exp.data.binary);
-            break;
+
+            return gen_code_expr_bin( varName, expr.data.binary, target_reg);
+
+//        case expr_negated:
+//            printf("negated stmt\n");
+//
+//            if (varName==NULL){
+//                base = code_seq_singleton(code_lit(target_reg, 0, expr.data.number.value));
+//            } else {
+//                return gen_code_number(varName, expr.data.negated.);
+//                //PROCESS NUMBER
+//            }
+//            break;
         case expr_ident:
-            return gen_code_ident(exp.data.ident);
+
+            if (varName==NULL)break;
+
+
+            unsigned int global_offset_1
+                    = literal_table_lookup(varName,0);
+
+            unsigned int global_offset_2
+                    = literal_table_lookup( expr.data.ident.name, 0);
+            printf("REASSIGN %s(%u)=%s(%u)\n", varName,global_offset_1, expr.data.ident.name, global_offset_2);
+
+            return code_seq_singleton(code_cpw(SP, global_offset_1,GP, global_offset_2));
+
+            // base = code_seq_singleton(code_cpr(target_reg, 0, expr.data.number.value));
+        case expr_negated:
+            int num =  expr.data.negated.expr->data.number.value;
+            if (varName==NULL){
+                base = code_seq_singleton(code_lit(target_reg, 0, num));
+            } else {
+                return gen_code_number(varName, expr.data.negated.expr->data.number,true);
+                //PROCESS NUMBER
+            }
             break;
         case expr_number:
-            return gen_code_number(exp.data.number);
-            break;
-        case expr_logical_not:
-            return gen_code_logical_not_expr(*(exp.data.logical_not));
+            if (varName==NULL){
+                base = code_seq_singleton(code_lit(target_reg, 0, expr.data.number.value));
+            } else {
+                return gen_code_number(varName, expr.data.number,false);
+                //PROCESS NUMBER
+            }
             break;
         default:
-            bail_with_error("Unexpected expr_kind_e (%d) in gen_code_expr",
-                            exp.expr_kind);
-            break;
+            fprintf(stderr, "Error: Unhandled expression kind in gen_code_expr\n");
+            exit(1);
     }
-    // never happens, but suppresses a warning from gcc
-    return code_seq_empty();
+    return base;
 }
 
 code_seq gen_code_number(char* cName, number_t num, bool negate) {
@@ -311,16 +313,27 @@ code_seq gen_code_number(char* cName, number_t num, bool negate) {
     unsigned int global_offset
             = literal_table_lookup(cName,i);
     printf("OFFSET SET (%d): %d\n",i,  global_offset);
-    return code_seq_singleton(code_cpw(SP, 0,GP, global_offset));
+    return code_seq_singleton(code_cpw(SP, global_offset,GP, global_offset));
 }
 
 code_seq gen_code_print_stmt(print_stmt_t s) {
     code_seq base = code_seq_empty();
 
+    // Evaluate the expression into R3
     code_seq expr_code = gen_code_expr(NULL, s.expr, SP);
-
     code_seq_concat(&base, expr_code);
-    code_seq_add_to_end(&base, code_pint(SP,0 ));
+
+    // Add print system call (PINT)
+    if (s.expr.expr_kind == expr_ident) {
+        int offset = literal_table_lookup(s.expr.data.ident.name, 0);
+        printf("L: %s %d\n", s.expr.data.ident.name,offset);
+
+//        code_seq_add_to_end(&base, code_pint(SP,offset));
+        code_seq_add_to_end(&base, code_pint(SP,        id_use_get_attrs(s.expr.data.ident.idu)->offset_count));
+
+    } else {
+        code_seq_add_to_end(&base, code_pint(SP,0 ));
+    }
 
     return base;
 }
@@ -377,6 +390,7 @@ code_seq gen_code_if_stmt(if_stmt_t stmt) {
     if (c.cond_kind==ck_rel) {
         code_seq_concat(&base, gen_code_if_ck_rel(c.data.rel_op_cond,thenSeqLength));
     }
+
 
     code_seq_concat(&base, thenSeq);
     code_seq_add_to_end(&base, code_jrel(elseSeqLength + 1));
@@ -458,10 +472,10 @@ code_seq gen_code_const(const_def_t*  def) {
     }
     //Handle single for now
 
-   // literal_table_debug_print();
+    // literal_table_debug_print();
 //    int v =     literal_table_lookup(def.ident.name,20);
 
-     // printf("%s=%d\n", def.ident.name, def.number.value);
+    // printf("%s=%d\n", def.ident.name, def.number.value);
 //    code_seq_add_to_end(&base, code_lit(GP,    literal_table_lookup(def.ident.name,  def.number.value),  def.number.value));
 
     return base;
@@ -510,7 +524,7 @@ void gen_code_program(BOFFILE bf, block_t b) {
     code_seq_concat(&main_cs, body_cs);
     code_seq_add_to_end(&main_cs, code_exit(0));
     code_seq tear_down_cs = code_utils_tear_down_program(); //BROKEN
-   // code_seq_concat(&main_cs, tear_down_cs);
+    // code_seq_concat(&main_cs, tear_down_cs);
 
     gen_code_output_program(bf, main_cs);
 
