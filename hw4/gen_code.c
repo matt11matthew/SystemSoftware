@@ -95,83 +95,6 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs) {
     bof_close(bf);
 }
 
-/*
- code_seq gen_code_rel_op(token_t rel_op, type_exp_e typ)
-{
-    // load top of the stack (the second operand) into AT
-    code_seq ret = code_pop_stack_into_reg(AT, typ);
-    // load next element of the stack into V0
-    ret = code_seq_concat(ret, code_pop_stack_into_reg(V0, typ));
-
-    // start out by doing the comparison
-    // and skipping the next 2 instructions if it's true
-    code_seq do_op = code_seq_empty();
-    switch (rel_op.code) {
-    case eqsym:
-	if (typ == float_te) {
-	    do_op = code_seq_singleton(code_bfeq(V0, AT, 2));
-	} else {
-	    do_op = code_seq_singleton(code_beq(V0, AT, 2));
-	}
-	break;
-    case neqsym:
-	if (typ == float_te) {
-	    do_op = code_seq_singleton(code_bfne(V0, AT, 2));
-	} else {
-	    do_op = code_seq_singleton(code_bne(V0, AT, 2));
-	}
-	break;
-    case ltsym:
-	if (typ == float_te) {
-	    do_op = code_seq_singleton(code_fsub(V0, AT, V0));
-	    do_op = code_seq_add_to_end(do_op, code_bfltz(V0, 2));
-	} else {
-	    do_op = code_seq_singleton(code_sub(V0, AT, V0));
-	    do_op = code_seq_add_to_end(do_op, code_bltz(V0, 2));
-	}
-	break;
-    case leqsym:
-	if (typ == float_te) {
-	    do_op = code_seq_singleton(code_fsub(V0, AT, V0));
-	    do_op = code_seq_add_to_end(do_op, code_bflez(V0, 2));
-	} else {
-	    do_op = code_seq_singleton(code_sub(V0, AT, V0));
-	    do_op = code_seq_add_to_end(do_op, code_blez(V0, 2));
-	}
-	break;
-    case gtsym:
-	if (typ == float_te) {
-	    do_op = code_seq_singleton(code_fsub(V0, AT, V0));
-	    do_op = code_seq_add_to_end(do_op, code_bfgtz(V0, 2));
-	} else {
-	    do_op = code_seq_singleton(code_sub(V0, AT, V0));
-	    do_op = code_seq_add_to_end(do_op, code_bgtz(V0, 2));
-	}
-	break;
-    case geqsym:
-	if (typ == float_te) {
-	    do_op = code_seq_singleton(code_fsub(V0, AT, V0));
-	    do_op = code_seq_add_to_end(do_op, code_bfgez(V0, 2));
-	} else {
-	    do_op = code_seq_singleton(code_sub(V0, AT, V0));
-	    do_op = code_seq_add_to_end(do_op, code_bgez(V0, 2));
-	}
-	break;
-    default:
-	bail_with_error("Unknown token code (%d) in gen_code_rel_op",
-			rel_op.code);
-	break;
-    }
-    ret = code_seq_concat(ret, do_op);
-    // rest of the code for the comparisons
-    ret = code_seq_add_to_end(ret, code_add(0, 0, AT)); // put false in AT
-    ret = code_seq_add_to_end(ret, code_beq(0, 0, 1)); // skip next instr
-    ret = code_seq_add_to_end(ret, code_addi(0, AT, 1)); // put true in AT
-    ret = code_seq_concat(ret, code_push_reg_on_stack(AT, bool_te));
-    return ret;
-}
- */
-
 code_seq gen_code_rel_op(token_t rel_op) {
 
 //    switch(rel_op.code){
@@ -240,50 +163,6 @@ code_seq gen_code_expr_bin(char* varName, binary_op_expr_t expr, reg_num_type ta
 //    code_seq_concat(&ret, gen_code_op(expr.arith_op));
     return code_seq_empty();
 }
-/*
-code_seq gen_code_op(token_t op, type_exp_e typ)
-{
-    switch (op.code) {
-    case eqsym: case neqsym:
-    case ltsym: case leqsym:
-    case gtsym: case geqsym:
-	return gen_code_rel_op(op, typ);
-	break;
-    case plussym: case minussym: case multsym: case divsym:
-	assert(typ == float_te);
-	return gen_code_arith_op(op);
-	break;
-    default:
-	bail_with_error("Unknown token code (%d) in gen_code_op",
-			op.code);
-	break;
-    }
-    return code_seq_empty();
-}
-
-*/
-
-/*// Generate code to put the value of the given identifier
-// on top of the stack
-// Modifies T9, V0, and SP when executed
-code_seq gen_code_ident(ident_t id)
-{
-    assert(id.idu != NULL);
-    code_seq ret = code_compute_fp(T9, id.idu->levelsOutward);
-    assert(id_use_get_attrs(id.idu) != NULL);
-    unsigned int offset_count = id_use_get_attrs(id.idu)->offset_count;
-    assert(offset_count <= USHRT_MAX); // it has to fit!
-    type_exp_e typ = id_use_get_attrs(id.idu)->type;
-    if (typ == float_te) {
-	ret = code_seq_add_to_end(ret,
-				  code_flw(T9, V0, offset_count));
-    } else {
-	ret = code_seq_add_to_end(ret,
-				  code_lw(T9, V0, offset_count));
-    }
-    return code_seq_concat(ret, code_push_reg_on_stack(V0, typ));
-}
-*/
 
 code_seq gen_code_ident(ident_t ident) {
 
@@ -327,9 +206,8 @@ code_seq gen_code_number( char* varName, number_t num) {
     }
     unsigned int global_offset
             = literal_table_lookup(varName, num.value);
+
     return push_reg_on_stack(GP, global_offset);
-
-
 }
 
 code_seq gen_code_print_stmt(print_stmt_t s) {
@@ -365,9 +243,11 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
 
     code_seq_concat(&base, gen_code_expr(stmt.expr1));
+    code_seq_add_to_end(&base, code_cpw(FP, 1, SP,0));
+
     code_seq_concat(&base, gen_code_expr(stmt.expr2));
 
-    code_seq_add_to_end(&base,  code_sub(SP, 0, FP, 0)); //PUTS subtracted value into SP
+    code_seq_add_to_end(&base,  code_sub(SP, 0, FP, 1)); //PUTS subtracted value into SP
 
     if (strcmp(stmt.rel_op.text, "<")==0) {
         code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize+2));
@@ -377,45 +257,6 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     return base;
 
 }
-
-/*
-
-// Generate code for stmt
-code_seq gen_code_assign_stmt(assign_stmt_t stmt)
-{
-    // can't call gen_code_ident,
-    // since stmt.name is not an ident_t
-    code_seq ret;
-    // put value of expression in $v0
-    ret = gen_code_expr(*(stmt.expr));
-    assert(stmt.idu != NULL);
-    assert(id_use_get_attrs(stmt.idu) != NULL);
-    type_exp_e typ = id_use_get_attrs(stmt.idu)->type;
-    ret = code_seq_concat(ret, code_pop_stack_into_reg(V0, typ));
-    // put frame pointer from the lexical address of the name
-    // (using stmt.idu) into $t9
-    ret = code_seq_concat(ret,
-			  code_compute_fp(T9, stmt.idu->levelsOutward));
-    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
-    assert(offset_count <= USHRT_MAX); // it has to fit!
-    switch (id_use_get_attrs(stmt.idu)->type) {
-    case float_te:
-	ret = code_seq_add_to_end(ret,
-				  code_fsw(T9, V0, offset_count));
-	break;
-    case bool_te:
-	ret = code_seq_add_to_end(ret,
-				  code_sw(T9, V0, offset_count));
-	break;
-    default:
-	bail_with_error("Bad var_type (%d) for ident in assignment stmt!",
-			id_use_get_attrs(stmt.idu)->type);
-	break;
-    }
-    return ret;
-}
-
- */
 
 code_seq gen_code_assign_stmt(assign_stmt_t stmt){
     code_seq base = code_seq_empty();
@@ -448,17 +289,15 @@ code_seq gen_code_if_stmt(if_stmt_t stmt) {
     int elseSeqLength = code_seq_size(elseSeq);
 
 
-    if (c.cond_kind==ck_db) {
+    if (c.cond_kind == ck_db) {
         code_seq_concat(&base, gen_code_if_ck_db(c.data.db_cond,thenSeqLength));
     }
-    if (c.cond_kind==ck_rel) {
+    if (c.cond_kind == ck_rel) {
         code_seq_concat(&base, gen_code_if_ck_rel(c.data.rel_op_cond,thenSeqLength));
     }
 
-
     code_seq_concat(&base, thenSeq);
     code_seq_add_to_end(&base, code_jrel(elseSeqLength + 1));
-
     code_seq_concat(&base, elseSeq);
 
     return base;
@@ -520,13 +359,11 @@ code_seq gen_code_stmt(stmt_t *s) {
 code_seq gen_code_const(const_def_t*  def) {
     code_seq base = code_seq_empty();
 
-
     while (def!=NULL) {
         //PROCESS;
 
 //        printf("\n-0-0-0-0-\nC NAME: %s (%s)\n-0-0-0-0-\n",cName, def->ident.name);
         code_seq_concat(&base, gen_code_number( def->ident.name,  def->number));
-
         def = def->next;
     }
     //Handle single for now
@@ -540,7 +377,6 @@ code_seq gen_code_const(const_def_t*  def) {
 }
 
 code_seq gen_code_consts(const_decls_t  decls) {
-
     code_seq base = code_seq_empty();
 
     const_decl_t *start = decls.start;
