@@ -279,7 +279,7 @@ code_seq gen_code_if_stmt(if_stmt_t stmt) {
 
 code_seq gen_code_while_stmt(while_stmt_t stmt) {
     code_seq base = code_seq_empty(); // Initialize base code sequence
-    code_seq bodyCode = gen_code_stmts(*stmt.body); // Generate body code
+    code_seq bodyCode = gen_code_stmts(stmt.body); // Generate body code
     int bodySeqSize = code_seq_size(bodyCode); // Number of instructions in body
 
     code_seq conditionCode = code_seq_empty(); // Code for evaluating condition
@@ -349,13 +349,42 @@ code_seq gen_code_call_stmt(call_stmt_t stmt) {
     return base;
 }
 
+// Generate code for the read statment given by stmt
+code_seq gen_code_read_stmt(read_stmt_t stmt)
+{
+    // put number read into $v0
+    code_seq ret = code_seq_singleton(code_rch());
+    // put frame pointer from the lexical address of the name
+    // (using stmt.idu) into $t9
+    assert(stmt.idu != NULL);
+    ret = code_seq_concat(ret,
+              code_compute_fp(T9, stmt.idu->levelsOutward));
+    assert(id_use_get_attrs(stmt.idu) != NULL);
+    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
+    assert(offset_count <= USHRT_MAX); // it has to fit!
+    ret = code_seq_add_to_end(ret,
+                  code_seq_singleton(code_fsw(T9, V0, offset_count)));
+    return ret;
+}
+
 code_seq gen_code_read_stmt(read_stmt_t stmt) {
     code_seq base = code_seq_empty();
+
+
+
     return base;
 }
 
 code_seq gen_code_block_stmt(block_stmt_t stmt) {
     code_seq base = code_seq_empty();
+
+
+    struct block_s * b = stmt.block;
+
+    code_seq_concat(&base, gen_code_consts(b->const_decls));
+    code_seq body_cs = gen_code_stmts(&b->stmts);
+    code_seq_concat(&base, body_cs);
+
     return base;
 }
 
@@ -424,13 +453,18 @@ code_seq gen_code_consts(const_decls_t  decls) {
 
 code_seq gen_code_stmts(stmts_t* stmts) {
     code_seq base = code_seq_empty();
+    if (stmts == NULL) {
+        return base;
+    }
 
-    if (stmts.stmts_kind == empty_stmts_e) {
+    stmts_t stmt = *stmts;
+
+    if (stmt.stmts_kind == empty_stmts_e) {
         return base; // Deal with epsilon case
     }
 
     // Not empty
-    stmt_t *s = stmts.stmt_list.start;
+    stmt_t *s = stmt.stmt_list.start;
 
     while (s != NULL) {
         code_seq stmt_code = gen_code_stmt(s);
@@ -441,14 +475,20 @@ code_seq gen_code_stmts(stmts_t* stmts) {
     return base;
 }
 
+
+
 void gen_code_program(BOFFILE bf, block_t b) {
     code_seq main_cs = code_utils_set_up_program();
 
-    code_seq_concat(&main_cs, gen_code_consts(b.const_decls));
 
-    code_seq body_cs = gen_code_stmts(b.stmts);
+
+
+    code_seq_concat(&main_cs, gen_code_consts(b.const_decls));
+    code_seq body_cs = gen_code_stmts(&b.stmts);
     code_seq_concat(&main_cs, body_cs);
-    // code_seq_add_to_end(&main_cs, code_exit(0));
+
+
+
  code_seq tear_down_cs = code_utils_tear_down_program(); //BROKEN
     code_seq_concat(&main_cs, tear_down_cs);
 
