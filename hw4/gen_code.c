@@ -127,9 +127,16 @@ code_seq gen_code_arith_op(token_t rel_op) {
     code_seq base = code_seq_empty();
     switch (rel_op.code) {
         case plussym:
+            code_seq_add_to_end(&base, code_add( SP, 0,FP, 0));
             code_seq_add_to_end(&base, code_add( SP, 0,GP, 0));
-            code_seq_concat(&base, push_reg_on_stack(GP,0));
+            code_seq_add_to_end(&base, code_cpw( FP, 0,SP, 0));
+            //code_seq_concat(&base, push_reg_on_stack(GP,0));
             //do_op = code_seq_singleton(code_add(SP, 0, SP, 1));
+
+            //PUT HERE
+            /*
+             	do_op = code_seq_add_to_end(do_op, code_fadd(V0, AT, V0));
+             */
             break;
         case minussym:
             break;
@@ -207,7 +214,10 @@ code_seq gen_code_ident(ident_t ident) {
 //    printf("GEN CODE _IDENT: OFFSET %s: %d\n", ident.name, ident.idu->levelsOutward);
 
     int offset = literal_table_lookup(ident.name, -3223);
-    return push_reg_on_stack(GP, offset);
+    code_seq seq = push_reg_on_stack(GP, offset);
+
+    code_seq_add_to_end(&seq, code_lit(FP, 0, 0));
+    return seq;
 }
 
 //PUSHES TO HEAD OF STACK
@@ -250,10 +260,14 @@ code_seq gen_code_number( char* varName, number_t num, bool negate) {
 
 
     if (varName==NULL){
-//        unsigned int global_offset
-//                = literal_table_lookup(num.text, num.value);
+        unsigned int global_offset
+                = literal_table_lookup(num.text, num.value);
 
         return code_seq_singleton(code_lit(SP, 0, val));
+//        unsigned int global_offset
+//                = literal_table_lookup(num.text, val);
+//
+//        return push_reg_on_stack(SP, global_offset);
     }
     unsigned int global_offset
             = literal_table_lookup(varName, val);
