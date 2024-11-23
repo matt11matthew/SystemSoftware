@@ -78,7 +78,6 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs) {
     bof_close(bf);
 }
 
-
 code_seq gen_code_arith_op(token_t rel_op) {
     code_seq base = code_seq_empty();
     switch (rel_op.code) {
@@ -107,12 +106,10 @@ code_seq gen_code_expr_bin(binary_op_expr_t expr){
     code_seq_concat(&seq, gen_code_expr(*expr.expr1,false));
     code_seq_concat(&seq, gen_code_expr(*expr.expr2,true));
     code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
-
     return seq;
 }
 
 code_seq gen_code_ident(ident_t ident, bool second) {
-
     int offset = literal_table_lookup(ident.name, 0);
     code_seq seq = push_reg_on_stack(GP, offset, second);
 
@@ -139,7 +136,6 @@ code_seq gen_code_expr(expr_t exp, bool second) {
 }
 
 code_seq gen_code_number( char* varName, number_t num, bool negate, bool second) {
-
     word_type val = num.value;
 
     if (negate) {
@@ -193,11 +189,9 @@ code_seq gen_code_print_stmt(print_stmt_t s) {
 code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
 
-
     // printf("divisor %d\n",stmt.divisor.data.number.value);
     // code_seq_concat(&base, gen_code_expr(stmt.divisor, true));
     // code_seq_add_to_end(&base, code_cfhi(SP, 0));
-
 
     // code_seq_add_to_end(&base, code_div(SP, 0));
     code_seq_concat(&base, gen_code_expr(stmt.dividend, false));
@@ -229,7 +223,6 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
         code_seq_add_to_end(&base, code_blez(SP,0,thenSize+2));
     }
     else if (strcmp(stmt.rel_op.text, "==") == 0) {
-
         code_seq_add_to_end(&base, code_bne(SP,1,thenSize+2));
     }
     else if (strcmp(stmt.rel_op.text, "!=") == 0) {
@@ -308,7 +301,8 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
                     bail_with_error("Unhandled relational operator in while condition");
                 }
             }
-        } else {
+        }
+        else {
             if (strcmp(rel.rel_op.text, "<") == 0) {
                 code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
                 code_seq_add_to_end(&conditionCode, code_bgtz(SP, 0, bodySeqSize + 2)); // Jump if false
@@ -329,7 +323,8 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
                 bail_with_error("Unhandled relational operator in while condition");
             }
         }
-    } else {
+    }
+    else {
         bail_with_error("Unhandled condition kind in while statement");
     }
 
@@ -343,7 +338,6 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
     return base;
 }
 
-
 code_seq gen_code_call_stmt(call_stmt_t stmt) {
     code_seq base = code_seq_empty();
     return base;
@@ -352,9 +346,10 @@ code_seq gen_code_call_stmt(call_stmt_t stmt) {
 // Generate code for the read statment given by stmt
 code_seq gen_code_read_stmt(read_stmt_t stmt) {
     code_seq base = code_seq_empty();
-
+//    base = code_seq_singleton(code_rch(SP, 0));
+//    code_seq_concat(&base, code_utils_compute_fp(SP, stmt.idu->levelsOutward));
+////    unsigned  int offsetCount = literal_table_find_offset(stmt.name, );
     code_seq_add_to_end(&base, code_rch(SP, 0));
-
 //    // put number read into $v0
 //    // put frame pointer from the lexical address of the name
 //    // (using stmt.idu) into $t9
@@ -369,30 +364,17 @@ code_seq gen_code_read_stmt(read_stmt_t stmt) {
     return base;
 }
 
-//code_seq gen_code_read_stmt(read_stmt_t stmt) {
-//    code_seq base = code_seq_empty();
-//
-//
-//
-//    return base;
-//}
-
 code_seq gen_code_block_stmt(block_stmt_t stmt) {
     code_seq base = code_seq_empty();
-
-
     struct block_s * b = stmt.block;
-
     code_seq_concat(&base, gen_code_consts(b->const_decls));
     code_seq body_cs = gen_code_stmts(&b->stmts);
     code_seq_concat(&base, body_cs);
-
     return base;
 }
 
 code_seq gen_code_stmt(stmt_t *s) {
     code_seq stmt_code = code_seq_empty();
-
     switch (s->stmt_kind) {
         case assign_stmt:
             stmt_code = gen_code_assign_stmt(s->data.assign_stmt);
@@ -419,7 +401,6 @@ code_seq gen_code_stmt(stmt_t *s) {
             fprintf(stderr, "Error: Unhandled statement kind in gen_code_stmt\n");
             exit(1);
     }
-
     return stmt_code;
 }
 
@@ -427,7 +408,6 @@ code_seq gen_code_const(const_def_t*  def) {
     code_seq base = code_seq_empty();
 
     while (def!=NULL) {
-
         bool negate = false;
         code_seq_concat(&base, gen_code_number( def->ident.name,  def->number, negate, false));
         def = def->next;
@@ -477,25 +457,14 @@ code_seq gen_code_stmts(stmts_t* stmts) {
     return base;
 }
 
-
-
 void gen_code_program(BOFFILE bf, block_t b) {
     code_seq main_cs = code_utils_set_up_program();
-
-
-
-
     code_seq_concat(&main_cs, gen_code_consts(b.const_decls));
     code_seq body_cs = gen_code_stmts(&b.stmts);
     code_seq_concat(&main_cs, body_cs);
-
-
-
- code_seq tear_down_cs = code_utils_tear_down_program(); //BROKEN
+    code_seq tear_down_cs = code_utils_tear_down_program(); //BROKEN
     code_seq_concat(&main_cs, tear_down_cs);
-
     gen_code_output_program(bf, main_cs);
-
     // literal_table_debug_print();
 //    code_seq_debug_print(stdout, main_cs);
 }
