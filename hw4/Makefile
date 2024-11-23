@@ -224,7 +224,7 @@ check-t: $(COMPILER) $(RUNVM)
 	fi
 
 check-outputs: $(COMPILER) $(RUNVM)
-	@DIFFS=0; \
+	@PASSED=0; FAILED=0; \
 	for f in `echo $(ALLTESTS) | sed -e 's/\\.$(SUF)//g'`; \
 	do \
 		echo running ./$(COMPILER) on "$$f.$(SUF)"; \
@@ -233,13 +233,20 @@ check-outputs: $(COMPILER) $(RUNVM)
 		echo running $(RUNVM) on "$$f.bof"; \
 		$(RM) "$$f.myo"; \
 		cat char-inputs.txt | $(RUNVM) "$$f.bof" > "$$f.myo" 2>&1; \
-		diff -w -B "$$f.out" "$$f.myo" && echo 'passed!' || DIFFS=1; \
+		if diff -w -B "$$f.out" "$$f.myo" > /dev/null 2>&1; then \
+			echo "$$f: passed!"; \
+			PASSED=$$((PASSED + 1)); \
+		else \
+			echo "$$f: failed!"; \
+			FAILED=$$((FAILED + 1)); \
+		fi; \
 	done; \
-	if test 0 = $$DIFFS; \
-	then \
+	TOTAL=$$((PASSED + FAILED)); \
+	echo "$$PASSED tests passed out of $$TOTAL"; \
+	if test $$FAILED -eq 0; then \
 		echo 'All output tests passed!'; \
 	else \
-		echo 'Some output test(s) failed!'; \
+		echo "$$FAILED test(s) failed!"; \
 	fi
 
 

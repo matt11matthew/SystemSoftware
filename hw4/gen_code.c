@@ -95,20 +95,20 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs) {
     bof_close(bf);
 }
 
-code_seq gen_code_rel_op(token_t rel_op) {
-
-//    switch(rel_op.code){
-//        case eqsym:
-//            break;
-//        case neqsym:
-//            break;
+//code_seq gen_code_rel_op(token_t rel_op) {
 //
-//        default:
-//            break;
-//    }
-
-    return code_seq_empty();
-}
+////    switch(rel_op.code){
+////        case eqsym:
+////            break;
+////        case neqsym:
+////            break;
+////
+////        default:
+////            break;
+////    }
+//
+//    return code_seq_empty();
+//}
 
 /*
  * code_seq gen_code_expr_bin(char* varName, binary_op_expr_t expr, reg_num_type target_reg){
@@ -147,6 +147,9 @@ code_seq gen_code_arith_op(token_t rel_op) {
         case minussym:
             break;
         case multsym:
+            code_seq_add_to_end(&base, code_mul( SP, 0));
+            code_seq_add_to_end(&base, code_cflo( GP, 0));
+
             break;
         case divsym:
             code_seq_add_to_end(&base, code_div( SP, 0));
@@ -158,43 +161,6 @@ code_seq gen_code_arith_op(token_t rel_op) {
     }
     return base;
 }
-//    switch (rel_op.code) {
-//        case plussym:
-//            code_seq_add_to_end(&do_op, code_add(GP, 0, GP, 1));
-//            //do_op = code_seq_singleton(code_add(SP, 0, SP, 1));
-//            break;
-////        case minussym:
-////            do_op = code_seq_add_to_end(do_op, code_fsub(V0, AT, V0));
-////            break;
-////        case multsym:
-////            do_op = code_seq_add_to_end(do_op, code_fmul(V0, AT, V0));
-////            break;
-////        case divsym:
-////            do_op = code_seq_add_to_end(do_op, code_fdiv(V0, AT, V0));
-////            break;
-//        default:
-//            bail_with_error("Unexpected arithOp (%d) in gen_code_arith_op", rel_op.code);
-//            break;
-//    }
-//    return do_op;
-
-
-//code_seq gen_code_op(token_t op) {
-//    switch (op.code) {
-//        case eqsym: case neqsym:
-//        case ltsym: case leqsym:
-//        case gtsym: case geqsym:
-//            return gen_code_rel_op(op);
-//            break;
-//        case plussym: case minussym: case multsym: case divsym:
-//            return gen_code_arith_op(op);
-//            break;
-//        default:
-//            bail_with_error("Unknown token code (%d) in gen_code_op", op.code);
-//            break;
-//    }
-//    return code_seq_empty();
-//}
 
 code_seq gen_code_expr_bin(binary_op_expr_t expr){
     code_seq seq = code_seq_empty();
@@ -202,40 +168,35 @@ code_seq gen_code_expr_bin(binary_op_expr_t expr){
         code_seq_concat(&seq, gen_code_expr(*expr.expr1,false));
         code_seq_concat(&seq, gen_code_expr(*expr.expr2,true));
         code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
-    }else if (expr.arith_op.code==divsym){ //2/1
+    }
+    else if (expr.arith_op.code==divsym){ //2/1
+        code_seq_concat(&seq, gen_code_expr(*expr.expr2,false));
         code_seq_concat(&seq, gen_code_expr(*expr.expr1, false));
-        code_seq_concat(&seq, gen_code_expr(*expr.expr2, true));
         code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
-    } else {
-//        code_seq_concat(&seq, gen_code_expr(*expr.expr1));
-//        code_seq_concat(&seq, gen_code_expr(*expr.expr2));
-//        code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
+    }
+    else {
+
     }
 
     return seq;
 }
 
-code_seq gen_code_ident(ident_t ident) {
+code_seq gen_code_ident(ident_t ident, bool second) {
 
-//    gen_code_number(ident.name,ident);
-//    printf("GEN CODE _IDENT: OFFSET %s: %d\n", ident.name, ident.idu->levelsOutward);
+    int offset = literal_table_lookup(ident.name, 0);
+    code_seq seq = push_reg_on_stack(GP, offset, second);
 
-    int offset = literal_table_lookup(ident.name, -3223);
-    code_seq seq = push_reg_on_stack(GP, offset, false);
-
-    code_seq_add_to_end(&seq, code_lit(FP, 0, 0));
+    //code_seq_add_to_end(&seq, code_lit(FP, 0, 0));
     return seq;
 }
 
-//PUSHES TO HEAD OF STACK
 code_seq gen_code_expr(expr_t exp, bool second) {
     switch (exp.expr_kind) {
         case expr_ident:
-            return gen_code_ident(exp.data.ident);
+            return gen_code_ident(exp.data.ident, second);
         case expr_bin:
             return gen_code_expr_bin(exp.data.binary);
         case expr_negated:
-//            return gen_code_expr(*exp.data.negated.expr);
             return gen_code_number(NULL, exp.data.negated.expr->data.number,true, second);
         case expr_number:
             return gen_code_number(NULL, exp.data.number,false, second);
@@ -251,24 +212,19 @@ code_seq gen_code_number( char* varName, number_t num, bool negate, bool second)
 
     word_type val = num.value;
 
-//
     if (negate) {
-//        if (num.value > 0) {
-//            val = (word_type)(-((int)num.value));
-//        } else {
-//            val = num.value;
-//        }
+
         val = -(num.value);
     } else {
         val = num.value;
     }
 
-    printf("GEN CODE NUm: %s %d\n", varName, val);
+//    printf("GEN CODE NUm: %s %d\n", varName, val);
 
 
     if (varName==NULL){
-        unsigned int global_offset
-                = literal_table_lookup(num.text, num.value);
+//        unsigned int global_offset
+//                = literal_table_lookup(num.text, num.value);
 
         return code_seq_singleton(code_lit(SP, (second?1:0), val));
 //        unsigned int global_offset
@@ -276,8 +232,7 @@ code_seq gen_code_number( char* varName, number_t num, bool negate, bool second)
 //
 //        return push_reg_on_stack(SP, global_offset);
     }
-    unsigned int global_offset
-            = literal_table_lookup(varName, val);
+    unsigned int global_offset = literal_table_lookup(varName, val);
 
     return push_reg_on_stack(GP, global_offset, second);
 }
@@ -307,34 +262,54 @@ code_seq gen_code_print_stmt(print_stmt_t s) {
 
 code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
-    printf("db_condition_t");
+    code_seq_concat(&base, gen_code_expr(stmt.divisor, false));
+    code_seq_concat(&base, gen_code_expr(stmt.dividend, true));
+    code_seq_add_to_end(&base, code_div(SP, 1));
+//    code_seq_add_to_end(&base, code_cfhi(SP, 0));
+
+    code_seq_add_to_end(&base, code_beq(SP,0,thenSize+2));
+
     return base;
 }
 
 code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
-
-    code_seq_concat(&base, gen_code_expr(stmt.expr2, false));
-    code_seq_add_to_end(&base, code_cpw(FP, 0, SP,0));
-
     code_seq_concat(&base, gen_code_expr(stmt.expr1, false));
+    code_seq_concat(&base, gen_code_expr(stmt.expr2, true));
+
+//    code_seq_add_to_end(&base, code_cpw( SP, 0,RA, 0));
+//    code_seq_concat(&base, gen_code_expr(stmt.expr2, false));
 
 
-    code_seq_add_to_end(&base,  code_sub(SP, 0,FP, 0 )); //PUTS subtracted value into SP
-
-    if (strcmp(stmt.rel_op.text, "<")==0) {
+    if (strcmp(stmt.rel_op.text, "<") == 0) {
+        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
         code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize+2));
     }
+    else if (strcmp(stmt.rel_op.text, "<=") == 0) {
+        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+        code_seq_add_to_end(&base, code_bgez(SP,0,thenSize+2));
+    }
+    else if(strcmp(stmt.rel_op.text, ">") == 0){
+        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+        code_seq_add_to_end(&base, code_bltz(SP,0,thenSize+2));
+    }
+    else if (strcmp(stmt.rel_op.text, ">=") == 0) {
+        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+        code_seq_add_to_end(&base, code_blez(SP,0,thenSize+2));
+    }
+    else if (strcmp(stmt.rel_op.text, "==") == 0) {
 
+        code_seq_add_to_end(&base, code_bne(SP,1,thenSize+2));
+    }
+    else if (strcmp(stmt.rel_op.text, "!=") == 0) {
+        code_seq_add_to_end(&base, code_beq(SP,1,thenSize+2));
+    }
 
     return base;
 }
 
 code_seq gen_code_assign_stmt(assign_stmt_t stmt){
     code_seq base = code_seq_empty();
-
-
-
 
     int offset = literal_table_lookup(stmt.name,0);
 
@@ -345,21 +320,17 @@ code_seq gen_code_assign_stmt(assign_stmt_t stmt){
     //PULL FROM FRONT
     code_seq_add_to_end(&base, code_cpw(GP, offset, SP,0));
 
-
     return base;
 }
 
 code_seq gen_code_if_stmt(if_stmt_t stmt) {
     code_seq base = code_seq_empty();
-
     condition_t c = stmt.condition;
-
     code_seq thenSeq = gen_code_stmts(*stmt.then_stmts);
     code_seq elseSeq = gen_code_stmts(*stmt.else_stmts);
 
     int thenSeqLength = code_seq_size(thenSeq);
     int elseSeqLength = code_seq_size(elseSeq);
-
 
     if (c.cond_kind == ck_db) {
         code_seq_concat(&base, gen_code_if_ck_db(c.data.db_cond,thenSeqLength));
@@ -498,6 +469,6 @@ void gen_code_program(BOFFILE bf, block_t b) {
 
     gen_code_output_program(bf, main_cs);
 
-    literal_table_debug_print();
+//    literal_table_debug_print();
 //    code_seq_debug_print(stdout, main_cs);
 }
