@@ -128,6 +128,7 @@ code_seq gen_code_arith_op(token_t rel_op) {
     switch (rel_op.code) {
         case plussym:
             code_seq_add_to_end(&base, code_add( SP, 0,GP, 0));
+            code_seq_concat(&base, push_reg_on_stack(GP,0));
             //do_op = code_seq_singleton(code_add(SP, 0, SP, 1));
             break;
         case minussym:
