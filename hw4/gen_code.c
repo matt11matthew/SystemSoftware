@@ -278,95 +278,59 @@ code_seq gen_code_if_stmt(if_stmt_t stmt) {
 }
 
 code_seq gen_code_while_stmt(while_stmt_t stmt) {
-    code_seq base = code_seq_empty();
+    code_seq base = code_seq_empty(); // Initialize base code sequence
     code_seq bodyCode = gen_code_stmts(*stmt.body); // Generate body code
-    int bodySeqSize = code_seq_size(bodyCode);
-    int ifSize = 0;
+    int bodySeqSize = code_seq_size(bodyCode); // Number of instructions in body
+
+    code_seq conditionCode = code_seq_empty(); // Code for evaluating condition
+    int conditionSize = 0;                     // Size of condition instructions
 
     // Handle the condition
-    if (stmt.condition.cond_kind == ck_db) {
-        // Handle divisible condition
-        // printf("ck_db");
-        // condition_code = gen_code_if_ck_db(stmt.condition.data.db_cond, bodySeqSize);
-    } else if (stmt.condition.cond_kind == ck_rel) {
-
-        code_seq base = code_seq_empty();
-
+    if (stmt.condition.cond_kind == ck_rel) {
         rel_op_condition_t rel = stmt.condition.data.rel_op_cond;
 
-        code_seq_concat(&base, gen_code_expr(rel.expr1, false));
-        code_seq_concat(&base, gen_code_expr(rel.expr2, true));
+        // Generate code for both expressions
+        code_seq_concat(&conditionCode, gen_code_expr(rel.expr1, false));
+        code_seq_concat(&conditionCode, gen_code_expr(rel.expr2, true));
+
+        conditionSize = code_seq_size(conditionCode); // Update condition size
+
+        // Generate branching code based on relational operator
+
 
         if (strcmp(rel.rel_op.text, "<") == 0) {
-            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-            code_seq_add_to_end(&base, code_bgtz(SP,0,bodySeqSize+2));
-        }
-        else if (strcmp(rel.rel_op.text, "<=") == 0) {
-            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-            code_seq_add_to_end(&base, code_bgez(SP,0,bodySeqSize+2));
-        }
-        else if(strcmp(rel.rel_op.text, ">") == 0){
-            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-            code_seq_add_to_end(&base, code_bltz(SP,0,bodySeqSize+2));
-        }
-        else if (strcmp(rel.rel_op.text, ">=") == 0) {
-            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-            code_seq_add_to_end(&base, code_blez(SP,0,bodySeqSize+2));
-        }
-        else if (strcmp(rel.rel_op.text, "==") == 0) {
-            code_seq_add_to_end(&base, code_bne(SP,1,bodySeqSize+2));
-        }
-        else if (strcmp(rel.rel_op.text, "!=") == 0) {
-            code_seq_add_to_end(&base, code_beq(SP,1,bodySeqSize+2));
+            code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
+            code_seq_add_to_end(&conditionCode, code_bgtz(SP, 0, bodySeqSize + 2)); // Jump if false
+        } else if (strcmp(rel.rel_op.text, "<=") == 0) {
+            code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
+            code_seq_add_to_end(&conditionCode, code_bgez(SP, 0, bodySeqSize + 2)); // Jump if false
+        } else if (strcmp(rel.rel_op.text, ">") == 0) {
+            code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
+            code_seq_add_to_end(&conditionCode, code_bltz(SP, 0, bodySeqSize + 2)); // Jump if false
+        } else if (strcmp(rel.rel_op.text, ">=") == 0) {
+            code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
+            code_seq_add_to_end(&conditionCode, code_blez(SP, 0, bodySeqSize + 2)); // Jump if false
+        } else if (strcmp(rel.rel_op.text, "==") == 0) {
+            code_seq_add_to_end(&conditionCode, code_bne(SP, 1, bodySeqSize + 2)); // Jump if false
+        } else if (strcmp(rel.rel_op.text, "!=") == 0) {
+            code_seq_add_to_end(&conditionCode, code_beq(SP, 1, bodySeqSize + 2)); // Jump if false
+        } else {
+            bail_with_error("Unhandled relational operator in while condition");
         }
     } else {
         bail_with_error("Unhandled condition kind in while statement");
     }
 
-    code_seq_concat(&base,bodyCode);
-//    code_seq_add_to_end(&base, code_jrel(-(bodySeqSize -1)));
+    // Concatenate condition code and body code
+    code_seq_concat(&base, conditionCode);
+    code_seq_concat(&base, bodyCode);
+
+    // Add jump to the start of the condition
+    code_seq_add_to_end(&base, code_jrel(-(conditionSize + bodySeqSize + 2)));
 
     return base;
 }
 
-// code_seq gen_code_while_stmt(while_stmt_t stmt){
-//     // code_seq base = code_seq_empty();
-//     // condition_t c = stmt.condition;
-//     // code_seq doSeq = gen_code_stmts(*stmt.body);
-//     //
-//     // if (c.cond_kind != endsym) {
-//     //     code_seq_concat(&base, doSeq);
-//     // }
-//     //
-//     code_seq base = code_seq_empty();
-//
-//     int PC = 10;
-//
-//
-//     printf("ADDRESS: %d\n",machine_types_formAddress(PC-1, 0));
-//     // condition_t c = stmt.condition;
-//     // code_seq wthenSeq = gen_code_stmts(*stmt.body);
-//
-//
-//     // code_seq elseSeq = gen_code_stmts(*stmt.else_stmts);
-//
-//     /*
-//     int thenSeqLength = code_seq_size(thenSeq);
-//     int elseSeqLength = code_seq_size(elseSeq);
-//
-//     if (c.cond_kind == ck_db) {
-//         code_seq_concat(&base, gen_code_if_ck_db(c.data.db_cond,thenSeqLength));
-//     }
-//     if (c.cond_kind == ck_rel) {
-//         code_seq_concat(&base, gen_code_if_ck_rel(c.data.rel_op_cond,thenSeqLength));
-//     }
-//
-//     code_seq_concat(&base, thenSeq);
-//     code_seq_add_to_end(&base, code_jrel(elseSeqLength + 1));
-//     code_seq_concat(&base, elseSeq);
-//     */
-//     return base;
-// }
 
 code_seq gen_code_call_stmt(call_stmt_t stmt) {
     code_seq base = code_seq_empty();
@@ -429,11 +393,6 @@ code_seq gen_code_const(const_def_t*  def) {
         def = def->next;
     }
     //Handle single for now
-    // literal_table_debug_print();
-//    int v =     literal_table_lookup(def.ident.name,20);
-
-//    printf("%s=%d\n", def.ident.name, def.number.value);
-//    code_seq_add_to_end(&base, code_lit(GP,    literal_table_lookup(def.ident.name,  def.number.value),  def.number.value));
 
     return base;
 }
