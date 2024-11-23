@@ -350,30 +350,32 @@ code_seq gen_code_call_stmt(call_stmt_t stmt) {
 }
 
 // Generate code for the read statment given by stmt
-code_seq gen_code_read_stmt(read_stmt_t stmt)
-{
-    // put number read into $v0
-    code_seq ret = code_seq_singleton(code_rch());
-    // put frame pointer from the lexical address of the name
-    // (using stmt.idu) into $t9
-    assert(stmt.idu != NULL);
-    ret = code_seq_concat(ret,
-              code_compute_fp(T9, stmt.idu->levelsOutward));
-    assert(id_use_get_attrs(stmt.idu) != NULL);
-    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
-    assert(offset_count <= USHRT_MAX); // it has to fit!
-    ret = code_seq_add_to_end(ret,
-                  code_seq_singleton(code_fsw(T9, V0, offset_count)));
-    return ret;
-}
-
 code_seq gen_code_read_stmt(read_stmt_t stmt) {
     code_seq base = code_seq_empty();
 
+    code_seq_add_to_end(&base, code_rch(SP, 0));
 
-
+//    // put number read into $v0
+//    // put frame pointer from the lexical address of the name
+//    // (using stmt.idu) into $t9
+//    assert(stmt.idu != NULL);
+////    ret = code_seq_concat(ret,
+////              code_compute_fp(T9, stmt.idu->levelsOutward));
+//  //  assert(id_use_get_attrs(stmt.idu) != NULL);
+//    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
+//    //assert(offset_count <= USHRT_MAX); // it has to fit!
+//    printf("THE READ OFF_SET");
+////code_seq_add_to_end(&base,code_seq_singleton(code_fsw(T9, V0, offset_count)));
     return base;
 }
+
+//code_seq gen_code_read_stmt(read_stmt_t stmt) {
+//    code_seq base = code_seq_empty();
+//
+//
+//
+//    return base;
+//}
 
 code_seq gen_code_block_stmt(block_stmt_t stmt) {
     code_seq base = code_seq_empty();

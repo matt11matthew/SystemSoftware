@@ -84,7 +84,7 @@ extern code *code_neg(reg_num_type t, offset_type ot,
 // --- other computational format instructions from table 4 ---
 
 // Create and return a fresh instruction
-// with the named mnemonic and parame1ters
+// with the named mnemonic and parameters
 extern code *code_lit(reg_num_type t, offset_type o,
 		      immediate_type i);
 
