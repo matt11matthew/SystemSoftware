@@ -16,8 +16,8 @@ void gen_code_initialize() {
 //    literal_table_test();
 }
 
-code_seq push_reg_on_stack(reg_num_type reg, offset_type offset) {
-    return code_seq_singleton(code_cpw(SP, 0, reg, offset));
+code_seq push_reg_on_stack(reg_num_type reg, offset_type offset, bool second ) {
+    return code_seq_singleton(code_cpw(SP, (second)?1 : 0, reg, offset));
 }
 
 void gen_code_output_literals(BOFFILE bf) {
@@ -127,9 +127,15 @@ code_seq gen_code_arith_op(token_t rel_op) {
     code_seq base = code_seq_empty();
     switch (rel_op.code) {
         case plussym:
-            code_seq_add_to_end(&base, code_add( SP, 0,FP, 0));
-            code_seq_add_to_end(&base, code_add( SP, 0,GP, 0));
-            code_seq_add_to_end(&base, code_cpw( FP, 0,SP, 0));
+            code_seq_add_to_end(&base, code_add( SP, 0,SP, 1));
+
+//            code_seq_add_to_end(&base, code_add( 10, 1,GP, 0));
+//
+//
+//            code_seq_add_to_end(&base, code_add( SP, 0,10, 0));
+//            code_seq_add_to_end(&base, code_add( SP, 0,10, 1));
+
+//            code_seq_add_to_end(&base, code_cpw( FP, 0,SP, 0));
             //code_seq_concat(&base, push_reg_on_stack(GP,0));
             //do_op = code_seq_singleton(code_add(SP, 0, SP, 1));
 
@@ -143,8 +149,9 @@ code_seq gen_code_arith_op(token_t rel_op) {
         case multsym:
             break;
         case divsym:
-            code_seq_add_to_end(&base, code_div( GP, 0));
-            code_seq_add_to_end(&base, code_cflo( SP, 0));
+            code_seq_add_to_end(&base, code_div( SP, 0));
+            code_seq_add_to_end(&base, code_cflo( GP, 0));
+
             break;
         default:
             return base;
@@ -172,32 +179,32 @@ code_seq gen_code_arith_op(token_t rel_op) {
 //    return do_op;
 
 
-code_seq gen_code_op(token_t op) {
-    switch (op.code) {
-        case eqsym: case neqsym:
-        case ltsym: case leqsym:
-        case gtsym: case geqsym:
-            return gen_code_rel_op(op);
-            break;
-        case plussym: case minussym: case multsym: case divsym:
-            return gen_code_arith_op(op);
-            break;
-        default:
-            bail_with_error("Unknown token code (%d) in gen_code_op", op.code);
-            break;
-    }
-    return code_seq_empty();
-}
+//code_seq gen_code_op(token_t op) {
+//    switch (op.code) {
+//        case eqsym: case neqsym:
+//        case ltsym: case leqsym:
+//        case gtsym: case geqsym:
+//            return gen_code_rel_op(op);
+//            break;
+//        case plussym: case minussym: case multsym: case divsym:
+//            return gen_code_arith_op(op);
+//            break;
+//        default:
+//            bail_with_error("Unknown token code (%d) in gen_code_op", op.code);
+//            break;
+//    }
+//    return code_seq_empty();
+//}
 
 code_seq gen_code_expr_bin(binary_op_expr_t expr){
     code_seq seq = code_seq_empty();
     if (expr.arith_op.code==plussym) {
-        code_seq_concat(&seq, gen_code_expr(*expr.expr1));
-        code_seq_concat(&seq, gen_code_expr(*expr.expr2));
+        code_seq_concat(&seq, gen_code_expr(*expr.expr1,false));
+        code_seq_concat(&seq, gen_code_expr(*expr.expr2,true));
         code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
     }else if (expr.arith_op.code==divsym){ //2/1
-        code_seq_concat(&seq, gen_code_expr(*expr.expr2));
-        code_seq_concat(&seq, gen_code_expr(*expr.expr1));
+        code_seq_concat(&seq, gen_code_expr(*expr.expr1, false));
+        code_seq_concat(&seq, gen_code_expr(*expr.expr2, true));
         code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
     } else {
 //        code_seq_concat(&seq, gen_code_expr(*expr.expr1));
@@ -214,14 +221,14 @@ code_seq gen_code_ident(ident_t ident) {
 //    printf("GEN CODE _IDENT: OFFSET %s: %d\n", ident.name, ident.idu->levelsOutward);
 
     int offset = literal_table_lookup(ident.name, -3223);
-    code_seq seq = push_reg_on_stack(GP, offset);
+    code_seq seq = push_reg_on_stack(GP, offset, false);
 
     code_seq_add_to_end(&seq, code_lit(FP, 0, 0));
     return seq;
 }
 
 //PUSHES TO HEAD OF STACK
-code_seq gen_code_expr(expr_t exp) {
+code_seq gen_code_expr(expr_t exp, bool second) {
     switch (exp.expr_kind) {
         case expr_ident:
             return gen_code_ident(exp.data.ident);
@@ -229,9 +236,9 @@ code_seq gen_code_expr(expr_t exp) {
             return gen_code_expr_bin(exp.data.binary);
         case expr_negated:
 //            return gen_code_expr(*exp.data.negated.expr);
-            return gen_code_number(NULL, exp.data.negated.expr->data.number,true);
+            return gen_code_number(NULL, exp.data.negated.expr->data.number,true, second);
         case expr_number:
-            return gen_code_number(NULL, exp.data.number,false);
+            return gen_code_number(NULL, exp.data.number,false, second);
         default:
             bail_with_error("Unexpected expr_kind_e (%d) in gen_code_expr", exp.expr_kind);
             break;
@@ -240,7 +247,7 @@ code_seq gen_code_expr(expr_t exp) {
     return code_seq_empty();
 }
 
-code_seq gen_code_number( char* varName, number_t num, bool negate) {
+code_seq gen_code_number( char* varName, number_t num, bool negate, bool second) {
 
     word_type val = num.value;
 
@@ -263,7 +270,7 @@ code_seq gen_code_number( char* varName, number_t num, bool negate) {
         unsigned int global_offset
                 = literal_table_lookup(num.text, num.value);
 
-        return code_seq_singleton(code_lit(SP, 0, val));
+        return code_seq_singleton(code_lit(SP, (second?1:0), val));
 //        unsigned int global_offset
 //                = literal_table_lookup(num.text, val);
 //
@@ -272,14 +279,14 @@ code_seq gen_code_number( char* varName, number_t num, bool negate) {
     unsigned int global_offset
             = literal_table_lookup(varName, val);
 
-    return push_reg_on_stack(GP, global_offset);
+    return push_reg_on_stack(GP, global_offset, second);
 }
 
 code_seq gen_code_print_stmt(print_stmt_t s) {
     code_seq base = code_seq_empty();
 
     // Evaluate the expression into R3
-    code_seq expr_code = gen_code_expr(s.expr);
+    code_seq expr_code = gen_code_expr(s.expr, false);
     code_seq_concat(&base, expr_code);
 
     code_seq_add_to_end(&base, code_pint(SP,0 ));
@@ -307,10 +314,10 @@ code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
 code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
 
-    code_seq_concat(&base, gen_code_expr(stmt.expr2));
+    code_seq_concat(&base, gen_code_expr(stmt.expr2, false));
     code_seq_add_to_end(&base, code_cpw(FP, 0, SP,0));
 
-    code_seq_concat(&base, gen_code_expr(stmt.expr1));
+    code_seq_concat(&base, gen_code_expr(stmt.expr1, false));
 
 
     code_seq_add_to_end(&base,  code_sub(SP, 0,FP, 0 )); //PUTS subtracted value into SP
@@ -331,7 +338,7 @@ code_seq gen_code_assign_stmt(assign_stmt_t stmt){
 
     int offset = literal_table_lookup(stmt.name,0);
 
-    code_seq_concat(&base,gen_code_expr(*stmt.expr));
+    code_seq_concat(&base,gen_code_expr(*stmt.expr, false));
 //    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
 //    printf("THE OFFSET: %u\n",offset_count);
 
@@ -430,7 +437,7 @@ code_seq gen_code_const(const_def_t*  def) {
 //        printf("\n-0-0-0-0-\nC NAME: %s (%s)\n-0-0-0-0-\n",cName, def->ident.name);
 
         bool negate = false;
-        code_seq_concat(&base, gen_code_number( def->ident.name,  def->number, negate));
+        code_seq_concat(&base, gen_code_number( def->ident.name,  def->number, negate, false));
         def = def->next;
     }
     //Handle single for now
