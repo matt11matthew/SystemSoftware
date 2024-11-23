@@ -281,7 +281,7 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
     code_seq base = code_seq_empty();
     code_seq bodyCode = gen_code_stmts(*stmt.body); // Generate body code
     int bodySeqSize = code_seq_size(bodyCode);
-    code_seq condition_code = code_seq_empty();
+    int ifSize = 0;
 
     // Handle the condition
     if (stmt.condition.cond_kind == ck_db) {
@@ -314,21 +314,17 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
             code_seq_add_to_end(&base, code_blez(SP,0,bodySeqSize+2));
         }
         else if (strcmp(rel.rel_op.text, "==") == 0) {
-
             code_seq_add_to_end(&base, code_bne(SP,1,bodySeqSize+2));
         }
         else if (strcmp(rel.rel_op.text, "!=") == 0) {
             code_seq_add_to_end(&base, code_beq(SP,1,bodySeqSize+2));
         }
-
-
-
     } else {
         bail_with_error("Unhandled condition kind in while statement");
     }
 
     code_seq_concat(&base,bodyCode);
-    code_seq_add_to_end(&base, code_jrel(-(bodySeqSize)));
+//    code_seq_add_to_end(&base, code_jrel(-(bodySeqSize -1)));
 
     return base;
 }
