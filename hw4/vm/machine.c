@@ -404,9 +404,14 @@ void machine_execute_instr(address_type addr, bin_instr_t bi)
 	    case DIV_F:
 		int divisor = memory.words[GPR[oci.reg]
 				     + machine_types_formOffset(oci.offset)];
-		if (divisor == 0) {
+        if (isPrinting == 1){
+
+            printf("Dividing: %d / %d\n",  memory.words[GPR[SP]],divisor);
+        }
+        if (divisor == 0) {
 		    bail_with_error("Error: Attempt to divide by zero!");
-		}
+
+        }
 		hilo_regs.hilo[HI] = memory.words[GPR[SP]] % divisor;
 		hilo_regs.hilo[LO] = memory.words[GPR[SP]] / divisor;
 		break;

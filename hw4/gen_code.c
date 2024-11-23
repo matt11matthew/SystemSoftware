@@ -110,10 +110,39 @@ code_seq gen_code_rel_op(token_t rel_op) {
     return code_seq_empty();
 }
 
-code_seq gen_code_arith_op(token_t rel_op) {
+/*
+ * code_seq gen_code_expr_bin(char* varName, binary_op_expr_t expr, reg_num_type target_reg){
+    code_seq ret = gen_code_expr(varName, *expr.expr1,target_reg);
 
-    code_seq do_op = code_seq_empty();
-    return do_op;
+    code_seq_concat(&ret, gen_code_expr(varName,*(expr.expr2), target_reg));
+    // check the types match
+//    type_exp_e t1 = ast_expr_type(*(exp.expr1));
+//    assert(ast_expr_type(*(expr.expr2)) == t1);
+    // do the operation, putting the result on the stack
+    code_seq_concat(&ret, gen_code_op(expr.arith_op));
+    return ret;
+}
+ */
+code_seq gen_code_arith_op(token_t rel_op) {
+    code_seq base = code_seq_empty();
+    switch (rel_op.code) {
+        case plussym:
+            code_seq_add_to_end(&base, code_add( SP, 0,GP, 0));
+            //do_op = code_seq_singleton(code_add(SP, 0, SP, 1));
+            break;
+        case minussym:
+            break;
+        case multsym:
+            break;
+        case divsym:
+            code_seq_add_to_end(&base, code_div( GP, 0));
+            code_seq_add_to_end(&base, code_cflo( SP, 0));
+            break;
+        default:
+            return base;
+    }
+    return base;
+}
 //    switch (rel_op.code) {
 //        case plussym:
 //            code_seq_add_to_end(&do_op, code_add(GP, 0, GP, 1));
@@ -133,7 +162,7 @@ code_seq gen_code_arith_op(token_t rel_op) {
 //            break;
 //    }
 //    return do_op;
-}
+
 
 code_seq gen_code_op(token_t op) {
     switch (op.code) {
@@ -152,16 +181,23 @@ code_seq gen_code_op(token_t op) {
     return code_seq_empty();
 }
 
-code_seq gen_code_expr_bin(char* varName, binary_op_expr_t expr, reg_num_type target_reg){
-//    code_seq ret = gen_code_expr(varName, *expr.expr1,target_reg);
+code_seq gen_code_expr_bin(binary_op_expr_t expr){
+    code_seq seq = code_seq_empty();
+    if (expr.arith_op.code==plussym) {
+        code_seq_concat(&seq, gen_code_expr(*expr.expr1));
+        code_seq_concat(&seq, gen_code_expr(*expr.expr2));
+        code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
+    }else if (expr.arith_op.code==divsym){ //2/1
+        code_seq_concat(&seq, gen_code_expr(*expr.expr2));
+        code_seq_concat(&seq, gen_code_expr(*expr.expr1));
+        code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
+    } else {
+//        code_seq_concat(&seq, gen_code_expr(*expr.expr1));
+//        code_seq_concat(&seq, gen_code_expr(*expr.expr2));
+//        code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
+    }
 
-//    code_seq_concat(&ret, gen_code_expr(varName,*(expr.expr2), target_reg));
-    // check the types match
-//    type_exp_e t1 = ast_expr_type(*(exp.expr1));
-//    assert(ast_expr_type(*(expr.expr2)) == t1);
-    // do the operation, putting the result on the stack
-//    code_seq_concat(&ret, gen_code_op(expr.arith_op));
-    return code_seq_empty();
+    return seq;
 }
 
 code_seq gen_code_ident(ident_t ident) {
@@ -179,9 +215,12 @@ code_seq gen_code_expr(expr_t exp) {
         case expr_ident:
             return gen_code_ident(exp.data.ident);
         case expr_bin:
-            return code_seq_empty();
+            return gen_code_expr_bin(exp.data.binary);
+        case expr_negated:
+//            return gen_code_expr(*exp.data.negated.expr);
+            return gen_code_number(NULL, exp.data.negated.expr->data.number,true);
         case expr_number:
-            return gen_code_number(NULL, exp.data.number);
+            return gen_code_number(NULL, exp.data.number,false);
         default:
             bail_with_error("Unexpected expr_kind_e (%d) in gen_code_expr", exp.expr_kind);
             break;
@@ -190,22 +229,33 @@ code_seq gen_code_expr(expr_t exp) {
     return code_seq_empty();
 }
 
-code_seq gen_code_number( char* varName, number_t num) {
-//    word_type i = negate ? -(num.value) : num.value;
-    //unsigned int offset_count = id_use_get_attrs(num.idu)->offset_count;
+code_seq gen_code_number( char* varName, number_t num, bool negate) {
 
+    word_type val = num.value;
 
-//    code_lwr()
+//
+    if (negate) {
+//        if (num.value > 0) {
+//            val = (word_type)(-((int)num.value));
+//        } else {
+//            val = num.value;
+//        }
+        val = -(num.value);
+    } else {
+        val = num.value;
+    }
+
+    printf("GEN CODE NUm: %s %d\n", varName, val);
 
 
     if (varName==NULL){
 //        unsigned int global_offset
 //                = literal_table_lookup(num.text, num.value);
 
-        return code_seq_singleton(code_lit(SP, 0, num.value));
+        return code_seq_singleton(code_lit(SP, 0, val));
     }
     unsigned int global_offset
-            = literal_table_lookup(varName, num.value);
+            = literal_table_lookup(varName, val);
 
     return push_reg_on_stack(GP, global_offset);
 }
@@ -242,12 +292,13 @@ code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
 code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
 
-    code_seq_concat(&base, gen_code_expr(stmt.expr1));
-    code_seq_add_to_end(&base, code_cpw(FP, 1, SP,0));
-
     code_seq_concat(&base, gen_code_expr(stmt.expr2));
+    code_seq_add_to_end(&base, code_cpw(FP, 0, SP,0));
 
-    code_seq_add_to_end(&base,  code_sub(SP, 0, FP, 1)); //PUTS subtracted value into SP
+    code_seq_concat(&base, gen_code_expr(stmt.expr1));
+
+
+    code_seq_add_to_end(&base,  code_sub(SP, 0,FP, 0 )); //PUTS subtracted value into SP
 
     if (strcmp(stmt.rel_op.text, "<")==0) {
         code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize+2));
@@ -255,7 +306,6 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
 
 
     return base;
-
 }
 
 code_seq gen_code_assign_stmt(assign_stmt_t stmt){
@@ -363,7 +413,9 @@ code_seq gen_code_const(const_def_t*  def) {
         //PROCESS;
 
 //        printf("\n-0-0-0-0-\nC NAME: %s (%s)\n-0-0-0-0-\n",cName, def->ident.name);
-        code_seq_concat(&base, gen_code_number( def->ident.name,  def->number));
+
+        bool negate = false;
+        code_seq_concat(&base, gen_code_number( def->ident.name,  def->number, negate));
         def = def->next;
     }
     //Handle single for now
@@ -425,5 +477,5 @@ void gen_code_program(BOFFILE bf, block_t b) {
     gen_code_output_program(bf, main_cs);
 
     literal_table_debug_print();
-    code_seq_debug_print(stdout, main_cs);
+//    code_seq_debug_print(stdout, main_cs);
 }

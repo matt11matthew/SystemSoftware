@@ -23,5 +23,5 @@ void gen_code_initialize();
 void gen_code_program(BOFFILE bf, block_t prog);
 code_seq gen_code_stmt(stmt_t *s);
 code_seq gen_code_expr( expr_t expr);
-code_seq gen_code_number( char* varName,number_t num);
+code_seq gen_code_number( char* varName,number_t num, bool negate);
 #endif //GEN_CODE_H
