@@ -18,7 +18,7 @@
 #include "utilities.h"
 #include "symtab.h"
 #include "scope_check.h"
-code_seq gen_code_stmts(stmts_t stmts);
+code_seq gen_code_stmts(stmts_t* stmts);
 void gen_code_initialize();
 void gen_code_program(BOFFILE bf, block_t prog);
 code_seq gen_code_stmt(stmt_t *s);

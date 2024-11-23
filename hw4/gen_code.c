@@ -257,8 +257,8 @@ code_seq gen_code_assign_stmt(assign_stmt_t stmt){
 code_seq gen_code_if_stmt(if_stmt_t stmt) {
     code_seq base = code_seq_empty();
     condition_t c = stmt.condition;
-    code_seq thenSeq = gen_code_stmts(*stmt.then_stmts);
-    code_seq elseSeq = gen_code_stmts(*stmt.else_stmts);
+    code_seq thenSeq = gen_code_stmts(stmt.then_stmts);
+    code_seq elseSeq = gen_code_stmts(stmt.else_stmts);
 
     int thenSeqLength = code_seq_size(thenSeq);
     int elseSeqLength = code_seq_size(elseSeq);
@@ -297,25 +297,37 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
 
         // Generate branching code based on relational operator
 
-
-        if (strcmp(rel.rel_op.text, "<") == 0) {
-            code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
-            code_seq_add_to_end(&conditionCode, code_bgtz(SP, 0, bodySeqSize + 2)); // Jump if false
-        } else if (strcmp(rel.rel_op.text, "<=") == 0) {
-            code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
-            code_seq_add_to_end(&conditionCode, code_bgez(SP, 0, bodySeqSize + 2)); // Jump if false
-        } else if (strcmp(rel.rel_op.text, ">") == 0) {
-            code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
-            code_seq_add_to_end(&conditionCode, code_bltz(SP, 0, bodySeqSize + 2)); // Jump if false
-        } else if (strcmp(rel.rel_op.text, ">=") == 0) {
-            code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
-            code_seq_add_to_end(&conditionCode, code_blez(SP, 0, bodySeqSize + 2)); // Jump if false
-        } else if (strcmp(rel.rel_op.text, "==") == 0) {
-            code_seq_add_to_end(&conditionCode, code_bne(SP, 1, bodySeqSize + 2)); // Jump if false
-        } else if (strcmp(rel.rel_op.text, "!=") == 0) {
-            code_seq_add_to_end(&conditionCode, code_beq(SP, 1, bodySeqSize + 2)); // Jump if false
+        if (rel.expr1.expr_kind==expr_number &&   rel.expr2.expr_kind==expr_number) {
+            int num1 = rel.expr1.data.number.value;
+            int num2 = rel.expr2.data.number.value;
+            if (num1==num2) {
+                if (strcmp(rel.rel_op.text, "<") == 0) {
+                    printf("FFFFFF");
+                    code_seq_add_to_end(&conditionCode, code_jrel( bodySeqSize + 2)); // Jump if false
+                } else {
+                    bail_with_error("Unhandled relational operator in while condition");
+                }
+            }
         } else {
-            bail_with_error("Unhandled relational operator in while condition");
+            if (strcmp(rel.rel_op.text, "<") == 0) {
+                code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
+                code_seq_add_to_end(&conditionCode, code_bgtz(SP, 0, bodySeqSize + 2)); // Jump if false
+            } else if (strcmp(rel.rel_op.text, "<=") == 0) {
+                code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
+                code_seq_add_to_end(&conditionCode, code_bgez(SP, 0, bodySeqSize + 2)); // Jump if false
+            } else if (strcmp(rel.rel_op.text, ">") == 0) {
+                code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
+                code_seq_add_to_end(&conditionCode, code_bltz(SP, 0, bodySeqSize + 2)); // Jump if false
+            } else if (strcmp(rel.rel_op.text, ">=") == 0) {
+                code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
+                code_seq_add_to_end(&conditionCode, code_blez(SP, 0, bodySeqSize + 2)); // Jump if false
+            } else if (strcmp(rel.rel_op.text, "==") == 0) {
+                code_seq_add_to_end(&conditionCode, code_bne(SP, 1, bodySeqSize + 2)); // Jump if false
+            } else if (strcmp(rel.rel_op.text, "!=") == 0) {
+                code_seq_add_to_end(&conditionCode, code_beq(SP, 1, bodySeqSize + 2)); // Jump if false
+            } else {
+                bail_with_error("Unhandled relational operator in while condition");
+            }
         }
     } else {
         bail_with_error("Unhandled condition kind in while statement");
@@ -384,9 +396,6 @@ code_seq gen_code_const(const_def_t*  def) {
     code_seq base = code_seq_empty();
 
     while (def!=NULL) {
-        //PROCESS;
-
-//        printf("\n-0-0-0-0-\nC NAME: %s (%s)\n-0-0-0-0-\n",cName, def->ident.name);
 
         bool negate = false;
         code_seq_concat(&base, gen_code_number( def->ident.name,  def->number, negate, false));
@@ -413,7 +422,7 @@ code_seq gen_code_consts(const_decls_t  decls) {
     return base;
 }
 
-code_seq gen_code_stmts(stmts_t stmts) {
+code_seq gen_code_stmts(stmts_t* stmts) {
     code_seq base = code_seq_empty();
 
     if (stmts.stmts_kind == empty_stmts_e) {
@@ -439,9 +448,9 @@ void gen_code_program(BOFFILE bf, block_t b) {
 
     code_seq body_cs = gen_code_stmts(b.stmts);
     code_seq_concat(&main_cs, body_cs);
-    code_seq_add_to_end(&main_cs, code_exit(0));
-    code_seq tear_down_cs = code_utils_tear_down_program(); //BROKEN
-    // code_seq_concat(&main_cs, tear_down_cs);
+    // code_seq_add_to_end(&main_cs, code_exit(0));
+ code_seq tear_down_cs = code_utils_tear_down_program(); //BROKEN
+    code_seq_concat(&main_cs, tear_down_cs);
 
     gen_code_output_program(bf, main_cs);
 
