@@ -19,9 +19,9 @@ void gen_code_initialize() {
 int curOffset = 0;
 
 
-code_seq push_reg_on_stack(reg_num_type reg, offset_type offset, bool second, reg_num_type sp ) {
+code_seq push_reg_on_stack(reg_num_type reg, offset_type offset, offset_type second, reg_num_type sp ) {
 //    return code_seq_singleton(code_cpw(sp, (curOffset>0?curOffset : (second)?1 : 0), reg, offset));
-    return code_seq_singleton(code_cpw(sp,  (second)?1 : 0, reg, offset));
+    return code_seq_singleton(code_cpw(sp,  second, reg, offset));
 //printf(" OFFSET: %d\n", offset);
 //    return code_seq_singleton(code_cpw(sp,  offset, reg, offset));
 //    return code_seq_singleton(code_cpw(sp,  offset, reg, offset));
@@ -129,23 +129,25 @@ code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg){
     return base;
 }
 
-code_seq gen_code_ident(ident_t ident, bool second, reg_num_type reg) {
+code_seq gen_code_ident(ident_t ident, offset_type second, reg_num_type reg) {
     int offset = literal_table_lookup(ident.name, 0);
     code_seq seq = push_reg_on_stack(GP, offset, second, reg);
     return seq;
 }
 
-code_seq gen_code_expr(char* name, expr_t exp, bool second, reg_num_type reg) {
+code_seq gen_code_expr(char* name, expr_t exp, offset_type second, reg_num_type reg) {
     curOffset++;
+
+
     switch (exp.expr_kind) {
         case expr_ident:
             return gen_code_ident(exp.data.ident, second, reg);
         case expr_bin:
             return gen_code_expr_bin(name, exp.data.binary, reg);
         case expr_negated:
-            return gen_code_number(name, exp.data.negated.expr->data.number,true, second, reg);
+            return gen_code_number(NULL, exp.data.negated.expr->data.number,true, second, reg);
         case expr_number:
-            return gen_code_number(name, exp.data.number,false, second, reg);
+            return gen_code_number(NULL, exp.data.number,false, second, reg);
         default:
             bail_with_error("Unexpected expr_kind_e (%d) in gen_code_expr", exp.expr_kind);
             break;
@@ -154,7 +156,7 @@ code_seq gen_code_expr(char* name, expr_t exp, bool second, reg_num_type reg) {
     return code_seq_empty();
 }
 
-code_seq gen_code_number( char* varName, number_t num, bool negate, bool second, reg_num_type sp) {
+code_seq gen_code_number( char* varName, number_t num, bool negate, offset_type second, reg_num_type sp) {
     word_type val = num.value;
     if (negate) {
         val = -(num.value);
@@ -162,7 +164,7 @@ code_seq gen_code_number( char* varName, number_t num, bool negate, bool second,
         val = num.value;
     }
     if (varName==NULL){
-        return code_seq_singleton(code_lit(SP, (second?1:0), val));
+        return code_seq_singleton(code_lit(SP, second, val));
     }
     unsigned int global_offset = literal_table_lookup(varName, val);
     return push_reg_on_stack(GP, global_offset, second, sp);
