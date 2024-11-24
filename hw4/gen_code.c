@@ -101,33 +101,34 @@ code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg){
 
             break;
         case minussym:
-            code_seq_concat(&base, gen_code_expr(name, *expr.expr1,false,SP));
+            code_seq_concat(&base, gen_code_expr(name, *expr.expr1,0,SP));
 
 
-            code_seq_concat(&base, gen_code_expr(name, *expr.expr2,true,SP));
+            code_seq_concat(&base, gen_code_expr(name, *expr.expr2,1,SP));
 
             code_seq_add_to_end(&base, code_sub( reg, 0,SP, 1));
             break;
         case multsym:
-            code_seq_concat(&base, gen_code_expr(name, *expr.expr1,false,SP));
-            code_seq_concat(&base, gen_code_expr(name, *expr.expr2,true,SP));
+            code_seq_concat(&base, gen_code_expr(name, *expr.expr1,0,SP));
+            code_seq_concat(&base, gen_code_expr(name, *expr.expr2,1,SP));
 
 
             code_seq_add_to_end(&base, code_mul( SP, 1));
             code_seq_add_to_end(&base, code_cflo( SP, 0));
             break;
         case divsym:
+            int R8 = 8;
 
-            code_seq_concat(&base, gen_code_expr(name, *expr.expr1,false,SP));
-            code_seq_concat(&base, gen_code_expr(name, *expr.expr2,true,SP));
+            code_seq_concat(&base, gen_code_expr(name, *expr.expr1,0,SP));
+            code_seq_concat(&base, gen_code_expr(name, *expr.expr2,1,SP));
 
             code_seq_add_to_end(&base, code_div( SP, 1));
+//            code_pint(R8, 0);
             code_seq_add_to_end(&base, code_cflo( SP, 0));
             break;
         default:
             return base;
     }
-
     return base;
 }
 
@@ -166,7 +167,7 @@ code_seq gen_code_number( char* varName, number_t num, bool negate, offset_type 
         val = num.value;
     }
     if (varName==NULL){
-        return code_seq_singleton(code_lit(SP, second, val));
+        return code_seq_singleton(code_lit(sp, second, val));
     }
     unsigned int global_offset = literal_table_lookup(varName, val);
     return push_reg_on_stack(GP, global_offset, second, sp);
