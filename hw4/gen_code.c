@@ -16,28 +16,23 @@ void gen_code_initialize() {
 //    literal_table_test();
 }
 
-code_seq push_reg_on_stack(reg_num_type reg, offset_type offset, bool second ) {
-    return code_seq_singleton(code_cpw(SP, (second)?1 : 0, reg, offset));
+code_seq push_reg_on_stack(reg_num_type reg, offset_type offset, bool second, reg_num_type sp ) {
+    return code_seq_singleton(code_cpw(sp, (second)?1 : 0, reg, offset));
 }
 
 void gen_code_output_literals(BOFFILE bf) {
     literal_table_start_iteration();
-    int count = 0;
     while (literal_table_iteration_has_next()) {
         word_type w = literal_table_iteration_next();
-        //printf("Literal[%d] %s: %u\n", count++, "?",  w);
-        // debug_print("Writing literal %f to BOF file\n", w);
         bof_write_word(bf, w);
     }
-//    literal_table_end_iteration(); // not necessary
-    //printf("Total literals written: %d\n", count);
 }
 
 int gen_code_output_seq_count(code_seq cs) {
     int res = 0;
 
     while (!code_seq_is_empty(cs)) {
-        bin_instr_t inst = code_seq_first(cs)->instr;
+//        bin_instr_t inst = code_seq_first(cs)->instr;
         res++;
         cs = code_seq_rest(cs);
     }
@@ -80,141 +75,117 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs) {
 
 code_seq gen_code_arith_op(token_t rel_op) {
     code_seq base = code_seq_empty();
-    switch (rel_op.code) {
+
+    return base;
+}
+
+code_seq gen_code_expr_bin(binary_op_expr_t expr, reg_num_type reg){
+    code_seq base = code_seq_empty();
+
+    switch (expr.arith_op.code) {
         case plussym:
-            code_seq_add_to_end(&base, code_add( SP, 0,SP, 1));
+
+            code_seq_concat(&base, gen_code_expr(*expr.expr1,false,SP));
+            code_seq_concat(&base, gen_code_expr(*expr.expr2,true,SP));
+
+            code_seq_add_to_end(&base, code_add( reg, 0,SP, 1));
             break;
         case minussym:
-            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+            code_seq_concat(&base, gen_code_expr(*expr.expr1,false,SP));
+            code_seq_concat(&base, gen_code_expr(*expr.expr2,true,SP));
+
+            code_seq_add_to_end(&base, code_sub( reg, 0,SP, 1));
             break;
         case multsym:
+            code_seq_concat(&base, gen_code_expr(*expr.expr1,false,SP));
+            code_seq_concat(&base, gen_code_expr(*expr.expr2,true,SP));
+
+
             code_seq_add_to_end(&base, code_mul( SP, 1));
             code_seq_add_to_end(&base, code_cflo( SP, 0));
             break;
-
         case divsym:
+
+            code_seq_concat(&base, gen_code_expr(*expr.expr1,false,SP));
+            code_seq_concat(&base, gen_code_expr(*expr.expr2,true,SP));
+
             code_seq_add_to_end(&base, code_div( SP, 1));
             code_seq_add_to_end(&base, code_cflo( SP, 0));
             break;
         default:
             return base;
     }
+
     return base;
 }
 
-code_seq gen_code_expr_bin(binary_op_expr_t expr){
-    code_seq seq = code_seq_empty();
-    code_seq_concat(&seq, gen_code_expr(*expr.expr1,false));
-    code_seq_concat(&seq, gen_code_expr(*expr.expr2,true));
-    code_seq_concat(&seq, gen_code_arith_op(expr.arith_op));
-    return seq;
-}
-
-code_seq gen_code_ident(ident_t ident, bool second) {
+code_seq gen_code_ident(ident_t ident, bool second, reg_num_type reg) {
+//    printf("IDENT %s: %d\n", ident.name, ident.idu->attrs->offset_count);
     int offset = literal_table_lookup(ident.name, 0);
-    code_seq seq = push_reg_on_stack(GP, offset, second);
-
-    //code_seq_add_to_end(&seq, code_lit(FP, 0, 0));
+    code_seq seq = push_reg_on_stack(GP, offset, second, reg);
     return seq;
 }
 
-code_seq gen_code_expr(expr_t exp, bool second) {
+code_seq gen_code_expr(expr_t exp, bool second, reg_num_type reg) {
     switch (exp.expr_kind) {
         case expr_ident:
-            return gen_code_ident(exp.data.ident, second);
+            return gen_code_ident(exp.data.ident, second, reg);
         case expr_bin:
-            return gen_code_expr_bin(exp.data.binary);
+            return gen_code_expr_bin(exp.data.binary, reg);
         case expr_negated:
-            return gen_code_number(NULL, exp.data.negated.expr->data.number,true, second);
+            return gen_code_number(NULL, exp.data.negated.expr->data.number,true, second, reg);
         case expr_number:
-            return gen_code_number(NULL, exp.data.number,false, second);
+            return gen_code_number(NULL, exp.data.number,false, second, reg);
         default:
             bail_with_error("Unexpected expr_kind_e (%d) in gen_code_expr", exp.expr_kind);
             break;
     }
-    // never happens, but suppresses a warning from gcc
     return code_seq_empty();
 }
 
-code_seq gen_code_number( char* varName, number_t num, bool negate, bool second) {
+code_seq gen_code_number( char* varName, number_t num, bool negate, bool second, reg_num_type sp) {
     word_type val = num.value;
     if (negate) {
         val = -(num.value);
     } else {
         val = num.value;
     }
-//    printf("GEN CODE NUm: %s %d\n", varName, val);
     if (varName==NULL){
-//        unsigned int global_offset
-//                = literal_table_lookup(num.text, num.value);
         return code_seq_singleton(code_lit(SP, (second?1:0), val));
-//        unsigned int global_offset
-//                = literal_table_lookup(num.text, val);
-//
-//        return push_reg_on_stack(SP, global_offset);
     }
     unsigned int global_offset = literal_table_lookup(varName, val);
-    return push_reg_on_stack(GP, global_offset, second);
+    return push_reg_on_stack(GP, global_offset, second, sp);
 }
 
 code_seq gen_code_print_stmt(print_stmt_t s) {
     code_seq base = code_seq_empty();
-
-    // Evaluate the expression into R3
-    code_seq expr_code = gen_code_expr(s.expr, false);
+    code_seq expr_code = gen_code_expr(s.expr, false, SP);
     code_seq_concat(&base, expr_code);
-
     code_seq_add_to_end(&base, code_pint(SP,0 ));
-    // Add print system call (PINT)
-//    if (s.expr.expr_kind == expr_ident) {
-//        int offset = literal_table_lookup(s.expr.data.ident.name, 0);
-//        printf("L: %s %d\n", s.expr.data.ident.name,offset);
-//
-////        code_seq_add_to_end(&base, code_pint(SP,offset));
-//        code_seq_add_to_end(&base, code_pint(SP,        id_use_get_attrs(s.expr.data.ident.idu)->offset_count));
-//
-//    } else {
-//        code_seq_add_to_end(&base, code_pint(SP,0 ));
-//    }
-
     return base;
 }
 
 code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
-     printf("divisor %d\n",stmt.divisor.data.number.value);
-//     code_seq_concat(&base, gen_code_expr(stmt.divisor, true));
-//     code_seq_add_to_end(&base, code_cfhi(SP, 0));
-//     code_seq_add_to_end(&base, code_div(SP, 0));
-
-       code_seq_concat(&base, gen_code_expr(stmt.dividend, false));
-       code_seq_add_to_end(&base, code_lit(SP, 1, stmt.divisor.data.number.value));
-       code_seq_add_to_end(&base, code_cfhi(SP, 1));
-       code_seq_add_to_end(&base, code_beq(SP,0,thenSize+2));
+    code_seq_concat(&base, gen_code_expr(stmt.dividend, false, SP));
+    code_seq_add_to_end(&base, code_lit(SP, 1, stmt.divisor.data.number.value));
+    code_seq_add_to_end(&base, code_cfhi(SP, 1));
+    code_seq_add_to_end(&base, code_beq(SP, 0, thenSize + 2));
     return base;
 }
 
 code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int elseSize, int thenSize, bool norm) {
     code_seq base = code_seq_empty();
-    code_seq_concat(&base, gen_code_expr(stmt.expr1,false));
-    code_seq_concat(&base, gen_code_expr(stmt.expr2,true));
+    code_seq_concat(&base, gen_code_expr(stmt.expr1,false, SP));
+    code_seq_concat(&base, gen_code_expr(stmt.expr2,true, SP));
 
-//    printf("LEQ: %s\n", stmt.rel_op.text);
 
     if (norm){
-//        printf("NORMAL: %s\n", stmt.rel_op.text );
          if (strcmp(stmt.rel_op.text, "==") == 0) {
-//            code_seq_add_to_end(&base, code_bne(SP, 0, elseSize + 2));
-//            //code_seq_add_to_end(&base  , code_jrel(elseSize));
              code_seq_add_to_end(&base, code_bne(SP,1,thenSize+2));
-         }
-
-        else if (strcmp(stmt.rel_op.text, "!=") == 0) {
-//            code_seq_add_to_end(&base, code_beq(SP, 0, elseSize + 2));
-////        code_seq_add_to_end(&base, code_jrel(elseSize));
+         } else if (strcmp(stmt.rel_op.text, "!=") == 0) {
              code_seq_add_to_end(&base, code_beq(SP,1,thenSize+2));
         }
-
     } else {
 
         if (strcmp(stmt.rel_op.text, "<=") == 0) {
@@ -235,28 +206,19 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int elseSize, int thenSize,
         }
     }
 
-
     return base;
 }
 
 code_seq gen_code_assign_stmt(assign_stmt_t stmt){
     code_seq base = code_seq_empty();
     int offset = literal_table_lookup(stmt.name,0);
-    code_seq_concat(&base,gen_code_expr(*stmt.expr, false));
-//    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
-//    printf("THE OFFSET: %u\n",offset_count);
+    code_seq_concat(&base,gen_code_expr(*stmt.expr, false, SP));
 
-    //PULL FROM FRONT
     code_seq_add_to_end(&base, code_cpw(GP, offset, SP,0));
 
     return base;
 }
-/*
- *  } else if (strcmp(rel.rel_op.text, "==") == 0) {
-                code_seq_add_to_end(&conditionCode, code_bne(SP, 1, bodySeqSize + 2)); // Jump if false
-               // code_seq_add_to_end(&base, code_jrel(bodySeqSize));
-            } else if (strcmp(rel.rel_op.text, "!=") == 0) {
- */
+
 bool isNormalRev(condition_t c) {
     if (strcmp(c.data.rel_op_cond.rel_op.text, "==") == 0)return true;
     if (strcmp(c.data.rel_op_cond.rel_op.text, "!=") == 0)return true;
@@ -266,7 +228,6 @@ bool isNormalRev(condition_t c) {
 code_seq gen_code_if_stmt(if_stmt_t stmt) {
     code_seq base = code_seq_empty();
     condition_t c = stmt.condition;
-
 
     bool rel = false;
     if (c.cond_kind == ck_rel) {
@@ -303,20 +264,20 @@ code_seq gen_code_if_stmt(if_stmt_t stmt) {
 }
 
 code_seq gen_code_while_stmt(while_stmt_t stmt) {
-    code_seq base = code_seq_empty(); // Initialize base code sequence
-    code_seq bodyCode = gen_code_stmts(stmt.body); // Generate body code
-    int bodySeqSize = code_seq_size(bodyCode); // Number of instructions in body
+    code_seq base = code_seq_empty();
+    code_seq bodyCode = gen_code_stmts(stmt.body);
+    int bodySeqSize = code_seq_size(bodyCode);
 
-    code_seq conditionCode = code_seq_empty(); // Code for evaluating condition
-    int conditionSize = 0;                     // Size of condition instructions
+    code_seq conditionCode = code_seq_empty();
+    int conditionSize = 0;
 
-    // Handle the condition
+
     if (stmt.condition.cond_kind == ck_rel) {
         rel_op_condition_t rel = stmt.condition.data.rel_op_cond;
 
         // Generate code for both expressions
-        code_seq_concat(&conditionCode, gen_code_expr(rel.expr1, false));
-        code_seq_concat(&conditionCode, gen_code_expr(rel.expr2, true));
+        code_seq_concat(&conditionCode, gen_code_expr(rel.expr1, false, SP));
+        code_seq_concat(&conditionCode, gen_code_expr(rel.expr2, true, SP));
 
         conditionSize = code_seq_size(conditionCode); // Update condition size
 
@@ -327,7 +288,6 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
             int num2 = rel.expr2.data.number.value;
             if (num1==num2) {
                 if (strcmp(rel.rel_op.text, "<") == 0) {
-                    //printf("FFFFFF");
                     code_seq_add_to_end(&conditionCode, code_jrel(bodySeqSize + 2)); // Jump if false
                 } else {
                     bail_with_error("Unhandled relational operator in while condition");
@@ -352,7 +312,6 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
                // code_seq_add_to_end(&base, code_jrel(bodySeqSize));
             } else if (strcmp(rel.rel_op.text, "!=") == 0) {
                 code_seq_add_to_end(&conditionCode, code_beq(SP, 1, bodySeqSize + 2)); // Jump if false
-//(&base, code_jrel(bodySeqSize));
             } else {
                 bail_with_error("Unhandled relational operator in while condition");
             }
@@ -427,14 +386,11 @@ code_seq gen_code_stmt(stmt_t *s) {
 
 code_seq gen_code_const(const_def_t*  def) {
     code_seq base = code_seq_empty();
-
     while (def!=NULL) {
         bool negate = false;
-        code_seq_concat(&base, gen_code_number( def->ident.name,  def->number, negate, false));
+        code_seq_concat(&base, gen_code_number( def->ident.name,  def->number, negate, false, SP));
         def = def->next;
     }
-    //Handle single for now
-
     return base;
 }
 
