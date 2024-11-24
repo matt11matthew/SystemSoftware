@@ -137,21 +137,15 @@ code_seq gen_code_expr(expr_t exp, bool second) {
 
 code_seq gen_code_number( char* varName, number_t num, bool negate, bool second) {
     word_type val = num.value;
-
     if (negate) {
-
         val = -(num.value);
     } else {
         val = num.value;
     }
-
 //    printf("GEN CODE NUm: %s %d\n", varName, val);
-
-
     if (varName==NULL){
 //        unsigned int global_offset
 //                = literal_table_lookup(num.text, num.value);
-
         return code_seq_singleton(code_lit(SP, (second?1:0), val));
 //        unsigned int global_offset
 //                = literal_table_lookup(num.text, val);
@@ -159,7 +153,6 @@ code_seq gen_code_number( char* varName, number_t num, bool negate, bool second)
 //        return push_reg_on_stack(SP, global_offset);
     }
     unsigned int global_offset = literal_table_lookup(varName, val);
-
     return push_reg_on_stack(GP, global_offset, second);
 }
 
@@ -206,23 +199,27 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     code_seq_concat(&base, gen_code_expr(stmt.expr1, false));
     code_seq_concat(&base, gen_code_expr(stmt.expr2, true));
 
+    printf("LEQ: %s\n", stmt.rel_op.text);
     if (strcmp(stmt.rel_op.text, "<") == 0) {
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
         code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize+2));
     }
     else if (strcmp(stmt.rel_op.text, "<=") == 0) {
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+        code_seq_add_to_end(&base, code_blez(SP,0,thenSize+2));
+    }
+    else if (strcmp(stmt.rel_op.text, ">=") == 0) {
+        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
         code_seq_add_to_end(&base, code_bgez(SP,0,thenSize+2));
     }
+
     else if(strcmp(stmt.rel_op.text, ">") == 0){
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
         code_seq_add_to_end(&base, code_bltz(SP,0,thenSize+2));
     }
-    else if (strcmp(stmt.rel_op.text, ">=") == 0) {
-        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_blez(SP,0,thenSize+2));
-    }
+
     else if (strcmp(stmt.rel_op.text, "==") == 0) {
+
         code_seq_add_to_end(&base, code_bne(SP,1,thenSize+2));
     }
     else if (strcmp(stmt.rel_op.text, "!=") == 0) {
@@ -295,8 +292,8 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
             int num2 = rel.expr2.data.number.value;
             if (num1==num2) {
                 if (strcmp(rel.rel_op.text, "<") == 0) {
-                    printf("FFFFFF");
-                    code_seq_add_to_end(&conditionCode, code_jrel( bodySeqSize + 2)); // Jump if false
+                    //printf("FFFFFF");
+                    code_seq_add_to_end(&conditionCode, code_jrel(bodySeqSize + 2)); // Jump if false
                 } else {
                     bail_with_error("Unhandled relational operator in while condition");
                 }
@@ -346,21 +343,8 @@ code_seq gen_code_call_stmt(call_stmt_t stmt) {
 // Generate code for the read statment given by stmt
 code_seq gen_code_read_stmt(read_stmt_t stmt) {
     code_seq base = code_seq_empty();
-//    base = code_seq_singleton(code_rch(SP, 0));
-//    code_seq_concat(&base, code_utils_compute_fp(SP, stmt.idu->levelsOutward));
-////    unsigned  int offsetCount = literal_table_find_offset(stmt.name, );
-    code_seq_add_to_end(&base, code_rch(SP, 0));
-//    // put number read into $v0
-//    // put frame pointer from the lexical address of the name
-//    // (using stmt.idu) into $t9
-//    assert(stmt.idu != NULL);
-////    ret = code_seq_concat(ret,
-////              code_compute_fp(T9, stmt.idu->levelsOutward));
-//  //  assert(id_use_get_attrs(stmt.idu) != NULL);
-//    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
-//    //assert(offset_count <= USHRT_MAX); // it has to fit!
-//    printf("THE READ OFF_SET");
-////code_seq_add_to_end(&base,code_seq_singleton(code_fsw(T9, V0, offset_count)));
+    int offset = literal_table_lookup(stmt.name,0);
+    code_seq_add_to_end(&base, code_rch(GP, offset));
     return base;
 }
 
@@ -465,6 +449,6 @@ void gen_code_program(BOFFILE bf, block_t b) {
     code_seq tear_down_cs = code_utils_tear_down_program(); //BROKEN
     code_seq_concat(&main_cs, tear_down_cs);
     gen_code_output_program(bf, main_cs);
-    // literal_table_debug_print();
+//    literal_table_debug_print();
 //    code_seq_debug_print(stdout, main_cs);
 }

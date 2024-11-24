@@ -553,11 +553,12 @@ void machine_execute_instr(address_type addr, bin_instr_t bi)
 		}
 		break;
 	    case BLEZ_O:
-		if (memory.words[GPR[ii.reg]
-				     + machine_types_formOffset(ii.offset)]
+//            printf("F: %d\n", memory.words[GPR[ii.reg]
+//                                           + machine_types_formOffset(ii.offset)]);
+		if (memory.words[GPR[ii.reg] + machine_types_formOffset(ii.offset)]
 		    <= 0) {
-		    PC = (PC - 1) + machine_types_formOffset(ii.immed);
-		}
+            PC = (PC - 1) + machine_types_formOffset(ii.immed);
+        }
 		break;
 	    case BLTZ_O:
 		if (memory.words[GPR[ii.reg]
