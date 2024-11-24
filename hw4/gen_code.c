@@ -117,7 +117,7 @@ code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg){
             code_seq_add_to_end(&base, code_cflo( SP, 0));
             break;
         case divsym:
-            int R8 = 8;
+
 
             code_seq_concat(&base, gen_code_expr(name, *expr.expr1,0,SP));
             code_seq_concat(&base, gen_code_expr(name, *expr.expr2,1,SP));
@@ -126,9 +126,16 @@ code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg){
 //            code_pint(R8, 0);
             code_seq_add_to_end(&base, code_cflo( SP, 0));
             break;
-        default:
-            return base;
     }
+    if (name!=NULL) {
+
+        int offset = literal_table_lookup(name,0);
+        printf("NAME: %s: %d\n", name, offset);
+        code_seq_concat(&base, push_reg_on_stack(GP, offset,SP, 0));
+//    push_reg_on_stack(SP, 0, GP, offset);
+    }
+
+
     return base;
 }
 
