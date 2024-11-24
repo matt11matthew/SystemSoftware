@@ -200,13 +200,14 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     code_seq_concat(&base, gen_code_expr(stmt.expr2, true));
 
     printf("LEQ: %s\n", stmt.rel_op.text);
-    if (strcmp(stmt.rel_op.text, "<") == 0) {
-        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize+2));
-    }
-    else if (strcmp(stmt.rel_op.text, "<=") == 0) {
+
+     if (strcmp(stmt.rel_op.text, "<=") == 0) {
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
         code_seq_add_to_end(&base, code_blez(SP,0,thenSize+2));
+    }
+    else if (strcmp(stmt.rel_op.text, "<") == 0) {
+        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+        code_seq_add_to_end(&base, code_bltz(SP,0,thenSize+2));
     }
     else if (strcmp(stmt.rel_op.text, ">=") == 0) {
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
@@ -215,7 +216,7 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
 
     else if(strcmp(stmt.rel_op.text, ">") == 0){
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_bltz(SP,0,thenSize+2));
+        code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize+2));
     }
 
     else if (strcmp(stmt.rel_op.text, "==") == 0) {
