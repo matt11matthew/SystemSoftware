@@ -84,6 +84,8 @@ code_seq gen_code_arith_op(token_t rel_op) {
     code_seq base = code_seq_empty();
     return base;
 }
+int offsetA= 0;
+int offsetB= 0;
 
 code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg){
     code_seq base = code_seq_empty();
@@ -92,9 +94,9 @@ code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg){
     switch (expr.arith_op.code) {
         case plussym:
 
-            code_seq_concat(&base, gen_code_expr(name, *expr.expr1,false,SP));
+            code_seq_concat(&base, gen_code_expr(name, *expr.expr2,0,SP));
 
-            code_seq_concat(&base, gen_code_expr(name, *expr.expr2,true,SP));
+            code_seq_concat(&base, gen_code_expr(name, *expr.expr1,1,SP));
             code_seq_add_to_end(&base, code_add( reg, 0,SP, 1));
 
             break;
