@@ -2,8 +2,8 @@
 begin
     var x, y, z, w;
     x := 35;
-    y := x + 10;
-    print y;       % prints 45
-    z := y + (y - x);
+    w := 100;
+    y := 10;
+    z := y + (w - x);
     print z
 end.

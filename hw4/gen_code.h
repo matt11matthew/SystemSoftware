@@ -43,13 +43,13 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs);
 code_seq gen_code_arith_op(token_t rel_op);
 
 // Generates code for a binary expression.
-code_seq gen_code_expr_bin(binary_op_expr_t expr, reg_num_type reg);
+code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg);
 
 // Generates code to retrieve the value of an identifier.
 code_seq gen_code_ident(ident_t ident, bool second, reg_num_type reg);
 
 // Generates code for an expression of various kinds (identifiers, numbers, binary expressions, etc.).
-code_seq gen_code_expr(expr_t exp, bool second, reg_num_type reg);
+code_seq gen_code_expr(char* name, expr_t exp, bool second, reg_num_type reg);
 
 // Generates code for a number (either constant or negated).
 code_seq gen_code_number( char* varName, number_t num, bool negate, bool second, reg_num_type sp);
