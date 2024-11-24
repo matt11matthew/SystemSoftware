@@ -41,9 +41,11 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs);
 
 // Generates code for an arithmetic operation.
 code_seq gen_code_arith_op(token_t rel_op);
+code_seq gen_code_bin_op_expr(binary_op_expr_t expr);
 
 // Generates code for a binary expression.
-code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg);
+// code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg);
+// code_seq gen_code_bin_op_expr(binary_op_expr_t expr, offset_type second, reg_num_type reg);
 
 // Generates code to retrieve the value of an identifier.
 code_seq gen_code_ident(ident_t ident, offset_type second, reg_num_type reg);
