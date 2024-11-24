@@ -217,12 +217,12 @@ code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
         code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize + 2));
     }
     else if (strcmp(stmt.rel_op.text, "==") == 0) {
-        code_seq_add_to_end(&base, code_beq(SP,0,thenSize + 2));
+        code_seq_add_to_end(&base, code_bne(SP,0,thenSize + 2));
         //code_seq_add_to_end(&base, code_jrel(thenSize));
      }
     else if (strcmp(stmt.rel_op.text, "!=") == 0) {
-        code_seq_add_to_end(&base, code_bne(SP,0,thenSize + 2));
-        code_seq_add_to_end(&base, code_jrel(thenSize));
+        code_seq_add_to_end(&base, code_beq(SP,0,thenSize + 2));
+//        code_seq_add_to_end(&base, code_jrel(thenSize));
     }
     return base;
 }
