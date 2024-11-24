@@ -81,13 +81,9 @@ code_seq gen_code_expr(char* name, expr_t exp, offset_type second, reg_num_type 
         break;
         case expr_negated:
             base = gen_code_number(NULL, exp.data.negated.expr->data.number, true, 0, SP);
-        // Adjust SP to allocate space
-        code_seq_add_to_end(&base, code_sri(SP, 1));
         break;
         case expr_number:
             base = gen_code_number(NULL, exp.data.number, false, 0, SP);
-        // Adjust SP to allocate space
-        code_seq_add_to_end(&base, code_sri(SP, 1));
         break;
         default:
             bail_with_error("Unexpected expr_kind_e (%d) in gen_code_expr", exp.expr_kind);
@@ -96,6 +92,7 @@ code_seq gen_code_expr(char* name, expr_t exp, offset_type second, reg_num_type 
     return base;
 }
 
+
 code_seq gen_code_arith_op(token_t rel_op) {
     code_seq base = code_seq_empty();
     return base;
@@ -103,24 +100,26 @@ code_seq gen_code_arith_op(token_t rel_op) {
 int AC = 4;
 
 code_seq gen_code_ident(ident_t ident, offset_type second, reg_num_type reg) {
+    code_seq base = code_seq_empty();
     int offset = literal_table_lookup(ident.name, 0);
-    code_seq seq = push_reg_on_stack(GP, offset, second, reg);
-    return seq;
+
+    // Adjust SP to allocate space
+    code_seq_add_to_end(&base, code_sri(SP, 1)); // SP = SP - 1
+
+    // Copy value from GP + offset to SP + 0
+    code_seq_add_to_end(&base, code_cpw(SP, 0, GP, offset));
+
+    return base;
 }
+
 code_seq gen_code_bin_op_expr(binary_op_expr_t expr) {
     code_seq base = code_seq_empty();
 
-    // Adjust SP to allocate space for the left operand
-    code_seq_add_to_end(&base, code_sri(SP, 1)); // SP = SP - 1
-
-    // Evaluate left operand and store at SP + 0
+    // Evaluate left operand (SP adjusted within gen_code_expr)
     code_seq left_code = gen_code_expr(NULL, *expr.expr1, 0, SP);
     code_seq_concat(&base, left_code);
 
-    // Adjust SP to allocate space for the right operand
-    code_seq_add_to_end(&base, code_sri(SP, 1)); // SP = SP - 1
-
-    // Evaluate right operand and store at SP + 0
+    // Evaluate right operand (SP adjusted within gen_code_expr)
     code_seq right_code = gen_code_expr(NULL, *expr.expr2, 0, SP);
     code_seq_concat(&base, right_code);
 
@@ -131,29 +130,21 @@ code_seq gen_code_bin_op_expr(binary_op_expr_t expr) {
     // Perform the operation
     switch (expr.arith_op.code) {
         case plussym:
-            // Mem[SP + 1] = Mem[SP + 1] + Mem[SP + 0];
             code_seq_add_to_end(&base, code_add(SP, 1, SP, 0));
-            break;
+        break;
         case minussym:
-            // Mem[SP + 1] = Mem[SP + 1] - Mem[SP + 0];
             code_seq_add_to_end(&base, code_sub(SP, 1, SP, 0));
-            break;
+        break;
         case multsym:
-            // Load left operand into AC
             code_seq_add_to_end(&base, code_lwr(AC, SP, 1));
-            // Multiply AC by right operand
-            code_seq_add_to_end(&base, code_mul(SP, 0));
-            // Store result from LO into SP + 1
-            code_seq_add_to_end(&base, code_cflo(SP, 1));
-            break;
+        code_seq_add_to_end(&base, code_mul(SP, 0));
+        code_seq_add_to_end(&base, code_cflo(SP, 1));
+        break;
         case divsym:
-            // Load left operand into AC
             code_seq_add_to_end(&base, code_lwr(AC, SP, 1));
-            // Divide AC by right operand
-            code_seq_add_to_end(&base, code_div(SP, 0));
-            // Store result from LO into SP + 1
-            code_seq_add_to_end(&base, code_cflo(SP, 1));
-            break;
+        code_seq_add_to_end(&base, code_div(SP, 0));
+        code_seq_add_to_end(&base, code_cflo(SP, 1));
+        break;
         default:
             bail_with_error("Unhandled binary operation in gen_code_bin_op_expr");
     }
@@ -162,43 +153,38 @@ code_seq gen_code_bin_op_expr(binary_op_expr_t expr) {
     code_seq_add_to_end(&base, code_ari(SP, 1)); // SP = SP + 1
 
     // Now the result is at SP + 0 (since SP has been incremented)
-    // Adjust SP to deallocate left operand and keep result at SP + 0
-    code_seq_add_to_end(&base, code_ari(SP, 1)); // SP = SP + 1
 
     return base;
 }
 
 
 
-code_seq gen_code_number( char* varName, number_t num, bool negate, offset_type second, reg_num_type sp) {
-    word_type val = num.value;
-    if (negate) {
-        val = -(num.value);
-    } else {
-        val = num.value;
-    }
-    if (varName==NULL){
-        return code_seq_singleton(code_lit(sp, second, val));
-    }
-    unsigned int global_offset = literal_table_lookup(varName, val);
-    return push_reg_on_stack(GP, global_offset, second, sp);
+code_seq gen_code_number(char* varName, number_t num, bool negate, offset_type second, reg_num_type sp) {
+    code_seq base = code_seq_empty();
+    word_type val = negate ? -(num.value) : num.value;
+
+    // Adjust SP to allocate space
+    code_seq_add_to_end(&base, code_sri(SP, 1)); // SP = SP - 1
+
+    // Store the literal at SP + 0
+    code_seq_add_to_end(&base, code_lit(SP, 0, val));
+
+    return base;
 }
+
 
 code_seq gen_code_print_stmt(print_stmt_t s) {
     code_seq base = code_seq_empty();
 
-    // Evaluate the expression
+    // Evaluate the expression (SP adjusted within gen_code_expr)
     code_seq expr_code = gen_code_expr(NULL, s.expr, 0, SP);
     code_seq_concat(&base, expr_code);
-
-    // Adjust SP to allocate space for the expression
-    code_seq_add_to_end(&base, code_sri(SP, 1));
 
     // Print the value
     code_seq_add_to_end(&base, code_pint(SP, 0));
 
-    // Adjust SP to deallocate the expression
-    code_seq_add_to_end(&base, code_ari(SP, 1));
+    // Deallocate the expression from the stack
+    code_seq_add_to_end(&base, code_ari(SP, 1)); // SP = SP + 1
 
     return base;
 }
@@ -214,56 +200,69 @@ code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
 
 code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int elseSize, int thenSize, bool norm) {
     code_seq base = code_seq_empty();
-    code_seq_concat(&base, gen_code_expr(NULL, stmt.expr1,false, SP));
-    code_seq_concat(&base, gen_code_expr(NULL,stmt.expr2,true, SP));
 
+    // Evaluate first expression
+    code_seq left_expr = gen_code_expr(NULL, stmt.expr1, 0, SP);
+    code_seq_concat(&base, left_expr);
 
-    if (norm){
-         if (strcmp(stmt.rel_op.text, "==") == 0) {
-             code_seq_add_to_end(&base, code_bne(SP,1,thenSize+2));
-         } else if (strcmp(stmt.rel_op.text, "!=") == 0) {
-             code_seq_add_to_end(&base, code_beq(SP,1,thenSize+2));
+    // Evaluate second expression
+    code_seq right_expr = gen_code_expr(NULL, stmt.expr2, 0, SP);
+    code_seq_concat(&base, right_expr);
+
+    // Now the stack has:
+    // [SP + 1]: expr1
+    // [SP + 0]: expr2
+
+    // Perform the comparison
+    code_seq_add_to_end(&base, code_sub(SP, 1, SP, 0));
+
+    // Deallocate expr2 from the stack
+    code_seq_add_to_end(&base, code_ari(SP, 1));
+
+    // Deallocate expr1 from the stack
+    code_seq_add_to_end(&base, code_ari(SP, 1));
+
+    // Branch based on the comparison result
+    if (norm) {
+        if (strcmp(stmt.rel_op.text, "==") == 0) {
+            code_seq_add_to_end(&base, code_bne(SP, 0, thenSize + 2));
+        } else if (strcmp(stmt.rel_op.text, "!=") == 0) {
+            code_seq_add_to_end(&base, code_beq(SP, 0, thenSize + 2));
         }
     } else {
-        if (strcmp(stmt.rel_op.text, "<=") == 0) {
-            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-            code_seq_add_to_end(&base, code_blez(SP, 0, elseSize + 2));
-        }
-        else if (strcmp(stmt.rel_op.text, "<") == 0) {
-            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+        // For relational operators, SP now points to the result of `expr1 - expr2`
+        if (strcmp(stmt.rel_op.text, "<") == 0) {
             code_seq_add_to_end(&base, code_bltz(SP, 0, elseSize + 2));
-        }
-        else if (strcmp(stmt.rel_op.text, ">=") == 0) {
-            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+        } else if (strcmp(stmt.rel_op.text, "<=") == 0) {
+            code_seq_add_to_end(&base, code_blez(SP, 0, elseSize + 2));
+        } else if (strcmp(stmt.rel_op.text, ">") == 0) {
+            code_seq_add_to_end(&base, code_bgtz(SP, 0, elseSize + 2));
+        } else if (strcmp(stmt.rel_op.text, ">=") == 0) {
             code_seq_add_to_end(&base, code_bgez(SP, 0, elseSize + 2));
         }
-        else if(strcmp(stmt.rel_op.text, ">") == 0){
-            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-            code_seq_add_to_end(&base, code_bgtz(SP, 0, elseSize + 2));
-        }
     }
+
     return base;
 }
+
 
 code_seq gen_code_assign_stmt(assign_stmt_t stmt) {
     code_seq base = code_seq_empty();
     int offset = literal_table_lookup(stmt.name, 0);
 
-    // Evaluate the expression
+    // Evaluate the expression (SP adjusted within gen_code_expr)
     code_seq expr_code = gen_code_expr(stmt.name, *stmt.expr, 0, SP);
     code_seq_concat(&base, expr_code);
-
-    // Adjust SP to allocate space for the expression
-    code_seq_add_to_end(&base, code_sri(SP, 1));
 
     // Store the value into the variable
     code_seq_add_to_end(&base, code_cpw(GP, offset, SP, 0));
 
-    // Adjust SP to deallocate the expression
-    code_seq_add_to_end(&base, code_ari(SP, 1));
+    // Deallocate the expression from the stack
+    code_seq_add_to_end(&base, code_ari(SP, 1)); // SP = SP + 1
 
     return base;
 }
+
 
 bool isNormalRev(condition_t c) {
     if (strcmp(c.data.rel_op_cond.rel_op.text, "==") == 0)return true;
