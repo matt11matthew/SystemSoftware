@@ -1,7 +1,10 @@
-% $Id: hw4-gtest2.spl,v 1.3 2024/09/17 21:48:53 leavens Exp $
 begin
-  if 3 < 4
-  then print 10    % prints 10
-  else print 11
-  end
+   var x;
+   x := 10;
+   if divisible x by 2
+   then
+      print 1
+   else
+      print 2
+   end
 end.

@@ -181,52 +181,49 @@ code_seq gen_code_print_stmt(print_stmt_t s) {
 
 code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
+     printf("divisor %d\n",stmt.divisor.data.number.value);
+//     code_seq_concat(&base, gen_code_expr(stmt.divisor, true));
+//     code_seq_add_to_end(&base, code_cfhi(SP, 0));
+//     code_seq_add_to_end(&base, code_div(SP, 0));
 
-    // printf("divisor %d\n",stmt.divisor.data.number.value);
-    // code_seq_concat(&base, gen_code_expr(stmt.divisor, true));
-    // code_seq_add_to_end(&base, code_cfhi(SP, 0));
-
-    // code_seq_add_to_end(&base, code_div(SP, 0));
-    code_seq_concat(&base, gen_code_expr(stmt.dividend, false));
-    code_seq_add_to_end(&base, code_lit(4, 1, stmt.divisor.data.number.value));
-    code_seq_add_to_end(&base, code_beq(4,1,thenSize+2));
-
+       code_seq_concat(&base, gen_code_expr(stmt.dividend, false));
+       code_seq_add_to_end(&base, code_lit(SP, 1, stmt.divisor.data.number.value));
+       code_seq_add_to_end(&base, code_cfhi(SP, 1));
+       code_seq_add_to_end(&base, code_beq(SP,0,thenSize+2));
     return base;
 }
 
 code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
     code_seq base = code_seq_empty();
-    code_seq_concat(&base, gen_code_expr(stmt.expr1, false));
-    code_seq_concat(&base, gen_code_expr(stmt.expr2, true));
+    code_seq_concat(&base, gen_code_expr(stmt.expr1,false));
+    code_seq_concat(&base, gen_code_expr(stmt.expr2,true));
 
     printf("LEQ: %s\n", stmt.rel_op.text);
 
      if (strcmp(stmt.rel_op.text, "<=") == 0) {
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_blez(SP,0,thenSize+2));
+        code_seq_add_to_end(&base, code_blez(SP,0,thenSize + 2));
     }
     else if (strcmp(stmt.rel_op.text, "<") == 0) {
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_bltz(SP,0,thenSize+2));
+        code_seq_add_to_end(&base, code_bltz(SP,0,thenSize + 2));
     }
     else if (strcmp(stmt.rel_op.text, ">=") == 0) {
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_bgez(SP,0,thenSize+2));
+        code_seq_add_to_end(&base, code_bgez(SP,0,thenSize + 2));
     }
-
     else if(strcmp(stmt.rel_op.text, ">") == 0){
         code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize+2));
+        code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize + 2));
     }
-
     else if (strcmp(stmt.rel_op.text, "==") == 0) {
-
-        code_seq_add_to_end(&base, code_bne(SP,1,thenSize+2));
-    }
+        code_seq_add_to_end(&base, code_beq(SP,0,thenSize + 2));
+        //code_seq_add_to_end(&base, code_jrel(thenSize));
+     }
     else if (strcmp(stmt.rel_op.text, "!=") == 0) {
-        code_seq_add_to_end(&base, code_beq(SP,1,thenSize+2));
+        code_seq_add_to_end(&base, code_bne(SP,0,thenSize + 2));
+        code_seq_add_to_end(&base, code_jrel(thenSize));
     }
-
     return base;
 }
 
@@ -255,15 +252,15 @@ code_seq gen_code_if_stmt(if_stmt_t stmt) {
     int elseSeqLength = code_seq_size(elseSeq);
 
     if (c.cond_kind == ck_db) {
-        code_seq_concat(&base, gen_code_if_ck_db(c.data.db_cond,thenSeqLength));
+        code_seq_concat(&base, gen_code_if_ck_db(c.data.db_cond,elseSeqLength));
     }
     if (c.cond_kind == ck_rel) {
-        code_seq_concat(&base, gen_code_if_ck_rel(c.data.rel_op_cond,thenSeqLength));
+        code_seq_concat(&base, gen_code_if_ck_rel(c.data.rel_op_cond,elseSeqLength));
     }
 
-    code_seq_concat(&base, thenSeq);
-    code_seq_add_to_end(&base, code_jrel(elseSeqLength + 1));
     code_seq_concat(&base, elseSeq);
+    code_seq_add_to_end(&base, code_jrel(thenSeqLength + 1));
+    code_seq_concat(&base, thenSeq);
 
     return base;
 }
@@ -314,9 +311,11 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
                 code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
                 code_seq_add_to_end(&conditionCode, code_blez(SP, 0, bodySeqSize + 2)); // Jump if false
             } else if (strcmp(rel.rel_op.text, "==") == 0) {
-                code_seq_add_to_end(&conditionCode, code_bne(SP, 1, bodySeqSize + 2)); // Jump if false
-            } else if (strcmp(rel.rel_op.text, "!=") == 0) {
                 code_seq_add_to_end(&conditionCode, code_beq(SP, 1, bodySeqSize + 2)); // Jump if false
+                code_seq_add_to_end(&base, code_jrel(bodySeqSize));
+            } else if (strcmp(rel.rel_op.text, "!=") == 0) {
+                code_seq_add_to_end(&conditionCode, code_bne(SP, 1, bodySeqSize + 2)); // Jump if false
+                code_seq_add_to_end(&base, code_jrel(bodySeqSize));
             } else {
                 bail_with_error("Unhandled relational operator in while condition");
             }
