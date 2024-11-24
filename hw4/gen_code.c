@@ -91,6 +91,7 @@ code_seq gen_code_arith_op(token_t rel_op) {
             code_seq_add_to_end(&base, code_mul( SP, 1));
             code_seq_add_to_end(&base, code_cflo( SP, 0));
             break;
+
         case divsym:
             code_seq_add_to_end(&base, code_div( SP, 1));
             code_seq_add_to_end(&base, code_cflo( SP, 0));
@@ -193,45 +194,54 @@ code_seq gen_code_if_ck_db(db_condition_t stmt, int thenSize) {
     return base;
 }
 
-code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int thenSize) {
+code_seq gen_code_if_ck_rel(rel_op_condition_t stmt, int elseSize, int thenSize, bool norm) {
     code_seq base = code_seq_empty();
     code_seq_concat(&base, gen_code_expr(stmt.expr1,false));
     code_seq_concat(&base, gen_code_expr(stmt.expr2,true));
 
-    printf("LEQ: %s\n", stmt.rel_op.text);
+//    printf("LEQ: %s\n", stmt.rel_op.text);
 
-     if (strcmp(stmt.rel_op.text, "<=") == 0) {
-        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_blez(SP,0,thenSize + 2));
+    if (norm){
+//        printf("NORMAL: %s\n", stmt.rel_op.text );
+         if (strcmp(stmt.rel_op.text, "==") == 0) {
+//            code_seq_add_to_end(&base, code_bne(SP, 0, elseSize + 2));
+//            //code_seq_add_to_end(&base  , code_jrel(elseSize));
+             code_seq_add_to_end(&base, code_bne(SP,1,thenSize+2));
+         }
+
+        else if (strcmp(stmt.rel_op.text, "!=") == 0) {
+//            code_seq_add_to_end(&base, code_beq(SP, 0, elseSize + 2));
+////        code_seq_add_to_end(&base, code_jrel(elseSize));
+             code_seq_add_to_end(&base, code_beq(SP,1,thenSize+2));
+        }
+
+    } else {
+
+        if (strcmp(stmt.rel_op.text, "<=") == 0) {
+            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+            code_seq_add_to_end(&base, code_blez(SP, 0, elseSize + 2));
+        }
+        else if (strcmp(stmt.rel_op.text, "<") == 0) {
+            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+            code_seq_add_to_end(&base, code_bltz(SP, 0, elseSize + 2));
+        }
+        else if (strcmp(stmt.rel_op.text, ">=") == 0) {
+            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+            code_seq_add_to_end(&base, code_bgez(SP, 0, elseSize + 2));
+        }
+        else if(strcmp(stmt.rel_op.text, ">") == 0){
+            code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
+            code_seq_add_to_end(&base, code_bgtz(SP, 0, elseSize + 2));
+        }
     }
-    else if (strcmp(stmt.rel_op.text, "<") == 0) {
-        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_bltz(SP,0,thenSize + 2));
-    }
-    else if (strcmp(stmt.rel_op.text, ">=") == 0) {
-        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_bgez(SP,0,thenSize + 2));
-    }
-    else if(strcmp(stmt.rel_op.text, ">") == 0){
-        code_seq_add_to_end(&base, code_sub( SP, 0,SP, 1));
-        code_seq_add_to_end(&base, code_bgtz(SP,0,thenSize + 2));
-    }
-    else if (strcmp(stmt.rel_op.text, "==") == 0) {
-        code_seq_add_to_end(&base, code_bne(SP,0,thenSize + 2));
-        //code_seq_add_to_end(&base, code_jrel(thenSize));
-     }
-    else if (strcmp(stmt.rel_op.text, "!=") == 0) {
-        code_seq_add_to_end(&base, code_beq(SP,0,thenSize + 2));
-//        code_seq_add_to_end(&base, code_jrel(thenSize));
-    }
+
+
     return base;
 }
 
 code_seq gen_code_assign_stmt(assign_stmt_t stmt){
     code_seq base = code_seq_empty();
-
     int offset = literal_table_lookup(stmt.name,0);
-
     code_seq_concat(&base,gen_code_expr(*stmt.expr, false));
 //    unsigned int offset_count = id_use_get_attrs(stmt.idu)->offset_count;
 //    printf("THE OFFSET: %u\n",offset_count);
@@ -241,27 +251,54 @@ code_seq gen_code_assign_stmt(assign_stmt_t stmt){
 
     return base;
 }
+/*
+ *  } else if (strcmp(rel.rel_op.text, "==") == 0) {
+                code_seq_add_to_end(&conditionCode, code_bne(SP, 1, bodySeqSize + 2)); // Jump if false
+               // code_seq_add_to_end(&base, code_jrel(bodySeqSize));
+            } else if (strcmp(rel.rel_op.text, "!=") == 0) {
+ */
+bool isNormalRev(condition_t c) {
+    if (strcmp(c.data.rel_op_cond.rel_op.text, "==") == 0)return true;
+    if (strcmp(c.data.rel_op_cond.rel_op.text, "!=") == 0)return true;
+    return false;
+}
 
 code_seq gen_code_if_stmt(if_stmt_t stmt) {
     code_seq base = code_seq_empty();
     condition_t c = stmt.condition;
+
+
+    bool rel = false;
+    if (c.cond_kind == ck_rel) {
+        rel = true;
+    }
+
     code_seq thenSeq = gen_code_stmts(stmt.then_stmts);
     code_seq elseSeq = gen_code_stmts(stmt.else_stmts);
 
     int thenSeqLength = code_seq_size(thenSeq);
     int elseSeqLength = code_seq_size(elseSeq);
 
+    bool norm = false;
+
+    if (rel && isNormalRev(c)) {
+        norm=true;
+    }
     if (c.cond_kind == ck_db) {
         code_seq_concat(&base, gen_code_if_ck_db(c.data.db_cond,elseSeqLength));
     }
-    if (c.cond_kind == ck_rel) {
-        code_seq_concat(&base, gen_code_if_ck_rel(c.data.rel_op_cond,elseSeqLength));
+    if (rel) {
+        code_seq_concat(&base, gen_code_if_ck_rel(c.data.rel_op_cond,elseSeqLength, thenSeqLength,  norm));
     }
-
-    code_seq_concat(&base, elseSeq);
-    code_seq_add_to_end(&base, code_jrel(thenSeqLength + 1));
-    code_seq_concat(&base, thenSeq);
-
+    if (rel && isNormalRev(c)) {
+        code_seq_concat(&base, thenSeq);
+        code_seq_add_to_end(&base, code_jrel(elseSeqLength + 1));
+        code_seq_concat(&base, elseSeq);
+    } else {
+        code_seq_concat(&base, elseSeq);
+        code_seq_add_to_end(&base, code_jrel(thenSeqLength + 1));
+        code_seq_concat(&base, thenSeq);
+    }
     return base;
 }
 
@@ -311,11 +348,11 @@ code_seq gen_code_while_stmt(while_stmt_t stmt) {
                 code_seq_add_to_end(&conditionCode, code_sub(SP, 0, SP, 1));
                 code_seq_add_to_end(&conditionCode, code_blez(SP, 0, bodySeqSize + 2)); // Jump if false
             } else if (strcmp(rel.rel_op.text, "==") == 0) {
-                code_seq_add_to_end(&conditionCode, code_beq(SP, 1, bodySeqSize + 2)); // Jump if false
-                code_seq_add_to_end(&base, code_jrel(bodySeqSize));
-            } else if (strcmp(rel.rel_op.text, "!=") == 0) {
                 code_seq_add_to_end(&conditionCode, code_bne(SP, 1, bodySeqSize + 2)); // Jump if false
-                code_seq_add_to_end(&base, code_jrel(bodySeqSize));
+               // code_seq_add_to_end(&base, code_jrel(bodySeqSize));
+            } else if (strcmp(rel.rel_op.text, "!=") == 0) {
+                code_seq_add_to_end(&conditionCode, code_beq(SP, 1, bodySeqSize + 2)); // Jump if false
+//(&base, code_jrel(bodySeqSize));
             } else {
                 bail_with_error("Unhandled relational operator in while condition");
             }
