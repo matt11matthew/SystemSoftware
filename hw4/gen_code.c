@@ -75,7 +75,6 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs) {
 
 code_seq gen_code_arith_op(token_t rel_op) {
     code_seq base = code_seq_empty();
-
     return base;
 }
 
@@ -84,31 +83,24 @@ code_seq gen_code_expr_bin(binary_op_expr_t expr, reg_num_type reg){
 
     switch (expr.arith_op.code) {
         case plussym:
-
             code_seq_concat(&base, gen_code_expr(*expr.expr1,false,SP));
             code_seq_concat(&base, gen_code_expr(*expr.expr2,true,SP));
-
-            code_seq_add_to_end(&base, code_add( reg, 0,SP, 1));
+            code_seq_add_to_end(&base, code_add( SP, 0,SP, 1));
             break;
         case minussym:
             code_seq_concat(&base, gen_code_expr(*expr.expr1,false,SP));
             code_seq_concat(&base, gen_code_expr(*expr.expr2,true,SP));
-
             code_seq_add_to_end(&base, code_sub( reg, 0,SP, 1));
             break;
         case multsym:
             code_seq_concat(&base, gen_code_expr(*expr.expr1,false,SP));
             code_seq_concat(&base, gen_code_expr(*expr.expr2,true,SP));
-
-
             code_seq_add_to_end(&base, code_mul( SP, 1));
             code_seq_add_to_end(&base, code_cflo( SP, 0));
             break;
         case divsym:
-
             code_seq_concat(&base, gen_code_expr(*expr.expr1,false,SP));
             code_seq_concat(&base, gen_code_expr(*expr.expr2,true,SP));
-
             code_seq_add_to_end(&base, code_div( SP, 1));
             code_seq_add_to_end(&base, code_cflo( SP, 0));
             break;
@@ -150,8 +142,9 @@ code_seq gen_code_number( char* varName, number_t num, bool negate, bool second,
     } else {
         val = num.value;
     }
+    printf("GEN VAL %u", val);
     if (varName==NULL){
-        return code_seq_singleton(code_lit(SP, (second?1:0), val));
+        return code_seq_singleton(code_lit(sp, (second?1:0), val));
     }
     unsigned int global_offset = literal_table_lookup(varName, val);
     return push_reg_on_stack(GP, global_offset, second, sp);

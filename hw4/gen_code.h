@@ -19,6 +19,7 @@
 #include "symtab.h"
 #include "scope_check.h"
 
+// Initializes the code generator, setting up any required state.
 void gen_code_initialize();
 
 // Pushes a register's value onto the stack with an optional offset.
