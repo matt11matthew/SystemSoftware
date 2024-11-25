@@ -22,7 +22,7 @@
 void gen_code_initialize();
 
 // Pushes a register's value onto the stack with an optional offset.
-code_seq push_reg_on_stack(reg_num_type reg, offset_type offset, offset_type second, reg_num_type sp);
+code_seq push_reg_on_stack(reg_num_type reg, offset_type offset, bool second, reg_num_type sp);
 
 // Outputs all literals stored in the literal table to a BOF file.
 void gen_code_output_literals(BOFFILE bf);
@@ -43,16 +43,16 @@ void gen_code_output_program(BOFFILE bf, code_seq main_cs);
 code_seq gen_code_arith_op(token_t rel_op);
 
 // Generates code for a binary expression.
-code_seq gen_code_expr_bin(char* name, binary_op_expr_t expr, reg_num_type reg);
+code_seq gen_code_expr_bin(binary_op_expr_t expr, reg_num_type reg);
 
 // Generates code to retrieve the value of an identifier.
-code_seq gen_code_ident(ident_t ident, offset_type second, reg_num_type reg);
+code_seq gen_code_ident(ident_t ident, bool second, reg_num_type reg);
 
 // Generates code for an expression of various kinds (identifiers, numbers, binary expressions, etc.).
-code_seq gen_code_expr(char* name, expr_t exp, offset_type second, reg_num_type reg);
+code_seq gen_code_expr(expr_t exp, bool second, reg_num_type reg);
 
 // Generates code for a number (either constant or negated).
-code_seq gen_code_number( char* varName, number_t num, bool negate, offset_type second, reg_num_type sp);
+code_seq gen_code_number( char* varName, number_t num, bool negate, bool second, reg_num_type sp);
 
 // Generates code for a print statement.
 code_seq gen_code_print_stmt(print_stmt_t s);
