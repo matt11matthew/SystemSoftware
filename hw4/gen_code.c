@@ -143,7 +143,7 @@ code_seq gen_code_expr(expr_t exp, bool second, reg_num_type reg) {
     return code_seq_empty();
 }
 
-code_seq gen_code_number( char* varName, number_t num, bool negate, bool second, reg_num_type sp) {
+code_seq gen_code_number(const char* varName, number_t num, bool negate, bool second, reg_num_type sp) {
     word_type val = num.value;
     if (negate) {
         val = -(num.value);

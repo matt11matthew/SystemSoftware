@@ -53,7 +53,7 @@ code_seq gen_code_ident(ident_t ident, bool second, reg_num_type reg);
 code_seq gen_code_expr(expr_t exp, bool second, reg_num_type reg);
 
 // Generates code for a number (either constant or negated).
-code_seq gen_code_number( char* varName, number_t num, bool negate, bool second, reg_num_type sp);
+code_seq gen_code_number(const char* varName, number_t num, bool negate, bool second, reg_num_type sp);
 
 // Generates code for a print statement.
 code_seq gen_code_print_stmt(print_stmt_t s);
