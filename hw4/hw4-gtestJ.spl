@@ -7,11 +7,11 @@ begin
   print z;              % prints 0
   if ten <= fifty
   then
-    x := 10 + 25;
+    x := 10 + 25;  
     print x;       % prints 35
-    y := x + 10;
+    y := x + 10;   
     print y;       % prints 45
-    z := y + (y-x);
+    z := y + (y-x); 
     print z;        % prints 55
     if (z + 0*9999) > fifty   % should be true
     then
@@ -20,7 +20,7 @@ begin
     else
       print z / 5 + ten
     end
-  else
+  else       
     print a
   end
 end.

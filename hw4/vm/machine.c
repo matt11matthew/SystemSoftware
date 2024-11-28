@@ -76,7 +76,6 @@ static void load_instructions(BOFFILE bf, int count)
 {
     for (int wa = 0; wa < count; wa++) {
 	memory.instrs[wa] = instruction_read(bf);
-        //printf("%d: %s\n", wa, instruction_assembly_form(wa,	memory.instrs[wa]));
     }
 }
 
@@ -226,7 +225,6 @@ static void print_global_data(FILE *out)
 // that were previously loaded into the VM's memory to out
 void machine_print_loaded_program(FILE *out)
 {
-
     // heading
     instruction_print_table_heading(out);
     // instructions
@@ -235,11 +233,6 @@ void machine_print_loaded_program(FILE *out)
     }
 
     print_global_data(out);
-}
-int isPrinting =0;
-void machine_enable_print() {
-
-    isPrinting = 1;
 }
 
 // Run the VM on the already loaded program,
@@ -289,13 +282,7 @@ void machine_trace_execute_instr(FILE *out, address_type addr,
 void machine_execute_instr(address_type addr, bin_instr_t bi)
 {
     // increment the PC (advance address by 1 word)
-
-    if (isPrinting == 1){
-
-        printf("Running: %d %s\n",addr, instruction_assembly_form(addr,bi));
-    }
     PC = PC + 1;
-
 
     // execute the actual instruction
     instr_type it = instruction_type(bi);
@@ -404,14 +391,9 @@ void machine_execute_instr(address_type addr, bin_instr_t bi)
 	    case DIV_F:
 		int divisor = memory.words[GPR[oci.reg]
 				     + machine_types_formOffset(oci.offset)];
-        if (isPrinting == 1){
-
-            printf("Dividing: %d / %d\n",  memory.words[GPR[SP]],divisor);
-        }
-        if (divisor == 0) {
+		if (divisor == 0) {
 		    bail_with_error("Error: Attempt to divide by zero!");
-
-        }
+		}
 		hilo_regs.hilo[HI] = memory.words[GPR[SP]] % divisor;
 		hilo_regs.hilo[LO] = memory.words[GPR[SP]] / divisor;
 		break;
@@ -553,12 +535,11 @@ void machine_execute_instr(address_type addr, bin_instr_t bi)
 		}
 		break;
 	    case BLEZ_O:
-//            printf("F: %d\n", memory.words[GPR[ii.reg]
-//                                           + machine_types_formOffset(ii.offset)]);
-		if (memory.words[GPR[ii.reg] + machine_types_formOffset(ii.offset)]
+		if (memory.words[GPR[ii.reg]
+				     + machine_types_formOffset(ii.offset)]
 		    <= 0) {
-            PC = (PC - 1) + machine_types_formOffset(ii.immed);
-        }
+		    PC = (PC - 1) + machine_types_formOffset(ii.immed);
+		}
 		break;
 	    case BLTZ_O:
 		if (memory.words[GPR[ii.reg]
